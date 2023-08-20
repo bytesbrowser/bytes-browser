@@ -74,6 +74,11 @@ body {
   overflow: hidden;
 }
 
+.macos {
+  margin-top: 0;
+  height: 100vh;
+}
+
 /* Hide default scrollbar for Webkit browsers */
 ::-webkit-scrollbar {
   width: 12px;

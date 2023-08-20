@@ -1,0 +1,14 @@
+{
+    "tauri": {
+        "windows": [
+            {
+                "fullscreen": false,
+                "resizable": true,
+                "title": "Bytes Browser",
+                "width": 1200,
+                "height": 1200,
+                "decorations": true
+            }
+        ]
+    }
+}

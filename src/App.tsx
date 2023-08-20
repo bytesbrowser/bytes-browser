@@ -2,22 +2,22 @@ import { RecoilRoot } from "recoil";
 import Router from "./components/Router";
 import { BrowserRouter } from "react-router-dom";
 
-import { appWindow } from "@tauri-apps/api/window";
 import { useEffect } from "react";
 import "animate.css/animate.min.css";
+import { os } from "@tauri-apps/api";
 
 const App = () => {
   useEffect(() => {
     if (document != null) {
-      document
-        .getElementById("titlebar-minimize")
-        ?.addEventListener("click", () => appWindow.minimize());
-      document
-        .getElementById("titlebar-maximize")
-        ?.addEventListener("click", () => appWindow.toggleMaximize());
-      document
-        .getElementById("titlebar-close")
-        ?.addEventListener("click", () => appWindow.close());
+      os.platform().then((platform) => {
+        if (platform === "darwin") {
+          const titlebar = document.getElementsByClassName("titlebar")[0]
+          titlebar.setAttribute("style", "display: none;");
+
+          const app = document.getElementsByClassName("app")[0]
+          app.classList.add("macos")
+        }
+      })
     }
   }, []);
 
