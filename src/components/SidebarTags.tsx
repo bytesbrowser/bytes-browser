@@ -1,11 +1,15 @@
 import { Link } from "react-router-dom";
 import { TagDoc } from "../lib/types";
+import { FallingLines } from "react-loader-spinner";
 
-export const SidebarTags = ({ tags }: { tags: TagDoc[] }) => {
+export const SidebarTags = ({ tags, loading}: { tags: TagDoc[], loading: boolean }) => {
   return (
     <div className="mt-14">
       <div className="section-title text-sm opacity-50 mb-4">Tags</div>
-      {tags.length === 0 && (
+      {loading && (
+        <FallingLines color="white" />
+      )}
+      {tags.length === 0 && !loading && (
         <>
           <p className="text-xs opacity-50">No tags have been created</p>
         </>

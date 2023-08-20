@@ -7,24 +7,27 @@ import { useEffect, useState } from "react";
 export const Device = ({
   device,
   selected,
-  key,
+  id,
 }: {
   device: DeviceInterface;
   selected: boolean;
-  key: number;
+  id: number;
 }) => {
+  const [randomTooltipID] = useState(String(Math.random()))
 
   const [percentUsed,setPercentUsed] = useState(0);
 
 
   useEffect(() => {
-      setPercentUsed(device.used / device.size);
+      setPercentUsed(device.used / device.size * 100);
   }, [device])
+
+  console.log(percentUsed)
 
   return (
     <>
       <Link
-        to={`/drive/${key}`}
+        to={`/drive/${id}`}
         className="device flex items-center justify-between mb-6 cursor-pointer transition-all hover:opacity-50"
       >
         <div className="left flex items-center">
@@ -71,11 +74,11 @@ export const Device = ({
         </div>
         <div className="right">
           <svg
-              data-tooltip-id={`device-info-${key}`}
+            data-tooltip-id={randomTooltipID}
             className="opacity-80 hover:opacity-100 transition-opacity cursor-pointer"
             xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
           >
             <path
@@ -100,7 +103,7 @@ export const Device = ({
           )}
         </div>
       </Link>
-      <Tooltip className="tooltip" id={`device-info-${key}`}>
+      <Tooltip className="tooltip z-[999]" id={randomTooltipID} opacity={"100%"}>
         <div className="p-2">
           <h1 className="text-xl mb-4">{device.name}</h1>
           <p className="opacity-50 mb-4">{device.file_system_type} {device.disk_type}</p>

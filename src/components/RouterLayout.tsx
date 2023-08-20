@@ -26,6 +26,33 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
     reset();
     start();
 
+    getVolumes();
+   
+  }, []);
+
+  useEffect(() => {
+    if (
+      runtime.currentDrive &&
+      runtime.currentDrive.name !== devices[driveId as any].name
+    ) {
+      setRuntime({
+        ...runtime,
+        currentDrive: devices[driveId as any] ?? null,
+      });
+    }
+  }, [driveId]);
+
+  const getTags = () => {
+    invoke("get_tags").then((tags: any) => {
+      setTags(tags);
+      setRuntime({
+        ...runtime,
+        readTags: true
+      })
+    });
+  }
+
+  const getVolumes = () => {
     invoke("get_volumes").then((volumes: any) => {
       const new_volumes: DeviceInterface[] = [];
 
@@ -47,20 +74,7 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
 
       setDevices(new_volumes);
     });
-  }, []);
-
-  useEffect(() => {
-    if (
-      runtime.currentDrive &&
-      runtime.currentDrive.name !== devices[driveId as any].name
-    ) {
-      setRuntime({
-        ...runtime,
-        currentDrive: devices[driveId as any] ?? null,
-      });
-    }
-  }, [driveId]);
-
+  }
 
   return (
     <>
@@ -76,13 +90,14 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
                   <Device
                     device={device}
                     key={key}
+                    id={key}
                     selected={
                       runtime.currentDrive?.name === device.name ?? false
                     }
                   />
                 ))}
               </div>
-              <SidebarTags tags={tags} />
+              <SidebarTags tags={tags} loading={runtime.readTags} />
             </div>
           </div>
           <div className="content">{children}</div>

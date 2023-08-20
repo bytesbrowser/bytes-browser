@@ -156,8 +156,6 @@ pub async fn get_volumes(state_mux: State<'_, StateSafe>) -> Result<Vec<Volume>,
         File::create(&CACHE_FILE_PATH[..]).unwrap();
     }
 
-    println!("Going to read Volumes");
-
     let volumes = sys
         .disks()
         .iter()
@@ -175,8 +173,6 @@ pub async fn get_volumes(state_mux: State<'_, StateSafe>) -> Result<Vec<Volume>,
 
     save_system_cache(&state_mux);
     run_cache_interval(&state_mux);
-
-    println!("Read Volumes");
 
     Ok(volumes)
 }
