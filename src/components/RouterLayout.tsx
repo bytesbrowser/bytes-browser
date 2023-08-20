@@ -12,7 +12,7 @@ import { SidebarTags } from "./SidebarTags";
 
 export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
   const [runtime, setRuntime] = useRecoilState(runtimeState);
-  const { isActive, start, reset, pause, seconds } = useTimer();
+  const { start, reset, pause, seconds } = useTimer();
 
   const { driveId } = useParams();
 
@@ -27,6 +27,7 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
     start();
 
     getVolumes();
+    getTags();
    
   }, []);
 

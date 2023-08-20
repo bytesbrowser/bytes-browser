@@ -187,6 +187,6 @@ pub fn load_system_cache(state_mux: &StateSafe) -> bool {
         }
     }
 
-    println!("Failed to deserialize the cache from disk, recaching...");
+    println!("Failed to deserialize the volume cache from disk, recaching...");
     false
 }
