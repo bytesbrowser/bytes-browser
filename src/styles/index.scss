@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;700&display=swap");
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  color: white;
+  font-family: "Open Sans", sans-serif;
+}
+
+body {
+  background-color: #27272d;
+}
+
+.titlebar {
+  height: 30px;
+  background: #27272d;
+  user-select: none;
+  display: flex;
+  justify-content: flex-end;
+  position: fixed;
+  align-items: center;
+  padding-right: 5px;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.titlebar-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.2s ease-in-out;
+  height: 100%;
+
+  svg {
+    fill: white;
+    width: 15px;
+    height: 15px;
+  }
+}
+
+.titlebar-button:hover {
+  background: white;
+
+  svg {
+    fill: #0b0f2e;
+  }
+}
+
+.app {
+  margin-top: 30px;
+  height: calc(100vh - 30px);
+  overflow: hidden;
+}
+
+/* Hide default scrollbar for Webkit browsers */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #2a3a5c; /* Slightly lighter blue than the background */
+  border-radius: 4px;
+  transition: background 0.2s ease-in-out;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #4b5a7a; /* A bit more lighter for hover effect */
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #0b0f2e; /* Darker blue almost black for the track */
+  border-radius: 4px;
+}
+
+/* Handle active state (when clicking and dragging) */
+::-webkit-scrollbar-thumb:active {
+  background: #3c4c6c; /* Active state color */
+}
