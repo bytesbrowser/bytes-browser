@@ -21,13 +21,24 @@ body {
   background: #27272d;
   user-select: none;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   position: fixed;
   align-items: center;
   padding-right: 5px;
   top: 0;
   left: 0;
   right: 0;
+
+  .right {
+    display: flex;
+    align-items: center;
+  }
+
+  .left {
+    height: 100%;
+    width: 25%;
+    background-color: #1c1b20;
+  }
 }
 
 .titlebar-button {
