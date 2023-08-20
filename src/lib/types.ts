@@ -8,3 +8,10 @@ export interface Device {
   file_system_type: string;
   disk_type: string;
 }
+
+export interface TagDoc {
+  uuid: string;
+  file_paths: string[];
+  identifier: string;
+  color_hex: string;
+}

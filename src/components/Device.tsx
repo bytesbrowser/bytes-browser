@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Device as DeviceInterface } from "../lib/types";
 import { Tooltip } from "react-tooltip";
 import { formatBytes } from "../lib/utils/formatBytes";
+import { useEffect, useState } from "react";
 
 export const Device = ({
   device,
@@ -12,6 +13,14 @@ export const Device = ({
   selected: boolean;
   key: number;
 }) => {
+
+  const [percentUsed,setPercentUsed] = useState(0);
+
+
+  useEffect(() => {
+      setPercentUsed(device.used / device.size);
+  }, [device])
+
   return (
     <>
       <Link
@@ -62,7 +71,7 @@ export const Device = ({
         </div>
         <div className="right">
           <svg
-            id="device-info"
+              data-tooltip-id={`device-info-${key}`}
             className="opacity-80 hover:opacity-100 transition-opacity cursor-pointer"
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -91,12 +100,26 @@ export const Device = ({
           )}
         </div>
       </Link>
-      <Tooltip anchorSelect="#device-info" className="tooltip">
-        <div className="w-[250px] h-[300px]">
-          <h1>{device.name}</h1>
-          <p>{formatBytes(device.used)} Space Used</p>
-          <p>{formatBytes(device.available)} Free Space</p>
-          <p>{formatBytes(device.size)} Total Space</p>
+      <Tooltip className="tooltip" id={`device-info-${key}`}>
+        <div className="p-2">
+          <h1 className="text-xl mb-4">{device.name}</h1>
+          <p className="opacity-50 mb-4">{device.file_system_type} {device.disk_type}</p>
+          
+          <div className="h-[10px] w-full bg-slate-300 rounded-md">
+                <div
+                  className="h-full bg-success flex items-center justify-center"
+                  style={{
+                    width: `${percentUsed}%`,
+                    borderTopLeftRadius: "6px",
+                    borderBottomLeftRadius: "6px",
+                  }}
+                ></div>
+              </div>
+              <p className="mt-2">
+                {Math.floor(percentUsed)}% (
+                {formatBytes(device.used)} of{" "}
+                {formatBytes(device.size)}) used
+              </p>
         </div>
       </Tooltip>
     </>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Device } from "./Device";
-import { Device as DeviceInterface } from "../lib/types";
+import { Device as DeviceInterface, TagDoc } from "../lib/types";
 import { useRecoilState } from "recoil";
 import { runtimeState } from "../lib/state/runtime.state";
 import { useParams } from "react-router-dom";
@@ -8,6 +8,7 @@ import { invoke } from "@tauri-apps/api";
 import { Triangle } from "react-loader-spinner";
 import useTimer from "../lib/hooks/useTimer";
 import { TimeText } from "./TimeText";
+import { SidebarTags } from "./SidebarTags";
 
 export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
   const [runtime, setRuntime] = useRecoilState(runtimeState);
@@ -15,14 +16,8 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
 
   const { driveId } = useParams();
 
-  const [devices, setDevices] = useState<DeviceInterface[]>([{
-    name: "Drive 1",
-    available: 999000000000,
-    mount_point: "",
-    removable: false,
-    size: 1000000000000,
-    used: 1000000000
-  }]);
+  const [devices, setDevices] = useState<DeviceInterface[]>([]);
+  const [tags, setTags] = useState<TagDoc[]>([]);
 
   useEffect(() => {
 
@@ -66,7 +61,6 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
     }
   }, [driveId]);
 
-  console.log(runtime.currentDrive, driveId)
 
   return (
     <>
@@ -77,7 +71,7 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
               <div className="section-title text-sm opacity-50">
                 Storage Devices
               </div>
-              <div className="storage-devices mt-8">
+              <div className="mt-8">
                 {devices.map((device, key) => (
                   <Device
                     device={device}
@@ -88,6 +82,7 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
                   />
                 ))}
               </div>
+              <SidebarTags tags={tags} />
             </div>
           </div>
           <div className="content">{children}</div>

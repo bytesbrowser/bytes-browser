@@ -6,6 +6,7 @@ export default {
       colors: {
         sidebar: "#1C1B20",
         body: "#27272D",
+        success: "#1db954",
       },
     },
   },
