@@ -5,7 +5,7 @@ mod app;
 mod filesystem;
 
 use app::tags::{add_tag, get_tags, TagCache};
-use filesystem::volume::get_volumes;
+use filesystem::volume::{get_volumes, safely_eject_removable};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
@@ -44,7 +44,12 @@ async fn main() {
             set_shadow(&window, true).unwrap();
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_volumes, add_tag, get_tags])
+        .invoke_handler(tauri::generate_handler![
+            get_volumes,
+            safely_eject_removable,
+            add_tag,
+            get_tags
+        ])
         .manage(Arc::new(Mutex::new(AppState::default())))
         .manage(Arc::new(Mutex::new(TagCache::new(
             NonZeroUsize::new(1).unwrap(),

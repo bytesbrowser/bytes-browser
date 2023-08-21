@@ -6,6 +6,7 @@ use std::io::{self, Read, Write};
 use std::num::NonZeroUsize;
 use std::sync::Arc;
 use std::time::Duration;
+use sysinfo::{System, SystemExt};
 use tauri::State;
 use tokio::time;
 
@@ -14,7 +15,7 @@ use crate::TagCacheSafe;
 lazy_static! {
     pub static ref TAG_CACHE_FILE_PATH: String = {
         let mut cache_path = dirs::cache_dir().expect("Failed to get base cache path");
-        cache_path.push(format!("{}.cache.bin", env!("CARGO_PKG_NAME")));
+        cache_path.push(format!("{}.appcache.bin", env!("CARGO_PKG_NAME")));
         cache_path.to_string_lossy().to_string()
     };
 }
@@ -78,22 +79,32 @@ impl TagCache {
 
 #[tauri::command]
 pub async fn get_tags(state_mux: State<'_, TagCacheSafe>) -> Result<Vec<String>, String> {
+    let mut sys = System::new_all();
+    sys.refresh_all();
+
     let mut tags = Vec::new();
 
-    let state = state_mux.lock().unwrap();
+    let mut cache_exists = fs::metadata(&TAG_CACHE_FILE_PATH[..]).is_ok();
+    if cache_exists {
+        // cache_exists = load_system_cache(&state_mux);
 
-    match state.load_from_disk(&TAG_CACHE_FILE_PATH) {
-        Ok(_) => {}
-        Err(e) => {
-            return Err(format!("Failed to load tag cache: {}", e));
+        let state = state_mux.lock().unwrap();
+
+        match state.load_from_disk(&TAG_CACHE_FILE_PATH) {
+            Ok(_) => {}
+            Err(e) => {
+                return Err(format!("Failed to load tag cache: {}", e));
+            }
         }
+
+        state.cache.iter().for_each(|(k, _)| {
+            tags.push(k.clone());
+        });
+
+        start_cache_interval(&state_mux);
+    } else {
+        File::create(&TAG_CACHE_FILE_PATH[..]).unwrap();
     }
-
-    state.cache.iter().for_each(|(k, _)| {
-        tags.push(k.clone());
-    });
-
-    start_cache_interval(&state_mux);
 
     Ok(tags)
 }

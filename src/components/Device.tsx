@@ -3,6 +3,7 @@ import { Device as DeviceInterface } from "../lib/types";
 import { Tooltip } from "react-tooltip";
 import { formatBytes } from "../lib/utils/formatBytes";
 import { useEffect, useState } from "react";
+import { invoke } from "@tauri-apps/api/tauri";
 
 export const Device = ({
   device,
@@ -13,17 +14,19 @@ export const Device = ({
   selected: boolean;
   id: number;
 }) => {
-  const [randomTooltipID] = useState(String(Math.random()))
+  const [randomTooltipID] = useState(String(Math.random()));
 
-  const [randomEjectTooltipID] = useState(String(Math.random()))
+  const [randomEjectTooltipID] = useState(String(Math.random()));
 
-  const [percentUsed,setPercentUsed] = useState(0);
-
+  const [percentUsed, setPercentUsed] = useState(0);
 
   useEffect(() => {
-      setPercentUsed(device.used / device.size * 100);
-  }, [device])
+    setPercentUsed((device.used / device.size) * 100);
+  }, [device]);
 
+  const safely_eject = () => {
+    invoke("safely_eject_removable", { mount_path: device.mount_point });
+  };
 
   return (
     <>
@@ -34,6 +37,7 @@ export const Device = ({
         <div className="left flex items-center">
           {device.removable ? (
             <svg
+              onClick={safely_eject}
               width="20"
               height="20"
               className="mr-4"
@@ -79,18 +83,18 @@ export const Device = ({
               display: device.removable ? "block" : "none",
             }}
             data-tooltip-id={randomEjectTooltipID}
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              className="opacity-80 hover:opacity-100 transition-opacity cursor-pointer mr-2"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M5 19V17H19V19H5ZM5.35 15L12 5L18.65 15H5.35Z"
-                fill="white"
-              />
-            </svg>
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            className="opacity-80 hover:opacity-100 transition-opacity cursor-pointer mr-2"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5 19V17H19V19H5ZM5.35 15L12 5L18.65 15H5.35Z"
+              fill="white"
+            />
+          </svg>
           <svg
             data-tooltip-id={randomTooltipID}
             className="opacity-80 hover:opacity-100 transition-opacity cursor-pointer"
@@ -106,29 +110,38 @@ export const Device = ({
           </svg>
         </div>
       </Link>
-      <Tooltip className="tooltip z-[999]" opacity={"100%"} id={randomEjectTooltipID}>
+      <Tooltip
+        className="tooltip z-[999]"
+        opacity={"100%"}
+        id={randomEjectTooltipID}
+      >
         <p>Eject</p>
       </Tooltip>
-      <Tooltip className="tooltip z-[999]" id={randomTooltipID} opacity={"100%"}>
+      <Tooltip
+        className="tooltip z-[999]"
+        id={randomTooltipID}
+        opacity={"100%"}
+      >
         <div className="p-2">
           <h1 className="text-xl mb-4">{device.name}</h1>
-          <p className="opacity-50 mb-4">{device.file_system_type} {device.disk_type}</p>
-          
+          <p className="opacity-50 mb-4">
+            {device.file_system_type} {device.disk_type}
+          </p>
+
           <div className="h-[10px] w-full bg-slate-300 rounded-md">
-                <div
-                  className="h-full bg-success flex items-center justify-center"
-                  style={{
-                    width: `${percentUsed}%`,
-                    borderTopLeftRadius: "6px",
-                    borderBottomLeftRadius: "6px",
-                  }}
-                ></div>
-              </div>
-              <p className="mt-2">
-                {Math.floor(percentUsed)}% (
-                {formatBytes(device.used)} of{" "}
-                {formatBytes(device.size)}) used
-              </p>
+            <div
+              className="h-full bg-success flex items-center justify-center"
+              style={{
+                width: `${percentUsed}%`,
+                borderTopLeftRadius: "6px",
+                borderBottomLeftRadius: "6px",
+              }}
+            ></div>
+          </div>
+          <p className="mt-2">
+            {Math.floor(percentUsed)}% ({formatBytes(device.used)} of{" "}
+            {formatBytes(device.size)}) used
+          </p>
         </div>
       </Tooltip>
     </>

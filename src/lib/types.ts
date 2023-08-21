@@ -15,3 +15,9 @@ export interface TagDoc {
   identifier: string;
   color_hex: string;
 }
+
+export interface BookmarkDoc {
+  uuid: string;
+  file_path: string;
+  identifier: string;
+}

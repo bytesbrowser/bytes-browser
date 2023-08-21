@@ -32,11 +32,12 @@ body {
   .right {
     display: flex;
     align-items: center;
+    height: 100%;
   }
 
   .left {
     height: 100%;
-    width: 25%;
+    width: 300px;
     background-color: #1c1b20;
   }
 }
@@ -61,15 +62,22 @@ body {
 }
 
 .titlebar-button:hover {
-  background: white;
+  background: #3c3c3c;
 
   svg {
-    fill: #0b0f2e;
+    fill: white;
+  }
+}
+
+#titlebar-close:hover {
+  background: #ff5f56;
+
+  svg {
+    fill: white;
   }
 }
 
 .app {
-  margin-top: 30px;
   height: calc(100vh - 30px);
   overflow: hidden;
 }

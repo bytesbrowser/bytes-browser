@@ -149,30 +149,69 @@ pub async fn get_volumes(state_mux: State<'_, StateSafe>) -> Result<Vec<Volume>,
     let mut sys = System::new_all();
     sys.refresh_all();
 
-    let mut cache_exists = fs::metadata(&CACHE_FILE_PATH[..]).is_ok();
-    if cache_exists {
-        cache_exists = load_system_cache(&state_mux);
+    let cache_exists = if fs::metadata(&CACHE_FILE_PATH[..]).is_ok() {
+        load_system_cache(&state_mux)
     } else {
         File::create(&CACHE_FILE_PATH[..]).unwrap();
-    }
+        false
+    };
 
-    let volumes = sys
-        .disks()
+    let disks = sys.disks();
+
+    // Use futures::future::join_all to await multiple futures concurrently
+    let volumes_futures: Vec<_> = disks
         .iter()
-        .map(|disk| {
+        .map(|disk| async {
             let volume = Volume::from_disk(disk);
-
             if !cache_exists {
                 volume.create_cache(&state_mux);
             }
-
             volume.watch_changes(&state_mux);
             volume
         })
         .collect();
 
-    save_system_cache(&state_mux);
-    run_cache_interval(&state_mux);
+    let volumes_results: Vec<_> = futures::future::join_all(volumes_futures).await;
+
+    let volumes: Vec<_> = volumes_results.into_iter().collect();
+
+    if !cache_exists {
+        save_system_cache(&state_mux);
+        run_cache_interval(&state_mux);
+    };
 
     Ok(volumes)
+}
+
+#[tauri::command]
+pub async fn safely_eject_removable(mount_path: String) -> Result<bool, String> {
+    // get volume
+    let mut sys = System::new_all();
+    sys.refresh_all();
+
+    let volume = sys
+        .disks()
+        .iter()
+        .find(|disk| disk.mount_point().to_string_lossy().to_string() == mount_path);
+
+    if let Some(volume) = volume {
+        if volume.is_removable() {
+            let mut command = String::from("udisksctl unmount -b ");
+            command.push_str(volume.name().to_str().unwrap());
+
+            let output = std::process::Command::new("sh")
+                .arg("-c")
+                .arg(command)
+                .output()
+                .expect("failed to execute process");
+
+            if output.status.success() {
+                return Ok(true);
+            } else {
+                return Err(String::from_utf8(output.stderr).unwrap());
+            }
+        }
+    }
+
+    Ok(true)
 }

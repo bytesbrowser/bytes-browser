@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
@@ -134,15 +135,25 @@ pub fn run_cache_interval(state_mux: &StateSafe) {
     let state_clone = Arc::clone(state_mux);
 
     tokio::spawn(async move {
-        // We use tokio spawn because async closures with std spawn is unstable
-        let mut interval = time::interval(Duration::from_secs(60));
-        interval.tick().await; // Wait 30 seconds before doing first re-cache
+        let cache_interval = Duration::from_secs(60);
+        let initial_delay = Duration::from_secs(30); // If you intended 30 seconds before first cache
+        tokio::time::sleep(initial_delay).await;
+
+        let mut interval = time::interval(cache_interval);
 
         loop {
             interval.tick().await;
 
-            let guard = &mut state_clone.lock().unwrap();
-            save_to_cache(guard);
+            match state_clone.lock() {
+                Ok(mut guard) => {
+                    save_to_cache(&mut guard);
+                }
+                Err(poisoned) => {
+                    eprintln!("Mutex was poisoned. Recovering and using the data.");
+                    let mut guard = poisoned.into_inner();
+                    save_to_cache(&mut guard);
+                }
+            }
         }
     });
 }
@@ -174,19 +185,33 @@ fn save_to_cache(state: &mut MutexGuard<AppState>) {
 /// Reads and decodes the cache file and stores it in memory for quick access.
 /// Returns false if the cache was unable to deserialize.
 pub fn load_system_cache(state_mux: &StateSafe) -> bool {
-    let state = &mut state_mux.lock().expect("Failed to lock mutex");
-
-    let cache_file = File::open(&CACHE_FILE_PATH[..]).expect("Failed to open cache file");
-    let reader = BufReader::new(cache_file);
-
-    if let Ok(decompressed) = zstd::decode_all(reader) {
-        let deserialize_result = serde_bencode::from_bytes(&decompressed[..]);
-        if let Ok(system_cache) = deserialize_result {
-            state.system_cache = system_cache;
-            return true;
-        }
+    let cache_file = File::open(&CACHE_FILE_PATH[..]);
+    if cache_file.is_err() {
+        println!("Failed to open cache file.");
+        return false;
     }
 
-    println!("Failed to deserialize the volume cache from disk, recaching...");
-    false
+    let reader = BufReader::new(cache_file.unwrap());
+
+    let decompressed = zstd::decode_all(reader);
+    if decompressed.is_err() {
+        println!("Failed to decompress cache file.");
+        return false;
+    }
+
+    let system_cache_result: Result<HashMap<String, VolumeCache>, _> =
+        serde_bencode::from_bytes(&decompressed.unwrap());
+    if system_cache_result.is_err() {
+        println!("Failed to deserialize the volume cache from disk.");
+        return false;
+    }
+
+    let state = state_mux.lock();
+    if state.is_err() {
+        println!("Failed to lock mutex.");
+        return false;
+    }
+
+    state.unwrap().system_cache = system_cache_result.unwrap();
+    true
 }
