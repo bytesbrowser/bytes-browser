@@ -22,6 +22,9 @@ const App = () => {
           const app = document.getElementsByClassName("app")[0];
           app.classList.add("macos");
         } else {
+          const titlebarLeft = document.getElementById("titlebar-left")!;
+          titlebarLeft.setAttribute("style", "background-color: #27272D;");
+
           setUseTitlebar(true);
 
           document
@@ -42,6 +45,11 @@ const App = () => {
     if (runtime.readVolumes && useTitlebar) {
       const titlebarLeft = document.getElementById("titlebar-left")!;
       titlebarLeft.setAttribute("style", "background-color: #1c1b20;");
+      const app = document.getElementsByClassName("app")[0];
+      app.setAttribute("style", "margin-top: 30px;");
+
+      const content = document.getElementsByClassName("content")[0];
+      content.setAttribute("style", "margin-top: 30px;");
     }
   }, [runtime]);
 

@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { RouterLayout } from "./RouterLayout";
 import { FolderExplorer } from "../pages/FolderExplorer";
+import { Settings } from "../pages/Settings";
 
 const Router = () => {
   return (
@@ -11,6 +12,14 @@ const Router = () => {
         element={
           <RouterLayout>
             <FolderExplorer />
+          </RouterLayout>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <RouterLayout>
+            <Settings />
           </RouterLayout>
         }
       />

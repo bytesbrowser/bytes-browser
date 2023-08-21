@@ -37,6 +37,7 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (
       runtime.currentDrive &&
+      devices[driveId as any] &&
       runtime.currentDrive.name !== devices[driveId as any].name
     ) {
       setRuntime({
@@ -130,7 +131,7 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
         Refresh
       </Tooltip>
       {runtime.readVolumes ? (
-        <div className="layout">
+        <div className="layout flex">
           <div className="sidebar bg-sidebar w-[300px] h-screen px-8 py-8 flex flex-col justify-between">
             <div className="section">
               <div className="section-title text-sm flex justify-between items-center">
@@ -172,7 +173,9 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
             </div>
             <SidebarBottom />
           </div>
-          <div className="content">{children}</div>
+          <div className="content flex-1 h-screen text-white bg-body">
+            {children}
+          </div>
         </div>
       ) : (
         <div className="loader flex justify-center items-center h-screen flex-col w-screen bg-body">
