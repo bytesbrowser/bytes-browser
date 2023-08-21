@@ -27,8 +27,10 @@ export const Device = ({
   const safely_eject = () => {
     console.log("ejecting")
     
-    invoke("safely_eject_removable", { mount_path: device.mount_point }).then((res) => {
+    invoke("safely_eject_removable", { mountPath: device.mount_point }).then((res) => {
       console.log(res)
+    }).catch(err => {
+      console.log(err)
     })
   };
 
@@ -84,7 +86,6 @@ export const Device = ({
           <svg
            onClick={(e) => {
             console.log("start eject")
-            e.stopPropagation();
             safely_eject()
           }}
             style={{
