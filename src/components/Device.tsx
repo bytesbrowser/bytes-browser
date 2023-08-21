@@ -25,7 +25,11 @@ export const Device = ({
   }, [device]);
 
   const safely_eject = () => {
-    invoke("safely_eject_removable", { mount_path: device.mount_point });
+    console.log("ejecting")
+    
+    invoke("safely_eject_removable", { mount_path: device.mount_point }).then((res) => {
+      console.log(res)
+    })
   };
 
   return (
@@ -37,7 +41,6 @@ export const Device = ({
         <div className="left flex items-center">
           {device.removable ? (
             <svg
-              onClick={safely_eject}
               width="20"
               height="20"
               className="mr-4"
@@ -79,6 +82,11 @@ export const Device = ({
         </div>
         <div className="right flex items-center">
           <svg
+           onClick={(e) => {
+            console.log("start eject")
+            e.stopPropagation();
+            safely_eject()
+          }}
             style={{
               display: device.removable ? "block" : "none",
             }}

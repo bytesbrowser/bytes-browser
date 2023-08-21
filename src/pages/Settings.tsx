@@ -6,7 +6,7 @@ export const Settings = () => {
   const [settingsIndex, setSettingsIndex] = useState(0);
 
   return (
-    <div className="px-8 animate__animated animate__fadeIn">
+    <div className="px-8 pt-8 animate__animated animate__fadeIn overflow-hidden overflow-y-scroll h-screen">
       <h1 className="text-2xl font-bold">App Settings</h1>
       <hr className="mt-4 opacity-20" />
       <div className="flex mt-8">
