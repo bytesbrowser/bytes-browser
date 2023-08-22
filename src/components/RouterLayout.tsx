@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
 import { Device } from "./Device";
-import { BookmarkDoc, Device as DeviceInterface, TagDoc } from "../lib/types";
+import {
+  BookmarkDoc,
+  Device as DeviceInterface,
+  ProfileStore,
+  TagDoc,
+} from "../lib/types";
 import { useRecoilState } from "recoil";
 import { runtimeState } from "../lib/state/runtime.state";
 import { useParams } from "react-router-dom";
@@ -31,7 +36,7 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
     start();
 
     getVolumes();
-    getTags();
+    getUserStore();
   }, []);
 
   useEffect(() => {
@@ -47,24 +52,17 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
     }
   }, [driveId]);
 
-  const getTags = () => {
-    invoke("get_tags").then((tags: any) => {
-      setTags(tags);
-      setRuntime({
-        ...runtime,
-        readTags: true,
-      });
-    });
-  };
+  const getUserStore = async () => {
+    if (runtime.store) {
+      const db = await runtime.store.get<ProfileStore>(
+        `profile-store-${runtime.currentUser}`
+      );
 
-  const getBookmarks = () => {
-    invoke("get_bookmarks").then((bookmarks: any) => {
-      setBookmarks(bookmarks);
-      setRuntime({
-        ...runtime,
-        readBookmarks: true,
-      });
-    });
+      if (db) {
+        setTags(db.tags);
+        setBookmarks(db.bookmarks);
+      }
+    }
   };
 
   const getVolumes = () => {

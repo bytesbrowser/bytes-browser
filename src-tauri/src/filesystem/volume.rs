@@ -184,8 +184,7 @@ pub async fn get_volumes(state_mux: State<'_, StateSafe>) -> Result<Vec<Volume>,
 }
 
 #[tauri::command]
-pub async fn safely_eject_removable(mount_path: String) -> Result<bool, String> {
-    // get volume
+pub async fn safely_eject_removable(mount_path: String, platform: String) -> Result<bool, String> {
     let mut sys = System::new_all();
     sys.refresh_all();
 
@@ -196,12 +195,32 @@ pub async fn safely_eject_removable(mount_path: String) -> Result<bool, String> 
 
     if let Some(volume) = volume {
         if volume.is_removable() {
-            let mut command = String::from("udisksctl unmount -b ");
-            command.push_str(volume.name().to_str().unwrap());
+            let (cmd, args) = match platform.as_str() {
+                "windows" => {
+                    let vol_name = volume.name().to_str().unwrap();
+                    let vol_name_stripped = vol_name.trim_end_matches('\\');
+                    (
+                        "mountvol".to_string(),
+                        vec![vol_name_stripped.to_string(), "/P".to_string()],
+                    )
+                }
+                "linux" => {
+                    let command_str =
+                        format!("udisksctl unmount -b {}", volume.name().to_str().unwrap());
+                    ("sh".to_string(), vec!["-c".to_string(), command_str])
+                }
+                "macos" => {
+                    let command_str = format!(
+                        "diskutil unmount {}",
+                        volume.mount_point().to_string_lossy()
+                    );
+                    ("sh".to_string(), vec!["-c".to_string(), command_str])
+                }
+                _ => return Err(format!("Unsupported platform: {}", platform)),
+            };
 
-            let output = std::process::Command::new("sh")
-                .arg("-c")
-                .arg(command)
+            let output = std::process::Command::new(cmd)
+                .args(&args)
                 .output()
                 .expect("failed to execute process");
 

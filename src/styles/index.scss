@@ -94,23 +94,23 @@ body {
 
 /* Handle */
 ::-webkit-scrollbar-thumb {
-  background: #2a3a5c; /* Slightly lighter blue than the background */
+  background: #54545a; /* Slightly lighter than the background */
   border-radius: 4px;
   transition: background 0.2s ease-in-out;
 }
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-  background: #4b5a7a; /* A bit more lighter for hover effect */
+  background: #6c6c71; /* A bit more lighter for hover effect */
 }
 
 /* Track */
 ::-webkit-scrollbar-track {
-  background: #0b0f2e; /* Darker blue almost black for the track */
+  background: #1c1c20; /* Darker than the main background for contrast */
   border-radius: 4px;
 }
 
 /* Handle active state (when clicking and dragging) */
 ::-webkit-scrollbar-thumb:active {
-  background: #3c4c6c; /* Active state color */
+  background: #5a5a5f; /* Active state color */
 }

@@ -21,3 +21,16 @@ export interface BookmarkDoc {
   file_path: string;
   identifier: string;
 }
+
+export interface ProfileStore {
+  tags: TagDoc[];
+  bookmarks: BookmarkDoc[];
+}
+
+export interface Profile {
+  name: string;
+  avatar?: string;
+  token?: string;
+  addedOn: string;
+  lastUsed: string;
+}

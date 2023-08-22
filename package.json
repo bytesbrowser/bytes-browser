@@ -26,7 +26,8 @@
     "react-tooltip": "^5.21.1",
     "recoil": "^0.7.7",
     "sass": "^1.66.0",
-    "scss": "^0.2.4"
+    "scss": "^0.2.4",
+    "tauri-plugin-store-api": "^0.0.0"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^1.4.0",

@@ -1,6 +1,9 @@
+import { useState } from "react";
 import Moment from "react-moment";
 
 export const SettingsAccount = () => {
+  const [hasChanges, setHasChanges] = useState(false);
+
   return (
     <>
       <p className="text-xs opacity-50 mb-8">
@@ -34,7 +37,11 @@ export const SettingsAccount = () => {
         className="text-sm w-full p-2 rounded-md bg-sidebar border border-light-border transition-all outline-none focus:border-gray-400 max-w-[500px]"
       />
 
-      <p className="mb-4 text-sm mt-10 bg-success w-[150px] p-2 rounded-md text-center cursor-pointer hover:opacity-80 transition-all">
+      <p
+        className={`mb-4 text-sm mt-10 bg-success w-[150px] p-2 rounded-md text-center cursor-pointer hover:opacity-80 transition-all ${
+          !hasChanges && "opacity-20"
+        }`}
+      >
         Save Changes
       </p>
       <p className="mb-4 text-sm mt-10 bg-error w-[150px] p-2 rounded-md text-center cursor-pointer hover:opacity-80 transition-all">

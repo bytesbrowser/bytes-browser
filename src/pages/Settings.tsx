@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { settingsContentItems, settingsSidebarConfig } from "../lib/constants";
 import { SettingsAccount } from "../components/settings/SettingsAccount";
+import { SettingsProfiles } from "../components/settings/SettingsProfiles";
 
 export const Settings = () => {
   const [settingsIndex, setSettingsIndex] = useState(0);
 
   return (
-    <div className="px-8 pt-8 animate__animated animate__fadeIn overflow-hidden overflow-y-scroll h-screen">
+    <div className="px-8 pt-8 animate__animated animate__fadeIn overflow-hidden overflow-y-auto h-screen">
       <h1 className="text-2xl font-bold">App Settings</h1>
       <hr className="mt-4 opacity-20" />
       <div className="flex mt-8">
@@ -40,6 +41,9 @@ export const Settings = () => {
           <div className="mt-8">
             {settingsContentItems[settingsIndex].title === "My Account" && (
               <SettingsAccount />
+            )}
+            {settingsContentItems[settingsIndex].title === "Profiles" && (
+              <SettingsProfiles />
             )}
           </div>
         </div>

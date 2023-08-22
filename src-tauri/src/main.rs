@@ -1,10 +1,8 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod app;
 mod filesystem;
 
-use app::tags::{add_tag, get_tags, TagCache};
 use filesystem::volume::{get_volumes, safely_eject_removable};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -32,8 +30,6 @@ pub struct AppState {
 
 pub type StateSafe = Arc<Mutex<AppState>>;
 
-pub type TagCacheSafe = Arc<Mutex<TagCache>>;
-
 #[tokio::main]
 async fn main() {
     tauri::Builder::default()
@@ -47,13 +43,9 @@ async fn main() {
         .invoke_handler(tauri::generate_handler![
             get_volumes,
             safely_eject_removable,
-            add_tag,
-            get_tags
         ])
         .manage(Arc::new(Mutex::new(AppState::default())))
-        .manage(Arc::new(Mutex::new(TagCache::new(
-            NonZeroUsize::new(1).unwrap(),
-        ))))
+        .plugin(tauri_plugin_store::Builder::default().build())
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -437,7 +437,7 @@
   resolved "https://registry.yarnpkg.com/@remix-run/router/-/router-1.8.0.tgz#e848d2f669f601544df15ce2a313955e4bf0bafc"
   integrity sha512-mrfKqIHnSZRyIzBcanNJmVQELTnX+qagEDlcKO90RgRBVOZGSGvZKeDihTRfWcqoDn5N/NkUcwWTccnpN18Tfg==
 
-"@tauri-apps/api@^1.4.0":
+"@tauri-apps/api@^1.2.0", "@tauri-apps/api@^1.4.0":
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/@tauri-apps/api/-/api-1.4.0.tgz#b4013ca3d17b853f7df29fe14079ebb4d52dbffa"
   integrity sha512-Jd6HPoTM1PZSFIzq7FB8VmMu3qSSyo/3lSwLpoapW+lQ41CL5Dow2KryLg+gyazA/58DRWI9vu/XpEeHK4uMdw==
@@ -1395,6 +1395,13 @@ tailwindcss@^3.3.3:
     postcss-selector-parser "^6.0.11"
     resolve "^1.22.2"
     sucrase "^3.32.0"
+
+tauri-plugin-store-api@^0.0.0:
+  version "0.0.0"
+  resolved "https://registry.yarnpkg.com/tauri-plugin-store-api/-/tauri-plugin-store-api-0.0.0.tgz#9dda84dea1c48355984b8f23bab682afd54f63f7"
+  integrity sha512-OycAs/ElRxqMh8nATuBE8hJBPjJaeZ8o52N+X4lRxKV6VRrHZ9dRMCDBvEST5Sa1Gxk4kwUPHkBHsmXOL/kt0w==
+  dependencies:
+    "@tauri-apps/api" "^1.2.0"
 
 thenify-all@^1.0.0:
   version "1.6.0"
