@@ -1,4 +1,4 @@
-import { atom, selector } from 'recoil';
+import { atom } from 'recoil';
 import { Store } from 'tauri-plugin-store-api';
 
 import { Device } from '../types';

@@ -1,26 +1,23 @@
-import { useState, useEffect } from "react";
-import { Device } from "./Device";
-import {
-  BookmarkDoc,
-  Device as DeviceInterface,
-  ProfileStore,
-  TagDoc,
-} from "../lib/types";
-import { useRecoilState } from "recoil";
-import { runtimeState } from "../lib/state/runtime.state";
-import { useParams } from "react-router-dom";
-import { invoke } from "@tauri-apps/api";
-import { Triangle } from "react-loader-spinner";
-import useTimer from "../lib/hooks/useTimer";
-import { TimeText } from "./TimeText";
-import { SidebarTags } from "./SidebarTags";
-import { Tooltip } from "react-tooltip";
-import { SidebarBookmarks } from "./SidebarBookmarks";
-import { SidebarBottom } from "./SidebarBottom";
+import { invoke } from '@tauri-apps/api';
+import { useEffect, useState } from 'react';
+import { Triangle } from 'react-loader-spinner';
+import { useParams } from 'react-router-dom';
+import { Tooltip } from 'react-tooltip';
+import { useRecoilState } from 'recoil';
+
+import useTimer from '../lib/hooks/useTimer';
+import { runtimeState } from '../lib/state/runtime.state';
+import { BookmarkDoc, Device as DeviceInterface, Profile, ProfileStore, TagDoc } from '../lib/types';
+import { Device } from './Device';
+import { SidebarBookmarks } from './SidebarBookmarks';
+import { SidebarBottom } from './SidebarBottom';
+import { SidebarTags } from './SidebarTags';
+import { TimeText } from './TimeText';
 
 export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
   const [runtime, setRuntime] = useRecoilState(runtimeState);
   const { start, reset, pause, seconds } = useTimer();
+  const [profile, setProfile] = useState<Profile | null>(null);
 
   const { driveId } = useParams();
 
@@ -30,6 +27,10 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
   const [refreshingVolumes, setRefreshingVolumes] = useState<boolean>(false);
 
   useEffect(() => {
+    if (!profile) {
+      updateProfile();
+    }
+
     if (runtime.readVolumes) return;
 
     reset();
@@ -40,11 +41,7 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    if (
-      runtime.currentDrive &&
-      devices[driveId as any] &&
-      runtime.currentDrive.name !== devices[driveId as any].name
-    ) {
+    if (runtime.currentDrive && devices[driveId as any] && runtime.currentDrive.name !== devices[driveId as any].name) {
       setRuntime({
         ...runtime,
         currentDrive: devices[driveId as any] ?? null,
@@ -54,9 +51,7 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
 
   const getUserStore = async () => {
     if (runtime.store) {
-      const db = await runtime.store.get<ProfileStore>(
-        `profile-store-${runtime.currentUser}`
-      );
+      const db = await runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`);
 
       if (db) {
         setTags(db.tags);
@@ -65,10 +60,22 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const updateProfile = async () => {
+    if (runtime.profileStore) {
+      const profiles = await runtime.profileStore.get<Profile[]>(`profiles`);
+
+      if (profiles) {
+        const profile = profiles[runtime.currentUser];
+        console.log(profiles);
+        setProfile(profile);
+      }
+    }
+  };
+
   const getVolumes = () => {
     if (refreshingVolumes) return;
 
-    invoke("get_volumes").then((volumes: any) => {
+    invoke('get_volumes').then((volumes: any) => {
       const new_volumes: DeviceInterface[] = [];
 
       for (const volume of volumes) {
@@ -98,7 +105,7 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
 
     setRefreshingVolumes(true);
 
-    invoke("get_volumes").then((volumes: any) => {
+    invoke('get_volumes').then((volumes: any) => {
       const new_volumes: DeviceInterface[] = [];
 
       for (const volume of volumes) {
@@ -121,11 +128,7 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <>
-      <Tooltip
-        id="refresh-tooltip"
-        className="tooltip z-[999]"
-        opacity={"100%"}
-      >
+      <Tooltip id="refresh-tooltip" className="tooltip z-[999]" opacity={'100%'}>
         Refresh
       </Tooltip>
       {runtime.readVolumes ? (
@@ -142,7 +145,7 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
                   height="20"
                   viewBox="0 0 24 24"
                   className={`cursor-pointer hover:opacity-100 focus:border-none focus:outline-none ${
-                    refreshingVolumes && "animate-spin"
+                    refreshingVolumes && 'animate-spin'
                   }`}
                 >
                   <path
@@ -157,39 +160,22 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
                     device={device}
                     key={key}
                     id={key}
-                    selected={
-                      runtime.currentDrive?.name === device.name ?? false
-                    }
+                    selected={runtime.currentDrive?.name === device.name ?? false}
                   />
                 ))}
               </div>
               <SidebarTags tags={tags} loading={runtime.readTags} />
-              <SidebarBookmarks
-                bookmarks={bookmarks}
-                loading={runtime.readBookmarks}
-              />
+              <SidebarBookmarks bookmarks={bookmarks} loading={runtime.readBookmarks} />
             </div>
-            <SidebarBottom />
+            {profile && <SidebarBottom profile={profile} />}
           </div>
-          <div className="content flex-1 h-screen text-white bg-body">
-            {children}
-          </div>
+          <div className="content flex-1 h-screen text-white bg-body">{children}</div>
         </div>
       ) : (
         <div className="loader flex justify-center items-center h-screen flex-col w-screen bg-body">
-          <Triangle
-            height="80"
-            width="80"
-            color="white"
-            ariaLabel="triangle-loading"
-            visible={true}
-          />
+          <Triangle height="80" width="80" color="white" ariaLabel="triangle-loading" visible={true} />
           <p className="mt-8 opacity-50">Getting things ready</p>
-          <TimeText
-            seconds={seconds}
-            className="mt-8 opacity-50"
-            prefix="Elapsed Caching Time:"
-          />
+          <TimeText seconds={seconds} className="mt-8 opacity-50" prefix="Elapsed Caching Time:" />
         </div>
       )}
     </>

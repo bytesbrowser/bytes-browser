@@ -5,6 +5,7 @@ import { useRecoilState } from 'recoil';
 
 import { Login } from '../components/Login';
 import { Register } from '../components/Register';
+import { useGetUserLazyQuery } from '../graphql';
 import { runtimeState } from '../lib/state/runtime.state';
 import { Profile } from '../lib/types';
 
@@ -13,6 +14,7 @@ export const Auth = () => {
   const [runtime, setRuntime] = useRecoilState(runtimeState);
   const navigate = useNavigate();
   const [hasNetwork, setHasNetwork] = useState<boolean>(false);
+  const [getUserQuery] = useGetUserLazyQuery();
 
   useEffect(() => {
     checkAuth();
@@ -47,16 +49,42 @@ export const Auth = () => {
 
   const onTokenReceived = async (token: string) => {
     // TODO: Get profile request after creation or login at first time adding a profile
+    let user:
+      | {
+          id: string;
+          full_name: string;
+          email: string;
+          created_at: string;
+          password: string;
+          avatar?: string | undefined;
+        }
+      | undefined;
+
+    await getUserQuery({
+      context: {
+        headers: {
+          Authorization: token,
+        },
+      },
+    }).then((res) => {
+      user = res.data?.getUser;
+    });
+
+    if (!user) {
+      toast.error('There was an issue logging you in.');
+      return;
+    }
 
     if (runtime.profileStore) {
-      const profiles = await runtime.profileStore.get<Profile[]>('profiles');
+      console.log(user);
 
+      const profiles = await runtime.profileStore.get<Profile[]>('profiles');
       if (profiles) {
         profiles.push({
           addedOn: new Date().toISOString(),
           lastUsed: new Date().toISOString(),
-          name: '',
-          avatar: '',
+          name: user.full_name,
+          avatar: user.avatar,
           token: token,
         });
 
@@ -74,8 +102,8 @@ export const Auth = () => {
           {
             addedOn: new Date().toISOString(),
             lastUsed: new Date().toISOString(),
-            name: '',
-            avatar: '',
+            name: user.full_name,
+            avatar: user.avatar,
             token: token,
           },
         ]);
