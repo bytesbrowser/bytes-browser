@@ -45,6 +45,51 @@ export const Auth = () => {
     checkNetwork();
   };
 
+  const onTokenReceived = async (token: string) => {
+    // TODO: Get profile request after creation or login at first time adding a profile
+
+    if (runtime.profileStore) {
+      const profiles = await runtime.profileStore.get<Profile[]>('profiles');
+
+      if (profiles) {
+        profiles.push({
+          addedOn: new Date().toISOString(),
+          lastUsed: new Date().toISOString(),
+          name: '',
+          avatar: '',
+          token: token,
+        });
+
+        // get index of last profile item
+        let index = profiles?.length - 1;
+
+        setRuntime({
+          ...runtime,
+          currentUser: index,
+        });
+
+        navigate('/drive/0');
+      } else {
+        await runtime.profileStore.set('profiles', [
+          {
+            addedOn: new Date().toISOString(),
+            lastUsed: new Date().toISOString(),
+            name: '',
+            avatar: '',
+            token: token,
+          },
+        ]);
+
+        setRuntime({
+          ...runtime,
+          currentUser: 0,
+        });
+
+        navigate('/drive/0');
+      }
+    }
+  };
+
   if (!hasNetwork) {
     return (
       <div className="w-screen h-screen bg-body max-w-[600px] m-auto pt-14 flex flex-col justify-center items-center">
@@ -74,11 +119,11 @@ export const Auth = () => {
   return (
     <>
       {method === 'LOGIN' ? (
-        <Login setMethod={setMethod} />
+        <Login onTokenReceived={onTokenReceived} setMethod={setMethod} />
       ) : method === 'FORGOT_PASSWORD' ? (
         <p>Forgot Password</p>
       ) : (
-        <Register setMethod={setMethod} />
+        <Register onTokenReceived={onTokenReceived} setMethod={setMethod} />
       )}
     </>
   );

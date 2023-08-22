@@ -1,4 +1,5 @@
 import { Dispatch, FormEvent, SetStateAction, useEffect, useRef, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { LineWave } from 'react-loader-spinner';
 import { Tooltip } from 'react-tooltip';
 
@@ -8,8 +9,10 @@ import { getVersionString } from '../lib/utils/getVersion';
 
 export const Register = ({
   setMethod,
+  onTokenReceived,
 }: {
   setMethod: Dispatch<SetStateAction<'LOGIN' | 'REGISTER' | 'FORGOT_PASSWORD'>>;
+  onTokenReceived: (token: string) => Promise<void>;
 }) => {
   const [version, setVersion] = useState('');
   const [form, setForm] = useState({
@@ -48,6 +51,10 @@ export const Register = ({
           avatar: form.avatar.value ? form.avatar.value : undefined,
         },
       },
+    }).then((res) => {
+      if (res.data) {
+        onTokenReceived(res.data.register);
+      }
     });
   };
 
@@ -100,6 +107,12 @@ export const Register = ({
   const triggerAvatarUpload = () => {
     avatarInputRef.current && avatarInputRef.current.click();
   };
+
+  useEffect(() => {
+    if (registerMutationResult.error) {
+      toast.error(registerMutationResult.error.message);
+    }
+  }, [registerMutationResult.error]);
 
   return (
     <div className="animate__animated animate__fadeIn flex flex-col justify-between items-center w-screen h-screen bg-content">

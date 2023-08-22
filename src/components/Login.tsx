@@ -8,8 +8,10 @@ import { getVersionString } from '../lib/utils/getVersion';
 
 export const Login = ({
   setMethod,
+  onTokenReceived,
 }: {
   setMethod: Dispatch<SetStateAction<'LOGIN' | 'REGISTER' | 'FORGOT_PASSWORD'>>;
+  onTokenReceived: (token: string) => Promise<void>;
 }) => {
   const [loginQuery, loginQueryResult] = useLoginLazyQuery();
   const [form, setForm] = useState({ email: { value: '', valid: true }, password: { value: '', valid: true } });
@@ -55,7 +57,11 @@ export const Login = ({
       return;
     }
 
-    loginQuery({ variables: { email: form.email.value, password: form.password.value } });
+    loginQuery({ variables: { email: form.email.value, password: form.password.value } }).then((res) => {
+      if (res.data) {
+        onTokenReceived(res.data.login);
+      }
+    });
   };
 
   useEffect(() => {
