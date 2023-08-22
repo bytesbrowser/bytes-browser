@@ -18,7 +18,9 @@
       "all": false,
       "shell": {
         "all": false,
-        "open": true
+        "open": true,
+        "sidecar": true,
+        "execute": true
       },
       "dialog": {
         "all": true

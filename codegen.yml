@@ -1,0 +1,16 @@
+overwrite: true
+schema: 'https://bytes-browser-server-c02da281c0f3.herokuapp.com'
+documents: 'src/**/*.graphql'
+generates:
+    src/graphql.tsx:
+        plugins:
+            - 'typescript'
+            - 'typescript-operations'
+            - 'typescript-react-apollo'
+        config:
+            enumsAsTypes: true
+            maybeValue: 'T | undefined'
+            skipTypename: true
+            reactApolloVersion: 3
+            exportFragmentSpreadSubTypes: true
+            preResolveTypes: true

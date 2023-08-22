@@ -1,6 +1,7 @@
-import { atom } from "recoil";
-import { Device } from "../types";
-import { Store } from "tauri-plugin-store-api";
+import { atom, selector } from 'recoil';
+import { Store } from 'tauri-plugin-store-api';
+
+import { Device } from '../types';
 
 export const runtimeState = atom<{
   currentDrive: Device | null;
@@ -11,14 +12,14 @@ export const runtimeState = atom<{
   profileStore: Store;
   currentUser: number;
 }>({
-  key: "runtime_state",
+  key: 'runtime_state',
   default: {
     currentDrive: null,
     readVolumes: false,
     readTags: false,
     readBookmarks: false,
-    store: new Store(".settings.dat"),
-    profileStore: new Store(".profiles.dat"),
+    store: new Store('.settings.dat'),
+    profileStore: new Store('.profiles.dat'),
     currentUser: 0,
   },
 });

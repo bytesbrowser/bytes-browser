@@ -1,12 +1,14 @@
-import { Navigate, Route, Routes } from "react-router-dom";
-import { RouterLayout } from "./RouterLayout";
-import { FolderExplorer } from "../pages/FolderExplorer";
-import { Settings } from "../pages/Settings";
+import { Route, Routes } from 'react-router-dom';
+
+import { Auth } from '../pages/Auth';
+import { FolderExplorer } from '../pages/FolderExplorer';
+import { Settings } from '../pages/Settings';
+import { RouterLayout } from './RouterLayout';
 
 const Router = () => {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/drive/0" />} />
+      <Route path="/" element={<Auth />} />
       <Route
         path="/drive/:driveId"
         element={

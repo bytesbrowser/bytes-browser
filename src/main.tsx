@@ -1,10 +1,17 @@
-import ReactDOM from "react-dom/client";
-import App from "./App";
-import "./styles/index.scss";
-import { RecoilRoot } from "recoil";
+import { ApolloProvider } from '@apollo/client';
+import ReactDOM from 'react-dom/client';
+import { RecoilRoot } from 'recoil';
+import RecoilNexus from 'recoil-nexus';
 
-ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  <RecoilRoot>
-    <App />
-  </RecoilRoot>
+import App from './App';
+import { apolloClient } from './lib/graphql/client';
+import './styles/index.scss';
+
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+  <ApolloProvider client={apolloClient}>
+    <RecoilRoot>
+      <RecoilNexus />
+      <App />
+    </RecoilRoot>
+  </ApolloProvider>,
 );

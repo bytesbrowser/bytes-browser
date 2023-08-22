@@ -1,0 +1,3 @@
+mutation Register($params: RegisterUserParams!) {
+  register(params: $params)
+}
