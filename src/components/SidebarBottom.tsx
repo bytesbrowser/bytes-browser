@@ -190,6 +190,14 @@ export const SidebarBottom = ({ profile }: { profile: Profile }) => {
           </svg>
           <svg
             data-tooltip-id="help-tooltip"
+            onClick={() => {
+              setRuntime({ ...runtime, showFeedbackWindow: true });
+              setFeedbackForm({
+                ...feedbackForm,
+                category: 'Help',
+                feedback: 'I need help with: ',
+              });
+            }}
             className="opacity-50 hover:opacity-100 cursor-pointer transition-all"
             width="24"
             height="24"
