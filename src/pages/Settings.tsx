@@ -50,7 +50,7 @@ export const Settings = () => {
           currentUser: 0,
           readVolumes: false,
         });
-        navigate('/');
+        navigate('/drive/' + 0);
       }
     }
   };

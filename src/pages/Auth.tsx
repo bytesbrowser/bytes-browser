@@ -86,6 +86,7 @@ export const Auth = () => {
           name: user.full_name,
           avatar: user.avatar,
           token: token,
+          email: user.email,
         });
 
         // get index of last profile item
@@ -105,6 +106,7 @@ export const Auth = () => {
             name: user.full_name,
             avatar: user.avatar,
             token: token,
+            email: user.email,
           },
         ]);
 

@@ -30,6 +30,7 @@ export interface ProfileStore {
 export interface Profile {
   name: string;
   avatar?: string;
+  email: string;
   token?: string;
   addedOn: string;
   lastUsed: string;

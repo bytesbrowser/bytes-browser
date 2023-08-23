@@ -39,8 +39,15 @@ export const SettingsProfiles = () => {
     }
   };
 
-  const onLogin = (e: FormEvent) => {
+  const onLogin = async (e: FormEvent) => {
     e.preventDefault();
+
+    const profiles = await runtime.profileStore.get<Profile[]>('profiles');
+
+    if (profiles?.find((prof) => prof.email === form.email.value)) {
+      toast.error('This profile is already signed in.');
+      return;
+    }
 
     if (!form.email.value || !form.password.value) {
       return;
@@ -105,12 +112,14 @@ export const SettingsProfiles = () => {
 
     if (runtime.profileStore) {
       const profiles = await runtime.profileStore.get<Profile[]>('profiles');
+
       if (profiles) {
         profiles.push({
           addedOn: new Date().toISOString(),
           lastUsed: new Date().toISOString(),
           name: user.full_name,
           avatar: user.avatar,
+          email: user.email,
           token: token,
         });
 
