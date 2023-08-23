@@ -1,0 +1,8 @@
+query GetSubscriptionStatus {
+  getSubscriptionStatus {
+    id
+    created_at
+    user_id
+    active
+  }
+}

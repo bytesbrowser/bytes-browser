@@ -38,7 +38,7 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
 
     getVolumes();
     getUserStore();
-  }, []);
+  }, [runtime]);
 
   useEffect(() => {
     updateProfile();

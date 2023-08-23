@@ -25,6 +25,14 @@ const Router = () => {
           </RouterLayout>
         }
       />
+      <Route
+        path="/no-subscription"
+        element={
+          <RouterLayout>
+            <p>Uh Oh!</p>
+          </RouterLayout>
+        }
+      />
     </Routes>
   );
 };

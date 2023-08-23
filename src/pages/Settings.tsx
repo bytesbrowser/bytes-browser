@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useRecoilState } from 'recoil';
 
@@ -7,6 +8,7 @@ import { SettingsAccount } from '../components/settings/SettingsAccount';
 import { SettingsNew } from '../components/settings/SettingsNew';
 import { SettingsPerformance } from '../components/settings/SettingsPerformance';
 import { SettingsProfiles } from '../components/settings/SettingsProfiles';
+import { useGetSubscriptionStatusLazyQuery } from '../graphql';
 import { settingsContentItems, settingsSidebarConfig } from '../lib/constants';
 import { runtimeState } from '../lib/state/runtime.state';
 import { Profile } from '../lib/types';
@@ -15,12 +17,40 @@ export const Settings = () => {
   const [settingsIndex, setSettingsIndex] = useState(0);
   const [runtime, setRuntime] = useRecoilState(runtimeState);
   const navigate = useNavigate();
+  const [getSubStatus] = useGetSubscriptionStatusLazyQuery();
 
   const logout = async () => {
     let profiles = await runtime.profileStore.get<Profile[]>('profiles');
 
     if (profiles) {
       if (profiles.length > 1) {
+        let profilesWithSub: Profile[] = [];
+
+        for (let i = 0; i < profiles.length; i++) {
+          await getSubStatus({
+            context: {
+              headers: {
+                Authorization: profiles[i].token,
+              },
+            },
+            fetchPolicy: 'no-cache',
+            nextFetchPolicy: 'no-cache',
+          }).then((res) => {
+            if (res.error) return;
+
+            if (res.data?.getSubscriptionStatus.active && profiles) {
+              profilesWithSub.push(profiles[i]);
+            }
+          });
+
+          continue;
+        }
+
+        if (profilesWithSub.length === 1 && profilesWithSub[0].email === profiles[runtime.currentUser].email) {
+          toast.error("You cannot logout with this profile because other profiles rely on it's subscription.");
+          return;
+        }
+
         profiles = profiles.filter((_, index) => index !== runtime.currentUser);
         await runtime.profileStore.set('profiles', profiles);
         setRuntime({
@@ -50,7 +80,7 @@ export const Settings = () => {
           currentUser: 0,
           readVolumes: false,
         });
-        navigate('/drive/' + 0);
+        navigate('/');
       }
     }
   };

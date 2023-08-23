@@ -27,6 +27,7 @@ export type MutationRegisterArgs = {
 };
 
 export type Query = {
+  getSubscriptionStatus: SubscriptionStatus;
   getUser: User;
   login: Scalars['String']['output'];
 };
@@ -44,6 +45,13 @@ export type RegisterUserParams = {
   password: Scalars['String']['input'];
 };
 
+export type SubscriptionStatus = {
+  active: Scalars['Boolean']['output'];
+  created_at: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  user_id: Scalars['ID']['output'];
+};
+
 export type User = {
   avatar?: Maybe<Scalars['String']['output']>;
   created_at: Scalars['String']['output'];
@@ -59,6 +67,11 @@ export type RegisterMutationVariables = Exact<{
 
 
 export type RegisterMutation = { register: string };
+
+export type GetSubscriptionStatusQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetSubscriptionStatusQuery = { getSubscriptionStatus: { id: string, created_at: string, user_id: string, active: boolean } };
 
 export type GetUserQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -105,6 +118,43 @@ export function useRegisterMutation(baseOptions?: Apollo.MutationHookOptions<Reg
 export type RegisterMutationHookResult = ReturnType<typeof useRegisterMutation>;
 export type RegisterMutationResult = Apollo.MutationResult<RegisterMutation>;
 export type RegisterMutationOptions = Apollo.BaseMutationOptions<RegisterMutation, RegisterMutationVariables>;
+export const GetSubscriptionStatusDocument = gql`
+    query GetSubscriptionStatus {
+  getSubscriptionStatus {
+    id
+    created_at
+    user_id
+    active
+  }
+}
+    `;
+
+/**
+ * __useGetSubscriptionStatusQuery__
+ *
+ * To run a query within a React component, call `useGetSubscriptionStatusQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSubscriptionStatusQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSubscriptionStatusQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetSubscriptionStatusQuery(baseOptions?: Apollo.QueryHookOptions<GetSubscriptionStatusQuery, GetSubscriptionStatusQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetSubscriptionStatusQuery, GetSubscriptionStatusQueryVariables>(GetSubscriptionStatusDocument, options);
+      }
+export function useGetSubscriptionStatusLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSubscriptionStatusQuery, GetSubscriptionStatusQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetSubscriptionStatusQuery, GetSubscriptionStatusQueryVariables>(GetSubscriptionStatusDocument, options);
+        }
+export type GetSubscriptionStatusQueryHookResult = ReturnType<typeof useGetSubscriptionStatusQuery>;
+export type GetSubscriptionStatusLazyQueryHookResult = ReturnType<typeof useGetSubscriptionStatusLazyQuery>;
+export type GetSubscriptionStatusQueryResult = Apollo.QueryResult<GetSubscriptionStatusQuery, GetSubscriptionStatusQueryVariables>;
 export const GetUserDocument = gql`
     query GetUser {
   getUser {

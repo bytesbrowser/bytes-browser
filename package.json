@@ -15,7 +15,8 @@
     "build:mac": "export REACT_APP_VERSION=$(git rev-parse HEAD) && tsc && vite build",
     "preview:mac": "export REACT_APP_VERSION=$(git rev-parse HEAD) && vite preview",
     "tauri:mac": "export REACT_APP_VERSION=$(git rev-parse HEAD) && tauri",
-    "build-all:mac": "export REACT_APP_VERSION=$(git rev-parse HEAD) && tauri build"
+    "build-all:mac": "export REACT_APP_VERSION=$(git rev-parse HEAD) && tauri build",
+    "codegen:build": "graphql-codegen --config codegen.yml"
   },
   "dependencies": {
     "@apollo/client": "^3.8.1",

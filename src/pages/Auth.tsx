@@ -5,7 +5,7 @@ import { useRecoilState } from 'recoil';
 
 import { Login } from '../components/Login';
 import { Register } from '../components/Register';
-import { useGetUserLazyQuery } from '../graphql';
+import { useGetSubscriptionStatusLazyQuery, useGetUserLazyQuery } from '../graphql';
 import { runtimeState } from '../lib/state/runtime.state';
 import { Profile } from '../lib/types';
 
@@ -15,6 +15,8 @@ export const Auth = () => {
   const navigate = useNavigate();
   const [hasNetwork, setHasNetwork] = useState<boolean>(false);
   const [getUserQuery] = useGetUserLazyQuery();
+  const [activatedProduct, setActivatedProduct] = useState<string>('');
+  const [getSubStatus] = useGetSubscriptionStatusLazyQuery();
 
   useEffect(() => {
     checkAuth();
@@ -40,7 +42,20 @@ export const Auth = () => {
       }
 
       if (profiles && profiles.length > 0) {
-        navigate('/drive/' + 0);
+        getSubStatus({
+          context: {
+            headers: {
+              Authorization: profiles?.[defaultProfile ?? 0].token,
+            },
+          },
+          fetchPolicy: 'no-cache',
+        }).then((res) => {
+          if (res.data?.getSubscriptionStatus.active) {
+            navigate('/drive/' + 0);
+          } else {
+            navigate('/no-subscription');
+          }
+        });
       }
     }
 
@@ -48,7 +63,36 @@ export const Auth = () => {
   };
 
   const onTokenReceived = async (token: string) => {
-    // TODO: Get profile request after creation or login at first time adding a profile
+    let profiles = await runtime.profileStore.get<Profile[]>('profiles');
+
+    let profilesWithSub: Profile[] = [];
+
+    if (profiles) {
+      for (let i = 0; i < profiles.length; i++) {
+        await getSubStatus({
+          context: {
+            headers: {
+              Authorization: profiles[i].token,
+            },
+          },
+          fetchPolicy: 'no-cache',
+          nextFetchPolicy: 'no-cache',
+        }).then((res) => {
+          if (res.error) return;
+
+          if (res.data?.getSubscriptionStatus.active && profiles) {
+            profilesWithSub.push(profiles[i]);
+          }
+        });
+
+        continue;
+      }
+    }
+
+    if (profilesWithSub.length > 1) {
+      return;
+    }
+
     let user:
       | {
           id: string;
@@ -76,9 +120,8 @@ export const Auth = () => {
     }
 
     if (runtime.profileStore) {
-      console.log(user);
-
       const profiles = await runtime.profileStore.get<Profile[]>('profiles');
+
       if (profiles) {
         profiles.push({
           addedOn: new Date().toISOString(),

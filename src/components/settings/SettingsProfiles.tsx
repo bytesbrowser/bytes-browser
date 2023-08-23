@@ -5,7 +5,7 @@ import Moment from 'react-moment';
 import { useNavigate } from 'react-router-dom';
 import { useRecoilState } from 'recoil';
 
-import { useGetUserLazyQuery, useLoginLazyQuery } from '../../graphql';
+import { useGetSubscriptionStatusLazyQuery, useGetUserLazyQuery, useLoginLazyQuery } from '../../graphql';
 import { runtimeState } from '../../lib/state/runtime.state';
 import { Profile } from '../../lib/types';
 import { is_email } from '../../lib/utils/formChecker';
@@ -18,6 +18,7 @@ export const SettingsProfiles = () => {
   const [hasNetwork, setHasNetwork] = useState<boolean>(false);
   const [getUserQuery] = useGetUserLazyQuery();
   const navigate = useNavigate();
+  const [getSubStatus] = useGetSubscriptionStatusLazyQuery();
 
   const checkNetwork = () => {
     setHasNetwork(navigator.onLine);
@@ -136,10 +137,43 @@ export const SettingsProfiles = () => {
     }
   };
 
-  const on_remove = (index: number) => {
+  const on_remove = async (index: number) => {
     if (runtime.currentUser === index) {
       toast.error('Cannot remove the current user. Please logout or switch profiles first.');
       return;
+    }
+
+    let profiles = await runtime.profileStore.get<Profile[]>('profiles');
+
+    if (profiles) {
+      if (profiles.length > 1) {
+        let profilesWithSub: Profile[] = [];
+
+        for (let i = 0; i < profiles.length; i++) {
+          await getSubStatus({
+            context: {
+              headers: {
+                Authorization: profiles[i].token,
+              },
+            },
+            fetchPolicy: 'no-cache',
+            nextFetchPolicy: 'no-cache',
+          }).then((res) => {
+            if (res.error) return;
+
+            if (res.data?.getSubscriptionStatus.active && profiles) {
+              profilesWithSub.push(profiles[i]);
+            }
+          });
+
+          continue;
+        }
+
+        if (profilesWithSub.length === 1 && profilesWithSub[0].email === profiles[index].email) {
+          toast.error("You cannot remove this profile because other profiles rely on it's subscription.");
+          return;
+        }
+      }
     }
 
     if (runtime.profileStore) {
