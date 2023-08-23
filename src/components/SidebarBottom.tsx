@@ -1,14 +1,16 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Tooltip } from 'react-tooltip';
 
 import { Profile } from '../lib/types';
 
 export const SidebarBottom = ({ profile }: { profile: Profile }) => {
+  const navigate = useNavigate();
+
   return (
     <div className="mb-6">
       <hr className="opacity-20 mb-8" />
       <div className="items flex items-center justify-between">
-        <div className="avatar">
+        <div className="avatar hover:opacity-50 transition-all" onClick={() => navigate('/settings')}>
           <img
             src={
               profile.avatar
@@ -16,7 +18,7 @@ export const SidebarBottom = ({ profile }: { profile: Profile }) => {
                 : 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y'
             }
             alt="avatar"
-            className="rounded-full w-12 h-12"
+            className="rounded-full w-12 h-12 cursor-pointer"
           />
         </div>
         <Link

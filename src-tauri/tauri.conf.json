@@ -17,10 +17,7 @@
       },
       "all": false,
       "shell": {
-        "all": false,
-        "open": true,
-        "sidecar": true,
-        "execute": true
+        "all": true
       },
       "dialog": {
         "all": true

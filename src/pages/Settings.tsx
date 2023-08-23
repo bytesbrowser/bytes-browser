@@ -1,11 +1,59 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useRecoilState } from 'recoil';
 
+import { SettingsAbout } from '../components/settings/SettingsAbout';
 import { SettingsAccount } from '../components/settings/SettingsAccount';
+import { SettingsNew } from '../components/settings/SettingsNew';
+import { SettingsPerformance } from '../components/settings/SettingsPerformance';
 import { SettingsProfiles } from '../components/settings/SettingsProfiles';
 import { settingsContentItems, settingsSidebarConfig } from '../lib/constants';
+import { runtimeState } from '../lib/state/runtime.state';
+import { Profile } from '../lib/types';
 
 export const Settings = () => {
   const [settingsIndex, setSettingsIndex] = useState(0);
+  const [runtime, setRuntime] = useRecoilState(runtimeState);
+  const navigate = useNavigate();
+
+  const logout = async () => {
+    let profiles = await runtime.profileStore.get<Profile[]>('profiles');
+
+    if (profiles) {
+      if (profiles.length > 1) {
+        profiles = profiles.filter((_, index) => index !== runtime.currentUser);
+        await runtime.profileStore.set('profiles', profiles);
+        setRuntime({
+          ...runtime,
+          currentUser: 0,
+          readVolumes: false,
+        });
+
+        const titlebarLeft = document.getElementById('titlebar-left')!;
+        if (titlebarLeft) {
+          console.log('here');
+          titlebarLeft.setAttribute('style', 'background-color: #27272D;');
+        }
+
+        navigate('/drive/' + 0);
+      } else {
+        await runtime.profileStore.clear();
+
+        const titlebarLeft = document.getElementById('titlebar-left')!;
+        if (titlebarLeft) {
+          console.log('here');
+          titlebarLeft.setAttribute('style', 'background-color: #27272D;');
+        }
+
+        setRuntime({
+          ...runtime,
+          currentUser: 0,
+          readVolumes: false,
+        });
+        navigate('/');
+      }
+    }
+  };
 
   return (
     <div className="px-8 pt-8 animate__animated animate__fadeIn overflow-hidden overflow-y-auto h-screen">
@@ -25,7 +73,9 @@ export const Settings = () => {
             </div>
           ))}
           <div className={`sidebar-item my-8 px-4 py-2 rounded-md cursor-pointer transition-all hover:bg-error group`}>
-            <p className="font-medium group-hover:text-white text-sm text-error">Logout</p>
+            <p className="font-medium group-hover:text-white text-sm text-error" onClick={logout}>
+              Logout
+            </p>
           </div>
         </div>
         <div className="flex-1 mt-8 ml-8 pl-8 border-l border-gray-500 animate__animated animate__fadeIn">
@@ -34,6 +84,9 @@ export const Settings = () => {
           <div className="mt-8">
             {settingsContentItems[settingsIndex].title === 'My Account' && <SettingsAccount />}
             {settingsContentItems[settingsIndex].title === 'Profiles' && <SettingsProfiles />}
+            {settingsContentItems[settingsIndex].title === 'About' && <SettingsAbout />}
+            {settingsContentItems[settingsIndex].title === 'Performance' && <SettingsPerformance />}
+            {settingsContentItems[settingsIndex].title === "What's New" && <SettingsNew />}
           </div>
         </div>
       </div>

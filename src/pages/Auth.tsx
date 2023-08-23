@@ -120,7 +120,7 @@ export const Auth = () => {
 
   if (!hasNetwork) {
     return (
-      <div className="w-screen h-screen bg-body max-w-[600px] m-auto pt-14 flex flex-col justify-center items-center">
+      <div className="w-screen h-full bg-body max-w-[600px] m-auto pt-14 flex flex-col justify-center items-center">
         <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 20 20">
           <circle cx="10" cy="16" r="2" fill="white" />
           <path

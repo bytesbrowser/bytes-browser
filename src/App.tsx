@@ -18,13 +18,19 @@ const App = () => {
       os.platform().then((platform) => {
         if (platform === 'darwin') {
           const titlebar = document.getElementsByClassName('titlebar')[0];
-          titlebar.setAttribute('style', 'display: none;');
+          if (titlebar) {
+            titlebar.setAttribute('style', 'display: none;');
+          }
 
           const app = document.getElementsByClassName('app')[0];
-          app.classList.add('macos');
+          if (app) {
+            app.classList.add('macos');
+          }
         } else {
           const titlebarLeft = document.getElementById('titlebar-left')!;
-          titlebarLeft.setAttribute('style', 'background-color: #27272D;');
+          if (titlebarLeft) {
+            titlebarLeft.setAttribute('style', 'background-color: #27272D;');
+          }
 
           setUseTitlebar(true);
 
@@ -34,17 +40,23 @@ const App = () => {
         }
       });
     }
-  }, []);
+  }, [runtime.currentUser]);
 
   useEffect(() => {
     if (runtime.readVolumes && useTitlebar) {
       const titlebarLeft = document.getElementById('titlebar-left')!;
-      titlebarLeft.setAttribute('style', 'background-color: #1c1b20;');
+      if (titlebarLeft) {
+        titlebarLeft.setAttribute('style', 'background-color: #1c1b20;');
+      }
       const app = document.getElementsByClassName('app')[0];
-      app.setAttribute('style', 'margin-top: 30px;');
+      if (app) {
+        app.setAttribute('style', 'margin-top: 30px;');
+      }
 
       const content = document.getElementsByClassName('content')[0];
-      content.setAttribute('style', 'margin-top: 30px;');
+      if (content) {
+        content.setAttribute('style', 'margin-top: 30px;');
+      }
     }
   }, [runtime]);
 

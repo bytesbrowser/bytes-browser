@@ -1,5 +1,6 @@
 import { ApolloProvider } from '@apollo/client';
 import ReactDOM from 'react-dom/client';
+import 'react-toggle/style.css';
 import { RecoilRoot } from 'recoil';
 import RecoilNexus from 'recoil-nexus';
 

@@ -24,10 +24,17 @@ const authMiddleware = new ApolloLink((operation, forward) => {
         } else {
           const token = profiles[runtime.currentUser]?.token;
 
+          const prevHeaders = operation.getContext().headers;
+
+          console.log(operation.getContext());
+
           if (token) {
             operation.setContext({
               headers: {
-                Authorization: token,
+                Authorization:
+                  prevHeaders && (prevHeaders.Authorization === '' || prevHeaders.Authorization.length > 0)
+                    ? prevHeaders.Authorization
+                    : token,
               },
             });
           } else {

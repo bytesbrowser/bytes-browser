@@ -115,7 +115,7 @@ export const Register = ({
   }, [registerMutationResult.error]);
 
   return (
-    <div className="animate__animated animate__fadeIn flex flex-col justify-between items-center w-screen h-screen bg-content">
+    <div className="animate__animated animate__fadeIn flex flex-col justify-between items-center w-screen h-full mt-8 bg-content pb-4">
       <div>
         <img src="/bytes_logo.png" className="w-[120px]" />
       </div>

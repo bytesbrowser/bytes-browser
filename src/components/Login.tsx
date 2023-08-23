@@ -75,7 +75,7 @@ export const Login = ({
   }, [loginQueryResult.error]);
 
   return (
-    <div className="animate__animated animate__fadeIn flex flex-col justify-between items-center w-screen h-screen bg-content">
+    <div className="animate__animated animate__fadeIn flex flex-col justify-between items-center w-screen h-full bg-content mt-8 pb-4">
       <div>
         <img src="/bytes_logo.png" className="w-[120px]" />
       </div>

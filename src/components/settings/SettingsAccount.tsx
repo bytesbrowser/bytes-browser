@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import Moment from 'react-moment';
 
-import { User, useGetUserLazyQuery, useGetUserQuery } from '../../graphql';
+import { User, useGetUserQuery } from '../../graphql';
 
 export const SettingsAccount = () => {
   const { data, error } = useGetUserQuery();
@@ -16,12 +16,12 @@ export const SettingsAccount = () => {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log(error);
     if (data?.getUser) {
       setProfile(data.getUser);
       setChanges({
         ...changes,
         fullName: data.getUser.full_name,
+        email: data.getUser.email,
       });
       setAvatarPreview(data.getUser.avatar!);
     }
@@ -50,7 +50,7 @@ export const SettingsAccount = () => {
   };
 
   return (
-    <form onSubmit={onSubmit}>
+    <form onSubmit={onSubmit} className="flex flex-col">
       {profile?.created_at && (
         <p className="text-xs opacity-50 mb-8">
           Account Created <Moment date={new Date(profile?.created_at!)} fromNow />

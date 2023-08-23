@@ -41,6 +41,10 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   useEffect(() => {
+    updateProfile();
+  }, [runtime.currentUser]);
+
+  useEffect(() => {
     if (runtime.currentDrive && devices[driveId as any] && runtime.currentDrive.name !== devices[driveId as any].name) {
       setRuntime({
         ...runtime,
@@ -66,7 +70,6 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
 
       if (profiles) {
         const profile = profiles[runtime.currentUser];
-        console.log(profiles);
         setProfile(profile);
       }
     }
