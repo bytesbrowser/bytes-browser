@@ -2,14 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;700&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;700&display=swap');
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
   color: white;
-  font-family: "Open Sans", sans-serif;
+  font-family: 'Open Sans', sans-serif;
 }
 
 body {
@@ -113,4 +113,17 @@ body {
 /* Handle active state (when clicking and dragging) */
 ::-webkit-scrollbar-thumb:active {
   background: #5a5a5f; /* Active state color */
+}
+
+.frf-water {
+  display: none;
+}
+
+#feedbackMsg {
+  color: black !important;
+}
+
+.modal-top {
+  background: rgb(237, 97, 65);
+  background: linear-gradient(90deg, rgba(237, 97, 65, 1) 0%, rgba(235, 66, 106, 1) 100%);
 }

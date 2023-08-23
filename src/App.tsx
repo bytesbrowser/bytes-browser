@@ -1,6 +1,8 @@
 import { os } from '@tauri-apps/api';
 import { appWindow } from '@tauri-apps/api/window';
 import 'animate.css/animate.min.css';
+//@ts-ignore
+import Feedback from 'feeder-react-feedback';
 import { useEffect, useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { BrowserRouter } from 'react-router-dom';

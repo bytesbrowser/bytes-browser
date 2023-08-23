@@ -1,4 +1,5 @@
 import { ApolloProvider } from '@apollo/client';
+import 'feeder-react-feedback/dist/feeder-react-feedback.css';
 import ReactDOM from 'react-dom/client';
 import 'react-toggle/style.css';
 import { RecoilRoot } from 'recoil';
