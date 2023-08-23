@@ -35,3 +35,8 @@ export interface Profile {
   addedOn: string;
   lastUsed: string;
 }
+
+export interface DirectoryContents {
+  Directory?: string[];
+  File?: string[];
+}

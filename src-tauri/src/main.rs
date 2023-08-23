@@ -3,6 +3,7 @@
 
 mod filesystem;
 
+use filesystem::explorer::open_directory;
 use filesystem::volume::{get_volumes, safely_eject_removable};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -42,7 +43,8 @@ async fn main() {
         .invoke_handler(tauri::generate_handler![
             get_volumes,
             safely_eject_removable,
-            get_environment_variable
+            get_environment_variable,
+            open_directory
         ])
         .manage(Arc::new(Mutex::new(AppState::default())))
         .plugin(tauri_plugin_store::Builder::default().build())

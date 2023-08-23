@@ -12,6 +12,7 @@ export const runtimeState = atom<{
   profileStore: Store;
   currentUser: number;
   showFeedbackWindow: boolean;
+  currentPath: string;
 }>({
   key: 'runtime_state',
   default: {
@@ -23,5 +24,6 @@ export const runtimeState = atom<{
     profileStore: new Store('.profiles.dat'),
     currentUser: 0,
     showFeedbackWindow: false,
+    currentPath: '',
   },
 });
