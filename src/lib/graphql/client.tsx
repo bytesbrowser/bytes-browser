@@ -1,4 +1,4 @@
-import { ApolloClient, ApolloLink, HttpLink, InMemoryCache, concat } from '@apollo/client';
+import { ApolloClient, ApolloLink, HttpLink, InMemoryCache, Observable, concat } from '@apollo/client';
 import { getRecoil } from 'recoil-nexus';
 
 import { runtimeState } from '../state/runtime.state';
@@ -9,35 +9,47 @@ const httpLink = new HttpLink({
 });
 
 const authMiddleware = new ApolloLink((operation, forward) => {
-  const runtime = getRecoil(runtimeState);
+  return new Observable((observer) => {
+    const runtime = getRecoil(runtimeState);
 
-  runtime.profileStore
-    .get<Profile[]>('profiles')
-    .then((profiles) => {
-      if (!profiles || profiles === null) {
-        return forward(operation);
-      }
+    runtime.profileStore
+      .get<Profile[]>('profiles')
+      .then((profiles) => {
+        if (!profiles || profiles === null) {
+          forward(operation).subscribe({
+            next: observer.next.bind(observer),
+            error: observer.error.bind(observer),
+            complete: observer.complete.bind(observer),
+          });
+        } else {
+          const token = profiles[runtime.currentUser]?.token;
 
-      const token = profiles[runtime.currentUser].token;
+          if (token) {
+            operation.setContext({
+              headers: {
+                Authorization: token,
+              },
+            });
+          } else {
+            operation.setContext({});
+          }
 
-      if (token !== null && token !== undefined && token.length > 0) {
-        operation.setContext({
-          headers: {
-            Authorization: token,
-          },
+          forward(operation).subscribe({
+            next: observer.next.bind(observer),
+            error: observer.error.bind(observer),
+            complete: observer.complete.bind(observer),
+          });
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        forward(operation).subscribe({
+          next: observer.next.bind(observer),
+          error: observer.error.bind(observer),
+          complete: observer.complete.bind(observer),
         });
-      } else {
-        operation.setContext({});
-      }
-
-      return forward(operation);
-    })
-    .catch((err) => {
-      console.log(err);
-      return forward(operation);
-    });
-
-  return forward(operation);
+      });
+  });
 });
 
 export const apolloClient = new ApolloClient({
