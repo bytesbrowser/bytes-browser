@@ -138,8 +138,18 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
       </Tooltip>
       {runtime.readVolumes ? (
         <div className="layout flex">
-          <div className="sidebar bg-sidebar w-[300px] h-screen px-8 py-8 flex flex-col justify-between">
+          <div className="sidebar bg-sidebar w-[300px] h-screen px-8 pb-8 flex flex-col justify-between">
             <div className="section">
+              <div className="search flex items-center bg-sidebar py-2 px-2 w-full mb-8 rounded-md mr-4 border border-[#333333] opacity-80 hover:opacity-100 transition-all cursor-pointer">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M16.148 15.352L12.6275 11.8322C13.6479 10.6071 14.1567 9.03585 14.0481 7.4452C13.9395 5.85456 13.2218 4.36701 12.0444 3.29201C10.867 2.21701 9.32041 1.63734 7.72647 1.67356C6.13253 1.70978 4.61392 2.35913 3.48654 3.4865C2.35916 4.61388 1.70982 6.13249 1.6736 7.72643C1.63737 9.32037 2.21705 10.8669 3.29205 12.0444C4.36705 13.2218 5.85459 13.9394 7.44524 14.048C9.03589 14.1566 10.6072 13.6478 11.8322 12.6274L15.3521 16.148C15.4043 16.2002 15.4664 16.2417 15.5347 16.27C15.6029 16.2983 15.6761 16.3128 15.75 16.3128C15.8239 16.3128 15.8971 16.2983 15.9654 16.27C16.0337 16.2417 16.0957 16.2002 16.148 16.148C16.2003 16.0957 16.2417 16.0337 16.27 15.9654C16.2983 15.8971 16.3129 15.8239 16.3129 15.75C16.3129 15.6761 16.2983 15.6029 16.27 15.5346C16.2417 15.4663 16.2003 15.4043 16.148 15.352ZM2.81254 7.875C2.81254 6.87373 3.10945 5.89495 3.66572 5.06243C4.222 4.2299 5.01265 3.58103 5.9377 3.19786C6.86275 2.81469 7.88065 2.71444 8.86268 2.90977C9.84471 3.10511 10.7468 3.58727 11.4548 4.29527C12.1628 5.00328 12.6449 5.90533 12.8403 6.88736C13.0356 7.86938 12.9353 8.88728 12.5522 9.81234C12.169 10.7374 11.5201 11.528 10.6876 12.0843C9.85509 12.6406 8.87631 12.9375 7.87504 12.9375C6.53284 12.936 5.24603 12.4022 4.29695 11.4531C3.34787 10.504 2.81403 9.2172 2.81254 7.875Z"
+                    fill="white"
+                    fill-opacity="0.6"
+                  />
+                </svg>
+                <p className="text-sm opacity-50 ml-4">Search for something</p>
+              </div>
               <div className="section-title text-sm flex justify-between items-center">
                 <p className="opacity-50">Storage Devices</p>
                 <svg

@@ -14,6 +14,7 @@ export const runtimeState = atom<{
   showFeedbackWindow: boolean;
   currentPath: string;
   devices: Device[];
+  listStyle: 'GRID' | 'LIST' | 'TREE';
 }>({
   key: 'runtime_state',
   default: {
@@ -27,5 +28,6 @@ export const runtimeState = atom<{
     showFeedbackWindow: false,
     currentPath: '',
     devices: [],
+    listStyle: 'LIST',
   },
 });
