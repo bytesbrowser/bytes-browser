@@ -21,7 +21,6 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
 
   const { driveId } = useParams();
 
-  const [devices, setDevices] = useState<DeviceInterface[]>([]);
   const [tags, setTags] = useState<TagDoc[]>([]);
   const [bookmarks, setBookmarks] = useState<BookmarkDoc[]>([]);
   const [refreshingVolumes, setRefreshingVolumes] = useState<boolean>(false);
@@ -31,7 +30,7 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
       updateProfile();
     }
 
-    if (runtime.readVolumes) return;
+    if (runtime.readVolumes || runtime.devices.length > 0) return;
 
     reset();
     start();
@@ -45,10 +44,14 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
   }, [runtime.currentUser]);
 
   useEffect(() => {
-    if (runtime.currentDrive && devices[driveId as any] && runtime.currentDrive.name !== devices[driveId as any].name) {
+    if (
+      runtime.currentDrive &&
+      runtime.devices[driveId as any] &&
+      runtime.currentDrive.name !== runtime.devices[driveId as any].name
+    ) {
       setRuntime({
         ...runtime,
-        currentDrive: devices[driveId as any] ?? null,
+        currentDrive: runtime.devices[driveId as any] ?? null,
       });
     }
   }, [driveId]);
@@ -93,11 +96,10 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
         ...runtime,
         readVolumes: true,
         currentDrive: new_volumes[0]!,
+        devices: new_volumes,
       });
 
       pause();
-
-      setDevices(new_volumes);
     });
   };
 
@@ -122,9 +124,9 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
       setRuntime({
         ...runtime,
         currentDrive: new_volumes[0]!,
+        devices: new_volumes,
       });
 
-      setDevices(new_volumes);
       setRefreshingVolumes(false);
     });
   };
@@ -158,7 +160,7 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
                 </svg>
               </div>
               <div className="mt-8">
-                {devices.map((device, key) => (
+                {runtime.devices.map((device, key) => (
                   <Device
                     device={device}
                     key={key}

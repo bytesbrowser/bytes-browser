@@ -13,6 +13,7 @@ export const runtimeState = atom<{
   currentUser: number;
   showFeedbackWindow: boolean;
   currentPath: string;
+  devices: Device[];
 }>({
   key: 'runtime_state',
   default: {
@@ -25,5 +26,6 @@ export const runtimeState = atom<{
     currentUser: 0,
     showFeedbackWindow: false,
     currentPath: '',
+    devices: [],
   },
 });

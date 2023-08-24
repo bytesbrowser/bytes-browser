@@ -55,10 +55,10 @@ const App = () => {
         app.setAttribute('style', 'margin-top: 30px;');
       }
 
-      const content = document.getElementsByClassName('content')[0];
-      if (content) {
-        content.setAttribute('style', 'margin-top: 30px;');
-      }
+      // const content = document.getElementsByClassName('content')[0];
+      // if (content) {
+      //   content.setAttribute('style', 'margin-top: 30px;');
+      // }
     }
   }, [runtime]);
 
