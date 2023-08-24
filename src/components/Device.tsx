@@ -1,19 +1,17 @@
-import { Link } from "react-router-dom";
-import { Device as DeviceInterface } from "../lib/types";
-import { Tooltip } from "react-tooltip";
-import { formatBytes } from "../lib/utils/formatBytes";
-import { useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api/tauri";
+import { os } from '@tauri-apps/api';
+import { invoke } from '@tauri-apps/api/tauri';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Tooltip } from 'react-tooltip';
+import { useRecoilState } from 'recoil';
 
-export const Device = ({
-  device,
-  selected,
-  id,
-}: {
-  device: DeviceInterface;
-  selected: boolean;
-  id: number;
-}) => {
+import { runtimeState } from '../lib/state/runtime.state';
+import { Device as DeviceInterface } from '../lib/types';
+import { formatBytes } from '../lib/utils/formatBytes';
+
+export const Device = ({ device, selected, id }: { device: DeviceInterface; selected: boolean; id: number }) => {
+  const [runtime, setRuntime] = useRecoilState(runtimeState);
+
   const [randomTooltipID] = useState(String(Math.random()));
 
   const [randomEjectTooltipID] = useState(String(Math.random()));
@@ -24,14 +22,21 @@ export const Device = ({
     setPercentUsed((device.used / device.size) * 100);
   }, [device]);
 
-  const safely_eject = () => {
-    console.log("ejecting")
-    
-    invoke("safely_eject_removable", { mountPath: device.mount_point }).then((res) => {
-      console.log(res)
-    }).catch(err => {
-      console.log(err)
-    })
+  const safely_eject = async () => {
+    console.log('ejecting');
+
+    const platform = await os.platform();
+
+    invoke('safely_eject_removable', { mountPath: device.mount_point, platform: platform.toString() })
+      .then((res) => {
+        setRuntime({
+          ...runtime,
+          devices: runtime.devices.filter((d) => d.mount_point !== device.mount_point),
+        });
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
   return (
@@ -76,20 +81,16 @@ export const Device = ({
               />
             </svg>
           )}
-          <p>
-            {device.name.length > 15
-              ? device.name.slice(0, 15) + "..."
-              : device.name}
-          </p>
+          <p>{device.name.length > 15 ? device.name.slice(0, 15) + '...' : device.name}</p>
         </div>
         <div className="right flex items-center">
           <svg
-           onClick={(e) => {
-            console.log("start eject")
-            safely_eject()
-          }}
+            onClick={(e) => {
+              console.log('start eject');
+              safely_eject();
+            }}
             style={{
-              display: device.removable ? "block" : "none",
+              display: device.removable ? 'block' : 'none',
             }}
             data-tooltip-id={randomEjectTooltipID}
             width="24"
@@ -99,10 +100,7 @@ export const Device = ({
             className="opacity-80 hover:opacity-100 transition-opacity cursor-pointer mr-2"
             xmlns="http://www.w3.org/2000/svg"
           >
-            <path
-              d="M5 19V17H19V19H5ZM5.35 15L12 5L18.65 15H5.35Z"
-              fill="white"
-            />
+            <path d="M5 19V17H19V19H5ZM5.35 15L12 5L18.65 15H5.35Z" fill="white" />
           </svg>
           <svg
             data-tooltip-id={randomTooltipID}
@@ -119,18 +117,10 @@ export const Device = ({
           </svg>
         </div>
       </Link>
-      <Tooltip
-        className="tooltip z-[999]"
-        opacity={"100%"}
-        id={randomEjectTooltipID}
-      >
+      <Tooltip className="tooltip z-[999]" opacity={'100%'} id={randomEjectTooltipID}>
         <p>Eject</p>
       </Tooltip>
-      <Tooltip
-        className="tooltip z-[999]"
-        id={randomTooltipID}
-        opacity={"100%"}
-      >
+      <Tooltip className="tooltip z-[999]" id={randomTooltipID} opacity={'100%'}>
         <div className="p-2">
           <h1 className="text-xl mb-4">{device.name}</h1>
           <p className="opacity-50 mb-4">
@@ -142,14 +132,13 @@ export const Device = ({
               className="h-full bg-success flex items-center justify-center"
               style={{
                 width: `${percentUsed}%`,
-                borderTopLeftRadius: "6px",
-                borderBottomLeftRadius: "6px",
+                borderTopLeftRadius: '6px',
+                borderBottomLeftRadius: '6px',
               }}
             ></div>
           </div>
           <p className="mt-2">
-            {Math.floor(percentUsed)}% ({formatBytes(device.used)} of{" "}
-            {formatBytes(device.size)}) used
+            {Math.floor(percentUsed)}% ({formatBytes(device.used)} of {formatBytes(device.size)}) used
           </p>
         </div>
       </Tooltip>

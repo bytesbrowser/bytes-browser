@@ -30,8 +30,8 @@ pub struct Volume {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum DirectoryChild {
-    File(String, String), // Name of file, path to file
-    Directory(String, String),
+    File(String, String, u64), // Name of file, path to file
+    Directory(String, String, u64),
 }
 
 impl Volume {
@@ -209,7 +209,7 @@ pub async fn safely_eject_removable(mount_path: String, platform: String) -> Res
                         format!("udisksctl unmount -b {}", volume.name().to_str().unwrap());
                     ("sh".to_string(), vec!["-c".to_string(), command_str])
                 }
-                "macos" => {
+                "darwin" => {
                     let command_str = format!(
                         "diskutil unmount {}",
                         volume.mount_point().to_string_lossy()

@@ -32,6 +32,7 @@ export const Auth = () => {
   const checkAuth = async () => {
     if (runtime.profileStore) {
       const profiles = await runtime.profileStore.get<Profile[]>('profiles');
+
       const defaultProfile = await runtime.profileStore.get<number>('defaultProfile');
 
       if (defaultProfile) {
@@ -65,6 +66,24 @@ export const Auth = () => {
   const onTokenReceived = async (token: string) => {
     let profiles = await runtime.profileStore.get<Profile[]>('profiles');
 
+    let thisUserHasSub = false;
+
+    await getSubStatus({
+      context: {
+        headers: {
+          Authorization: token,
+        },
+      },
+      fetchPolicy: 'no-cache',
+      nextFetchPolicy: 'no-cache',
+    }).then((res) => {
+      if (res.error) return;
+
+      if (res.data?.getSubscriptionStatus.active) {
+        thisUserHasSub = true;
+      }
+    });
+
     let profilesWithSub: Profile[] = [];
 
     if (profiles) {
@@ -89,7 +108,8 @@ export const Auth = () => {
       }
     }
 
-    if (profilesWithSub.length > 1) {
+    if (profilesWithSub.length < 1 && !thisUserHasSub) {
+      toast.error('You do not have an active subscription.');
       return;
     }
 
@@ -139,6 +159,8 @@ export const Auth = () => {
           ...runtime,
           currentUser: index,
         });
+
+        await runtime.profileStore.set('profiles', profiles);
 
         navigate('/drive/0');
       } else {

@@ -3,8 +3,10 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useRecoilState } from 'recoil';
 
+import { SmartFileIcon } from '../components/SmartFileIcon';
 import { runtimeState } from '../lib/state/runtime.state';
 import { DirectoryContents } from '../lib/types';
+import { formatBytes } from '../lib/utils/formatBytes';
 
 export const FolderExplorer = () => {
   const [runtime, setRuntime] = useRecoilState(runtimeState);
@@ -17,20 +19,20 @@ export const FolderExplorer = () => {
 
   useEffect(() => {
     if (runtime.currentDrive) {
-      invoke('open_directory', { path: runtime.currentDrive.mount_point + runtime.currentPath }).then((res) => {
-        setDirectories(res as DirectoryContents[]);
+      invoke('open_directory', { path: runtime.currentDrive.mount_point + runtime.currentPath }).then((res: any) => {
+        setDirectories(res.data as DirectoryContents[]);
       });
     }
   }, [runtime.currentDrive]);
 
   useEffect(() => {
     if (runtime.currentPath === '' && runtime.currentDrive) {
-      invoke('open_directory', { path: runtime.currentDrive.mount_point }).then((res) => {
-        setDirectories(res as DirectoryContents[]);
+      invoke('open_directory', { path: runtime.currentDrive.mount_point }).then((res: any) => {
+        setDirectories(res.data as DirectoryContents[]);
       });
     } else if (runtime.currentDrive) {
-      invoke('open_directory', { path: runtime.currentDrive.mount_point + runtime.currentPath }).then((res) => {
-        setDirectories(res as DirectoryContents[]);
+      invoke('open_directory', { path: runtime.currentDrive.mount_point + runtime.currentPath }).then((res: any) => {
+        setDirectories(res.data as DirectoryContents[]);
       });
     }
   }, [runtime.currentPath]);
@@ -38,6 +40,8 @@ export const FolderExplorer = () => {
   useEffect(() => {
     console.log(navigationRules);
   }, [navigationRules]);
+
+  console.log('DIRS', directories);
 
   return (
     <div className="folder-explorer max-h-full overflow-hidden overflow-y-auto animate__animated animate__fadeIn animate__faster">
@@ -253,26 +257,56 @@ export const FolderExplorer = () => {
         </div>
       </div>
       <div className="explorer-contents">
-        {directories.map((directory, key) => (
-          <p
-            onClick={() => {
-              if (directory['Directory']) {
-                setNavigationRules((prevRules) => ({
-                  forward: [],
-                  back: [...prevRules.back, runtime.currentPath],
-                }));
+        <div className="top-content border-b border-white border-opacity-10 pb-2 w-full mt-2 flex items-center justify-between pl-12 pr-12">
+          <p className="opacity-50 w-1/4 pl-2">Name</p>
+          <p className="opacity-50 w-1/4">Date Modified</p>
+          <p className="opacity-50 w-1/4">Kind</p>
+          <p className="opacity-50 w-1/4">Size</p>
+        </div>
+        {directories &&
+          directories.map((directory, key) => (
+            <div
+              className="row flex
+            px-4 py-2 cursor-pointer transition-all hover:opacity-50 items-center odd:bg-sidebar"
+              key={key}
+            >
+              {directory['Directory'] ? (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                  <path
+                    fill="white"
+                    d="M4 20q-.825 0-1.413-.588T2 18V6q0-.825.588-1.413T4 4h6l2 2h8q.825 0 1.413.588T22 8v10q0 .825-.588 1.413T20 20H4Z"
+                  />
+                </svg>
+              ) : (
+                <SmartFileIcon file={directory} />
+              )}
+              <div
+                className="ml-4 flex items-center justify-between w-full pr-12"
+                onClick={() => {
+                  if (directory['Directory']) {
+                    setNavigationRules((prevRules) => ({
+                      forward: [],
+                      back: [...prevRules.back, runtime.currentPath],
+                    }));
 
-                setRuntime({
-                  ...runtime,
-                  currentPath: runtime.currentPath + directory['Directory']![0] + '/',
-                });
-              }
-            }}
-            key={key}
-          >
-            {directory['Directory'] ? directory['Directory'][0] : directory['File']![0]}
-          </p>
-        ))}
+                    setRuntime({
+                      ...runtime,
+                      currentPath: runtime.currentPath + directory['Directory']![0] + '/',
+                    });
+                  }
+                }}
+              >
+                <p className="w-1/4">{directory['Directory'] ? directory['Directory'][0] : directory['File']![0]}</p>
+                <p className="w-1/4 flex justify-left">Unknown</p>
+                <p className="w-1/4 flex justify-left">{directory['Directory'] ? 'Folder' : 'File'}</p>
+                <p className="opacity-50 w-1/4 flex justify-left">
+                  {directory['Directory']
+                    ? formatBytes(directory['Directory']![2])
+                    : formatBytes(directory['File']![2])}
+                </p>
+              </div>
+            </div>
+          ))}
       </div>
     </div>
   );
