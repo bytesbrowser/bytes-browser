@@ -37,6 +37,6 @@ export interface Profile {
 }
 
 export interface DirectoryContents {
-  Directory?: string[];
-  File?: string[];
+  Directory?: [string, string, number, number];
+  File?: [string, string, number, number];
 }

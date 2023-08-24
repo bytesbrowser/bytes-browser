@@ -67,10 +67,23 @@ async fn handle_entry(entry: DirEntry) -> io::Result<Vec<DirectoryChild>> {
     let file_name = entry.file_name().to_string_lossy().to_string();
     let path = entry.path().to_string_lossy().to_string();
     let size = fs::metadata(&path)?.len();
+    let last_modified_sys_time = fs::metadata(&path)?.modified()?;
+
+    let last_modified = last_modified_sys_time.elapsed().unwrap().as_secs();
 
     if entry.file_type()?.is_file() {
-        Ok(vec![DirectoryChild::File(file_name, path, size)])
+        Ok(vec![DirectoryChild::File(
+            file_name,
+            path,
+            size,
+            last_modified,
+        )])
     } else {
-        Ok(vec![DirectoryChild::Directory(file_name, path, size)])
+        Ok(vec![DirectoryChild::Directory(
+            file_name,
+            path,
+            size,
+            last_modified,
+        )])
     }
 }

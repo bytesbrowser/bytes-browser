@@ -53,10 +53,13 @@
       {
         "fullscreen": false,
         "resizable": true,
+        "center": true,
         "title": "Bytes Browser",
-        "width": 1200,
+        "width": 1400,
         "height": 1200,
-        "decorations": false
+        "decorations": false,
+        "minWidth": 1400,
+        "minHeight": 1200
       }
     ]
   }

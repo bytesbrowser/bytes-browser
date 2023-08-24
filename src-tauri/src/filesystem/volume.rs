@@ -30,8 +30,8 @@ pub struct Volume {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum DirectoryChild {
-    File(String, String, u64), // Name of file, path to file
-    Directory(String, String, u64),
+    File(String, String, u64, u64), // Name of file, path to file, size of file, last modified seconds
+    Directory(String, String, u64, u64), // Name of directory, path to directory, size of directory, last modified seconds
 }
 
 impl Volume {

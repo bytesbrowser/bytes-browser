@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "for /f %i in ('git rev-parse HEAD') do set REACT_APP_VERSION=%i && vite",
     "dev-all": "for /f %i in ('git rev-parse HEAD') do set REACT_APP_VERSION=%i && tauri dev",
     "build": "for /f %i in ('git rev-parse HEAD') do set REACT_APP_VERSION=%i && tsc && vite build",
     "preview": "for /f %i in ('git rev-parse HEAD') do set REACT_APP_VERSION=%i && vite preview",

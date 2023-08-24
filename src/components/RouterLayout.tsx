@@ -141,7 +141,7 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
       </Tooltip>
       {runtime.readVolumes ? (
         <div className="layout flex">
-          <div className="sidebar bg-sidebar w-[300px] h-screen px-8 pb-8 flex flex-col justify-between">
+          <div className="sidebar bg-sidebar min-w-[300px] h-screen px-8 pb-8 flex flex-col justify-between">
             <div className="section">
               <div
                 className={`search flex items-center bg-sidebar py-2 px-2 w-full mb-8 rounded-md mr-4 border border-[#333333] opacity-80 hover:opacity-100 transition-all cursor-pointer ${

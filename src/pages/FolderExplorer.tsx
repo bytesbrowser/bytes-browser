@@ -1,12 +1,16 @@
 import { invoke } from '@tauri-apps/api';
 import { useEffect, useState } from 'react';
+import Moment from 'react-moment';
 import { Link, useNavigate } from 'react-router-dom';
+import { Tooltip } from 'react-tooltip';
 import { useRecoilState } from 'recoil';
 
 import { SmartFileIcon } from '../components/SmartFileIcon';
+import { TimeText } from '../components/TimeText';
 import { runtimeState } from '../lib/state/runtime.state';
 import { DirectoryContents } from '../lib/types';
 import { formatBytes } from '../lib/utils/formatBytes';
+import { secondsAgoToDate } from '../lib/utils/secondsToTimestamp';
 
 export const FolderExplorer = () => {
   const [runtime, setRuntime] = useRecoilState(runtimeState);
@@ -258,10 +262,70 @@ export const FolderExplorer = () => {
       </div>
       <div className="explorer-contents">
         <div className="top-content border-b border-white border-opacity-10 pb-2 w-full mt-2 flex items-center justify-between pl-12 pr-12">
-          <p className="opacity-50 w-1/4 pl-2">Name</p>
-          <p className="opacity-50 w-1/4">Date Modified</p>
-          <p className="opacity-50 w-1/4">Kind</p>
-          <p className="opacity-50 w-1/4">Size</p>
+          <p className="min-w-[250px] pl-2 flex items-center">
+            <span className="opacity-50">Name</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 256 256"
+              className="ml-2 cursor-pointer opacity-50 hover:opacity-100"
+              data-tooltip-id="tooltip-item-name"
+            >
+              <path
+                fill="white"
+                d="M140 180a12 12 0 1 1-12-12a12 12 0 0 1 12 12ZM128 72c-22.06 0-40 16.15-40 36v4a8 8 0 0 0 16 0v-4c0-11 10.77-20 24-20s24 9 24 20s-10.77 20-24 20a8 8 0 0 0-8 8v8a8 8 0 0 0 16 0v-.72c18.24-3.35 32-17.9 32-35.28c0-19.85-17.94-36-40-36Zm104 56A104 104 0 1 1 128 24a104.11 104.11 0 0 1 104 104Zm-16 0a88 88 0 1 0-88 88a88.1 88.1 0 0 0 88-88Z"
+              />
+            </svg>
+          </p>
+          <p className="min-w-[250px] pl-2 flex items-center">
+            <span className="opacity-50">Date Modified</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 256 256"
+              className="ml-2 cursor-pointer opacity-50 hover:opacity-100"
+              data-tooltip-id="tooltip-item-modified"
+            >
+              <path
+                fill="white"
+                d="M140 180a12 12 0 1 1-12-12a12 12 0 0 1 12 12ZM128 72c-22.06 0-40 16.15-40 36v4a8 8 0 0 0 16 0v-4c0-11 10.77-20 24-20s24 9 24 20s-10.77 20-24 20a8 8 0 0 0-8 8v8a8 8 0 0 0 16 0v-.72c18.24-3.35 32-17.9 32-35.28c0-19.85-17.94-36-40-36Zm104 56A104 104 0 1 1 128 24a104.11 104.11 0 0 1 104 104Zm-16 0a88 88 0 1 0-88 88a88.1 88.1 0 0 0 88-88Z"
+              />
+            </svg>
+          </p>
+          <p className="min-w-[250px] pl-2 flex items-center">
+            <span className="opacity-50">Kind</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 256 256"
+              className="ml-2 cursor-pointer opacity-50 hover:opacity-100"
+              data-tooltip-id="tooltip-item-kind"
+            >
+              <path
+                fill="white"
+                d="M140 180a12 12 0 1 1-12-12a12 12 0 0 1 12 12ZM128 72c-22.06 0-40 16.15-40 36v4a8 8 0 0 0 16 0v-4c0-11 10.77-20 24-20s24 9 24 20s-10.77 20-24 20a8 8 0 0 0-8 8v8a8 8 0 0 0 16 0v-.72c18.24-3.35 32-17.9 32-35.28c0-19.85-17.94-36-40-36Zm104 56A104 104 0 1 1 128 24a104.11 104.11 0 0 1 104 104Zm-16 0a88 88 0 1 0-88 88a88.1 88.1 0 0 0 88-88Z"
+              />
+            </svg>
+          </p>
+          <p className="min-w-[250px] pl-2 flex items-center">
+            <span className="opacity-50">Size</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 256 256"
+              className="ml-2 cursor-pointer opacity-50 hover:opacity-100"
+              data-tooltip-id="tooltip-item-size"
+            >
+              <path
+                fill="white"
+                d="M140 180a12 12 0 1 1-12-12a12 12 0 0 1 12 12ZM128 72c-22.06 0-40 16.15-40 36v4a8 8 0 0 0 16 0v-4c0-11 10.77-20 24-20s24 9 24 20s-10.77 20-24 20a8 8 0 0 0-8 8v8a8 8 0 0 0 16 0v-.72c18.24-3.35 32-17.9 32-35.28c0-19.85-17.94-36-40-36Zm104 56A104 104 0 1 1 128 24a104.11 104.11 0 0 1 104 104Zm-16 0a88 88 0 1 0-88 88a88.1 88.1 0 0 0 88-88Z"
+              />
+            </svg>
+          </p>
         </div>
         {directories &&
           directories.map((directory, key) => (
@@ -296,10 +360,20 @@ export const FolderExplorer = () => {
                   }
                 }}
               >
-                <p className="w-1/4">{directory['Directory'] ? directory['Directory'][0] : directory['File']![0]}</p>
-                <p className="w-1/4 flex justify-left">Unknown</p>
-                <p className="w-1/4 flex justify-left">{directory['Directory'] ? 'Folder' : 'File'}</p>
-                <p className="opacity-50 w-1/4 flex justify-left">
+                <p className="min-w-[250px]">
+                  {directory['Directory'] ? directory['Directory'][0] : directory['File']![0]}
+                </p>
+                <Moment
+                  fromNow
+                  date={secondsAgoToDate(
+                    directory['Directory'] ? directory['Directory']![3] : directory['File']![3],
+                  ).toISOString()}
+                  className="min-w-[250px] flex justify-left opacity-50"
+                />
+                <p className="min-w-[250px] flex justify-left opacity-50">
+                  {directory['Directory'] ? 'Folder' : 'File'}
+                </p>
+                <p className="opacity-50 min-w-[250px] flex justify-left">
                   {directory['Directory']
                     ? formatBytes(directory['Directory']![2])
                     : formatBytes(directory['File']![2])}
@@ -307,6 +381,14 @@ export const FolderExplorer = () => {
               </div>
             </div>
           ))}
+        <Tooltip id="tooltip-item-name" content="This is the file or folder name" opacity={100} />
+        <Tooltip id="tooltip-item-kind" content="This is the type of the entry" opacity={100} />
+        <Tooltip
+          id="tooltip-item-size"
+          content="This is the size of the file or files inside a folder exlcluding subdirectories"
+          opacity={100}
+        />
+        <Tooltip id="tooltip-item-modified" content="This is the last time the entry was modified" opacity={100} />
       </div>
     </div>
   );
