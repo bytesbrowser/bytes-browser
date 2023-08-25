@@ -26,8 +26,6 @@ const authMiddleware = new ApolloLink((operation, forward) => {
 
           const prevHeaders = operation.getContext().headers;
 
-          console.log(operation.getContext());
-
           if (token) {
             operation.setContext({
               headers: {

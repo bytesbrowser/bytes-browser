@@ -5,10 +5,12 @@ import { useParams } from 'react-router-dom';
 import { Tooltip } from 'react-tooltip';
 import { useRecoilState } from 'recoil';
 
+import { useHotkey } from '../lib/commands';
 import useTimer from '../lib/hooks/useTimer';
 import { runtimeState } from '../lib/state/runtime.state';
 import { BookmarkDoc, Device as DeviceInterface, Profile, ProfileStore, TagDoc } from '../lib/types';
 import { Device } from './Device';
+import { SearchModal } from './SearchModal';
 import { SidebarBookmarks } from './SidebarBookmarks';
 import { SidebarBottom } from './SidebarBottom';
 import { SidebarTags } from './SidebarTags';
@@ -19,6 +21,13 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
   const { start, reset, pause, seconds } = useTimer();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isMac, setIsMac] = useState(false);
+
+  useHotkey('CommandOrControl+Space', (_shortcut) => {
+    setRuntime({
+      ...runtime,
+      searchOpen: true,
+    });
+  });
 
   const { driveId } = useParams();
 
@@ -107,8 +116,6 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
   };
 
   const refreshVolumes = () => {
-    console.log(refreshingVolumes);
-
     if (refreshingVolumes) return;
 
     setRefreshingVolumes(true);
@@ -136,6 +143,15 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <>
+      <SearchModal
+        show={runtime.searchOpen}
+        setShow={(show) =>
+          setRuntime({
+            ...runtime,
+            searchOpen: show,
+          })
+        }
+      />
       <Tooltip id="refresh-tooltip" className="tooltip z-[999]" opacity={'100%'}>
         Refresh
       </Tooltip>
@@ -155,7 +171,9 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
                     fill-opacity="0.6"
                   />
                 </svg>
-                <p className="text-sm opacity-50 ml-4">Search for something</p>
+                <p className="text-sm opacity-50 ml-4">
+                  Search <span className="text-xs bg-gray-600 py-1 px-2 rounded ml-2">ctrl + space</span>
+                </p>
               </div>
               <div className="section-title text-sm flex justify-between items-center">
                 <p className="opacity-50">Storage Devices</p>

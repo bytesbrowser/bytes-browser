@@ -19,7 +19,7 @@ use walkdir::WalkDir;
 #[derive(Serialize)]
 pub struct Volume {
     name: String,
-    mount_point: PathBuf,
+    pub mount_point: PathBuf,
     used: u64,
     size: u64,
     available: u64,
@@ -30,8 +30,8 @@ pub struct Volume {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum DirectoryChild {
-    File(String, String, u64, u64), // Name of file, path to file, size of file, last modified seconds
-    Directory(String, String, u64, u64), // Name of directory, path to directory, size of directory, last modified seconds
+    File(String, String, u64, u64, String), // Name of file, path to file, size of file, last modified seconds, type of file
+    Directory(String, String, u64, u64, String), // Name of directory, path to directory, size of directory, last modified seconds
 }
 
 impl Volume {

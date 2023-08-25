@@ -25,6 +25,7 @@ export interface BookmarkDoc {
 export interface ProfileStore {
   tags: TagDoc[];
   bookmarks: BookmarkDoc[];
+  recentSearches: string[];
 }
 
 export interface Profile {
@@ -37,6 +38,11 @@ export interface Profile {
 }
 
 export interface DirectoryContents {
-  Directory?: [string, string, number, number];
-  File?: [string, string, number, number];
+  Directory?: [string, string, number, number, string];
+  File?: [string, string, number, number, string];
+}
+
+export interface SearchResult {
+  results: DirectoryContents[];
+  more: boolean;
 }

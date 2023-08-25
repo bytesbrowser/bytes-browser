@@ -5,6 +5,7 @@ import 'animate.css/animate.min.css';
 import Feedback from 'feeder-react-feedback';
 import { useEffect, useState } from 'react';
 import { Toaster } from 'react-hot-toast';
+import ReactModal from 'react-modal';
 import { BrowserRouter } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
 

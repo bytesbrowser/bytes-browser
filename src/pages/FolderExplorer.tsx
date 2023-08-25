@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api';
 import { useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import Moment from 'react-moment';
 import { Link, useNavigate } from 'react-router-dom';
 import { Tooltip } from 'react-tooltip';
@@ -41,14 +42,8 @@ export const FolderExplorer = () => {
     }
   }, [runtime.currentPath]);
 
-  useEffect(() => {
-    console.log(navigationRules);
-  }, [navigationRules]);
-
-  console.log('DIRS', directories);
-
   return (
-    <div className="folder-explorer max-h-full overflow-hidden overflow-y-auto animate__animated animate__fadeIn animate__faster">
+    <div className="folder-explorer h-[96.5vh] overflow-hidden animate__animated animate__fadeIn animate__faster">
       <div className="top border-b border-white border-opacity-10 flex items-center border-t">
         <div className="arrows flex items-center justify-around border-r border-white border-opacity-10 mr-4 pr-2 py-2 pl-2">
           <svg
@@ -115,7 +110,7 @@ export const FolderExplorer = () => {
             />
           </svg>
         </div>
-        <div className="breadcrumbs flex items-center py-2 justify-between flex-1 border-r border-white border-opacity-10 mr-4">
+        <div className="breadcrumbs flex items-center py-2 justify-between flex-1 border-r border-white border-opacity-10 mr-4 overflow-hidden">
           <div className="crumbs flex items-center">
             <svg
               width="21"
@@ -138,57 +133,61 @@ export const FolderExplorer = () => {
               </defs>
             </svg>
 
-            <Link
-              to={`/drive/${currentIndex}`}
-              className="underline cursor-pointer font-light"
-              onClick={() => {
-                setRuntime({
-                  ...runtime,
-                  currentPath: '',
-                });
-                setNavigationRules({
-                  forward: [],
-                  back: [],
-                });
-              }}
-            >
-              {runtime.currentDrive?.name}://
-            </Link>
-            {runtime.currentPath
-              .split('/')
-              .filter((path) => path.length > 1)
-              .map((path, key) => (
-                <p
-                  onClick={() => {
-                    let paths = runtime.currentPath.split('/');
+            <div className="flex items-center">
+              <Link
+                to={`/drive/${currentIndex}`}
+                className="underline cursor-pointer font-light w-min whitespace-nowrap"
+                onClick={() => {
+                  setRuntime({
+                    ...runtime,
+                    currentPath: '',
+                  });
+                  setNavigationRules({
+                    forward: [],
+                    back: [],
+                  });
+                }}
+              >
+                {runtime.currentDrive?.name}://
+              </Link>
+              {runtime.currentPath
+                .split('/')
+                .filter((path) => path.length > 1)
+                .map((path, key, arr) => (
+                  <p
+                    onClick={() => {
+                      let paths = runtime.currentPath.split('/');
 
-                    const clickedPath = paths.indexOf(path);
+                      const clickedPath = paths.indexOf(path);
 
-                    if (clickedPath === -1) return;
+                      if (clickedPath === -1) return;
 
-                    const newPaths = paths.slice(0, clickedPath + 1);
+                      const newPaths = paths.slice(0, clickedPath + 1);
 
-                    const newPath = newPaths.join('/') + '/';
+                      const newPath = newPaths.join('/') + '/';
 
-                    setNavigationRules((prevRules) => ({
-                      forward: [...prevRules.forward, runtime.currentPath],
-                      back: navigationRules.back,
-                    }));
+                      setNavigationRules((prevRules) => ({
+                        forward: [...prevRules.forward, runtime.currentPath],
+                        back: navigationRules.back,
+                      }));
 
-                    setRuntime({
-                      ...runtime,
-                      currentPath: newPath,
-                    });
-                  }}
-                  className="underline cursor-pointer font-light"
-                  key={key}
-                >
-                  {path}/
-                </p>
-              ))}
+                      setRuntime({
+                        ...runtime,
+                        currentPath: newPath,
+                      });
+                    }}
+                    className={`underline w-min whitespace-nowrap cursor-pointer font-light ${
+                      key === arr.length - 1 && runtime.currentPath.length > 76 && 'truncate'
+                    }`}
+                    key={key}
+                  >
+                    {path}/
+                  </p>
+                ))}
+            </div>
           </div>
         </div>
-        <div className="page-options flex items-center">
+        <div className="page-options flex items-center min-w-[150px]">
           <svg
             width="24"
             height="24"
@@ -318,7 +317,7 @@ export const FolderExplorer = () => {
               height="24"
               viewBox="0 0 256 256"
               className="ml-2 cursor-pointer opacity-50 hover:opacity-100"
-              data-tooltip-id="tooltip-item-size"
+              data-tooltip-id="tooltip-item-kind"
             >
               <path
                 fill="white"
@@ -327,60 +326,74 @@ export const FolderExplorer = () => {
             </svg>
           </p>
         </div>
-        {directories &&
-          directories.map((directory, key) => (
-            <div
-              className="row flex
-            px-4 py-2 cursor-pointer transition-all hover:opacity-50 items-center odd:bg-sidebar"
-              key={key}
-            >
-              {directory['Directory'] ? (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                  <path
-                    fill="white"
-                    d="M4 20q-.825 0-1.413-.588T2 18V6q0-.825.588-1.413T4 4h6l2 2h8q.825 0 1.413.588T22 8v10q0 .825-.588 1.413T20 20H4Z"
-                  />
-                </svg>
-              ) : (
-                <SmartFileIcon file={directory} />
-              )}
+        <div className="flex flex-col overflow-auto h-[89vh]">
+          {directories &&
+            directories.map((directory, key) => (
               <div
-                className="ml-4 flex items-center justify-between w-full pr-12"
-                onClick={() => {
-                  if (directory['Directory']) {
-                    setNavigationRules((prevRules) => ({
-                      forward: [],
-                      back: [...prevRules.back, runtime.currentPath],
-                    }));
-
-                    setRuntime({
-                      ...runtime,
-                      currentPath: runtime.currentPath + directory['Directory']![0] + '/',
-                    });
-                  }
-                }}
+                className="row flex
+            px-4 py-2 cursor-pointer transition-all hover:opacity-50 items-center odd:bg-sidebar"
+                key={key}
               >
-                <p className="min-w-[250px]">
-                  {directory['Directory'] ? directory['Directory'][0] : directory['File']![0]}
-                </p>
-                <Moment
-                  fromNow
-                  date={secondsAgoToDate(
-                    directory['Directory'] ? directory['Directory']![3] : directory['File']![3],
-                  ).toISOString()}
-                  className="min-w-[250px] flex justify-left opacity-50"
-                />
-                <p className="min-w-[250px] flex justify-left opacity-50">
-                  {directory['Directory'] ? 'Folder' : 'File'}
-                </p>
-                <p className="opacity-50 min-w-[250px] flex justify-left">
-                  {directory['Directory']
-                    ? formatBytes(directory['Directory']![2])
-                    : formatBytes(directory['File']![2])}
-                </p>
+                {directory['Directory'] ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                    <path
+                      fill="white"
+                      d="M4 20q-.825 0-1.413-.588T2 18V6q0-.825.588-1.413T4 4h6l2 2h8q.825 0 1.413.588T22 8v10q0 .825-.588 1.413T20 20H4Z"
+                    />
+                  </svg>
+                ) : (
+                  <SmartFileIcon file={directory} />
+                )}
+                <div
+                  className="ml-4 flex items-center justify-between w-full pr-12"
+                  onClick={() => {
+                    if (directory['Directory']) {
+                      setNavigationRules((prevRules) => ({
+                        forward: [],
+                        back: [...prevRules.back, runtime.currentPath],
+                      }));
+
+                      setRuntime({
+                        ...runtime,
+                        currentPath: runtime.currentPath + directory['Directory']![0] + '/',
+                      });
+                    } else if (directory['File']) {
+                      invoke('open_file', {
+                        path: directory['File']![1],
+                      })
+                        .then((_) => {})
+                        .catch((err) => {
+                          toast.error(err);
+                        });
+                    }
+                  }}
+                >
+                  <p className="min-w-[250px] text-ellipsis truncate w-[250px]">
+                    {directory['Directory'] ? directory['Directory'][0] : directory['File']![0]}
+                  </p>
+                  <Moment
+                    fromNow
+                    date={secondsAgoToDate(
+                      directory['Directory'] ? directory['Directory']![3] : directory['File']![3],
+                    ).toISOString()}
+                    className="min-w-[250px] flex justify-left opacity-50 pl-2"
+                  />
+                  <p className="min-w-[250px] flex justify-left opacity-50 pl-6">
+                    {directory['Directory']
+                      ? directory['Directory']![4] === 'File'
+                        ? 'Folder'
+                        : directory['Directory']![4]
+                      : directory['File']![4]}
+                  </p>
+                  <p className="opacity-50 min-w-[250px] flex justify-left pl-8">
+                    {directory['Directory']
+                      ? formatBytes(directory['Directory']![2])
+                      : formatBytes(directory['File']![2])}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+        </div>
         <Tooltip id="tooltip-item-name" content="This is the file or folder name" opacity={100} />
         <Tooltip id="tooltip-item-kind" content="This is the type of the entry" opacity={100} />
         <Tooltip

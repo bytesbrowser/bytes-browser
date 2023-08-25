@@ -32,8 +32,6 @@ export const SettingsProfiles = () => {
     if (runtime.profileStore) {
       const profs = await runtime.profileStore.get<Profile[]>('profiles');
 
-      console.log(profs);
-
       if (profs) {
         setProfiles(profs);
       }

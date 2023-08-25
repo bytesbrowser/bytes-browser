@@ -32,6 +32,9 @@
         "unmaximize": true,
         "unminimize": true,
         "startDragging": true
+      },
+      "globalShortcut": {
+        "all": true
       }
     },
     "bundle": {
@@ -55,10 +58,10 @@
         "resizable": true,
         "center": true,
         "title": "Bytes Browser",
-        "width": 1400,
+        "width": 1460,
         "height": 1200,
         "decorations": false,
-        "minWidth": 1400,
+        "minWidth": 1460,
         "minHeight": 1200
       }
     ]

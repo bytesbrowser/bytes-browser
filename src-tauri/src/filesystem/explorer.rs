@@ -2,9 +2,11 @@ use futures::future;
 use serde::Serialize;
 use std::fs::{self, DirEntry};
 use std::io;
-use std::path::Path;
 use tokio::task;
 
+use crate::error::Error;
+
+use super::get_file_description;
 use super::volume::DirectoryChild;
 
 #[derive(Serialize)]
@@ -71,12 +73,21 @@ async fn handle_entry(entry: DirEntry) -> io::Result<Vec<DirectoryChild>> {
 
     let last_modified = last_modified_sys_time.elapsed().unwrap().as_secs();
 
+    let extension = entry
+        .path()
+        .extension()
+        .unwrap_or_default()
+        .to_string_lossy()
+        .to_string();
+    let file_type = get_file_description(&extension);
+
     if entry.file_type()?.is_file() {
         Ok(vec![DirectoryChild::File(
             file_name,
             path,
             size,
             last_modified,
+            file_type.to_string(),
         )])
     } else {
         Ok(vec![DirectoryChild::Directory(
@@ -84,6 +95,28 @@ async fn handle_entry(entry: DirEntry) -> io::Result<Vec<DirectoryChild>> {
             path,
             size,
             last_modified,
+            "File".to_string(),
         )])
     }
+}
+
+#[tauri::command]
+pub async fn open_file(path: String) -> Result<(), Error> {
+    let output_res = open::commands(path)[0].output();
+
+    let output = match output_res {
+        Ok(output) => output,
+        Err(err) => {
+            let err_msg = format!("Failed to get open command output: {}", err);
+            return Err(Error::Custom(err_msg));
+        }
+    };
+
+    if output.status.success() {
+        return Ok(());
+    }
+
+    let err_msg = String::from_utf8(output.stderr)
+        .unwrap_or(String::from("Failed to open file and deserialize stderr."));
+    Err(Error::Custom(err_msg))
 }

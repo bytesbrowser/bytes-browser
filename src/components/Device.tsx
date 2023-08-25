@@ -1,6 +1,7 @@
 import { os } from '@tauri-apps/api';
 import { invoke } from '@tauri-apps/api/tauri';
 import { useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 import { Tooltip } from 'react-tooltip';
 import { useRecoilState } from 'recoil';
@@ -23,19 +24,18 @@ export const Device = ({ device, selected, id }: { device: DeviceInterface; sele
   }, [device]);
 
   const safely_eject = async () => {
-    console.log('ejecting');
-
     const platform = await os.platform();
 
     invoke('safely_eject_removable', { mountPath: device.mount_point, platform: platform.toString() })
-      .then((res) => {
+      .then((_) => {
         setRuntime({
           ...runtime,
           devices: runtime.devices.filter((d) => d.mount_point !== device.mount_point),
         });
+        toast.success('Successfully ejected removable');
       })
       .catch((err) => {
-        console.log(err);
+        toast.error('Failed to eject removable');
       });
   };
 
@@ -85,8 +85,7 @@ export const Device = ({ device, selected, id }: { device: DeviceInterface; sele
         </div>
         <div className="right flex items-center">
           <svg
-            onClick={(e) => {
-              console.log('start eject');
+            onClick={() => {
               safely_eject();
             }}
             style={{

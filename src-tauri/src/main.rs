@@ -1,10 +1,13 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod error;
 mod filesystem;
+mod search;
 
-use filesystem::explorer::open_directory;
+use filesystem::explorer::{open_directory, open_file};
 use filesystem::volume::{get_volumes, safely_eject_removable};
+use search::search_directory;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
@@ -44,7 +47,9 @@ async fn main() {
             get_volumes,
             safely_eject_removable,
             get_environment_variable,
-            open_directory
+            open_directory,
+            open_file,
+            search_directory
         ])
         .manage(Arc::new(Mutex::new(AppState::default())))
         .plugin(tauri_plugin_store::Builder::default().build())

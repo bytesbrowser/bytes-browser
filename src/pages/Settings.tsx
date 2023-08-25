@@ -61,7 +61,6 @@ export const Settings = () => {
 
         const titlebarLeft = document.getElementById('titlebar-left')!;
         if (titlebarLeft) {
-          console.log('here');
           titlebarLeft.setAttribute('style', 'background-color: #27272D;');
         }
 
@@ -71,7 +70,6 @@ export const Settings = () => {
 
         const titlebarLeft = document.getElementById('titlebar-left')!;
         if (titlebarLeft) {
-          console.log('here');
           titlebarLeft.setAttribute('style', 'background-color: #27272D;');
         }
 
