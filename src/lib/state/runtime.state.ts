@@ -16,6 +16,7 @@ export const runtimeState = atom<{
   devices: Device[];
   listStyle: 'GRID' | 'LIST' | 'TREE';
   searchOpen: boolean;
+  currentDriveName?: string;
 }>({
   key: 'runtime_state',
   default: {
@@ -31,5 +32,6 @@ export const runtimeState = atom<{
     devices: [],
     listStyle: 'LIST',
     searchOpen: false,
+    currentDriveName: undefined,
   },
 });

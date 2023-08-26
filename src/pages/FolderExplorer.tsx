@@ -7,7 +7,6 @@ import { Tooltip } from 'react-tooltip';
 import { useRecoilState } from 'recoil';
 
 import { SmartFileIcon } from '../components/SmartFileIcon';
-import { TimeText } from '../components/TimeText';
 import { runtimeState } from '../lib/state/runtime.state';
 import { DirectoryContents } from '../lib/types';
 import { formatBytes } from '../lib/utils/formatBytes';

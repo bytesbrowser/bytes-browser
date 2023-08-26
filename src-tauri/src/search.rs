@@ -161,6 +161,12 @@ pub async fn search_directory(
                     &mut fuzzy_scores,
                 );
 
+                if results.len() >= 10000 {
+                    println!("Over limit");
+                    results_exceeded = true; // set the flag to true
+                    break 'outer; // this will break out of both loops
+                }
+
                 continue;
             }
 
@@ -201,6 +207,7 @@ pub async fn search_directory(
             fuzzy_scores.push(score);
 
             if results.len() >= 10000 {
+                println!("Over limit");
                 results_exceeded = true; // set the flag to true
                 break 'outer; // this will break out of both loops
             }

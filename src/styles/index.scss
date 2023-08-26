@@ -18,7 +18,7 @@ body {
 
 .titlebar {
   height: 30px;
-  background: #27272d;
+  background: #1c1b20;
   user-select: none;
   display: flex;
   justify-content: space-between;
@@ -39,6 +39,7 @@ body {
     height: 100%;
     width: 300px;
     background-color: #1c1b20;
+    padding-left: 270px;
   }
 }
 

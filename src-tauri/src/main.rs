@@ -14,6 +14,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 use tauri::Manager;
+use tauri::State;
 use window_shadows::set_shadow;
 
 #[derive(Serialize, Deserialize)]
@@ -49,7 +50,8 @@ async fn main() {
             get_environment_variable,
             open_directory,
             open_file,
-            search_directory
+            search_directory,
+            get_volume_for_path
         ])
         .manage(Arc::new(Mutex::new(AppState::default())))
         .plugin(tauri_plugin_store::Builder::default().build())
@@ -60,4 +62,19 @@ async fn main() {
 #[tauri::command]
 fn get_environment_variable(name: &str) -> String {
     std::env::var(name).unwrap_or_else(|_| "".to_string())
+}
+
+#[tauri::command]
+fn get_volume_for_path(path: &str, state_mux: State<'_, StateSafe>) -> Option<String> {
+    let state = state_mux.lock().unwrap();
+
+    for (volume, cache) in state.system_cache.iter() {
+        for cached_path in cache.values().flatten() {
+            if cached_path.file_path == path {
+                return Some(volume.to_string());
+            }
+        }
+    }
+
+    None
 }

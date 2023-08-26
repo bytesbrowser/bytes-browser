@@ -3,13 +3,17 @@ import { FormEvent, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { InfinitySpin } from 'react-loader-spinner';
 import Modal from 'react-modal';
-import { useRecoilValue } from 'recoil';
+import { useRecoilState } from 'recoil';
 
 import { runtimeState } from '../lib/state/runtime.state';
-import { ProfileStore, SearchResult } from '../lib/types';
+import { DirectoryContents, ProfileStore, SearchResult } from '../lib/types';
+import { formatLongText } from '../lib/utils/formatLongText';
+import { removeAllAfterLastSlash } from '../lib/utils/removeAllAfterLastSlash';
+import { removeLastCharOf } from '../lib/utils/removeLastCharOf';
+import { SmartFileIcon } from './SmartFileIcon';
 
 export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: boolean) => void }) => {
-  const runtime = useRecoilValue(runtimeState);
+  const [runtime, setRuntime] = useRecoilState(runtimeState);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [searchValue, setSearchValue] = useState<string>('');
   const [searching, setSearching] = useState<boolean>(false);
@@ -41,6 +45,10 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
     if (runtime.store) {
       runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then((db) => {
         if (db) {
+          if (db.recentSearches.includes(search)) {
+            return;
+          }
+
           db.recentSearches = [...db.recentSearches, search];
           setRecentSearches(db.recentSearches);
           runtime.store?.set(`profile-store-${runtime.currentUser}`, db);
@@ -49,13 +57,13 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
     }
   };
 
-  const onSearch = (e?: FormEvent) => {
+  const onSearch = (e?: FormEvent, overide?: string) => {
     e?.preventDefault();
 
     setSearching(true);
 
     invoke<SearchResult>('search_directory', {
-      query: searchValue,
+      query: overide ? overide : searchValue,
       mountPnt: runtime.currentDrive?.mount_point,
       acceptFiles: true,
       acceptDirectories: false,
@@ -85,6 +93,29 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
         }
       });
     }
+  };
+
+  const clickedSearch = (result: DirectoryContents) => {
+    invoke('open_file', {
+      path: result['File']![1],
+    });
+
+    // const device = runtime.devices.find((device) => {
+    //   return device.mount_point.includes(
+    //     result['Directory'] ? result['Directory']![1].slice(1, 2) : result['File']![1].slice(0, 2),
+    //   );
+    // });
+
+    // setRuntime({
+    //   ...runtime,
+    //   currentDrive: device ?? null,
+    //   currentDriveName: device?.name,
+    //   currentPath: result['Directory']
+    //     ? removeAllAfterLastSlash(result['Directory']![1])
+    //     : removeAllAfterLastSlash(result['File']![1]),
+    // });
+
+    // setShow(false);
   };
 
   return (
@@ -155,7 +186,7 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
                   <p
                     onClick={() => {
                       setSearchValue(search);
-                      onSearch();
+                      onSearch(undefined, search);
                     }}
                     className="text-sm mr-2 hover:underline transition-all"
                   >
@@ -197,10 +228,32 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
                   </span>
                 </p>
               )}
-              <div className="result-list max-h-[500px] overflow-y-auto">
+              <div className="result-list max-h-[500px] overflow-y-auto overflow-x-hidden">
                 {results.results.map((result, key) => (
-                  <div key={key}>
-                    <p>{result['Directory'] ? result['Directory']![0] : result['File']![0]}</p>
+                  <div
+                    onClick={() => clickedSearch(result)}
+                    key={key}
+                    className="font-light py-1 mb-1 flex items-center justify-between w-full cursor-pointer opacity-50 hover:ml-2 hover:opacity-100 transition-all"
+                  >
+                    <>
+                      {result['Directory'] ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                          <path
+                            fill="white"
+                            d="M4 20q-.825 0-1.413-.588T2 18V6q0-.825.588-1.413T4 4h6l2 2h8q.825 0 1.413.588T22 8v10q0 .825-.588 1.413T20 20H4Z"
+                          />
+                        </svg>
+                      ) : (
+                        <SmartFileIcon file={result} />
+                      )}
+                      <p className="w-1/2">{result['Directory'] ? result['Directory']![0] : result['File']![0]}</p>
+                    </>
+                    <p className="w-1/2 flex items-center justify-end mr-2">
+                      {result['Directory']
+                        ? removeLastCharOf(formatLongText(result['Directory']![1], 50).replace(searchValue, ''))
+                        : removeLastCharOf(formatLongText(result['File']![1], 50).replace(searchValue, ''))}
+                    </p>
+                    <p></p>
                   </div>
                 ))}
               </div>
