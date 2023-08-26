@@ -1,10 +1,12 @@
 use crate::filesystem::get_file_description;
+use crate::CachedPath;
 use crate::{filesystem::volume::DirectoryChild, StateSafe};
 use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs;
-use std::os::windows::prelude::MetadataExt;
+// use std::os::windows::prelude::MetadataExt;
 use std::path::Path;
 use std::time::Instant;
 use tauri::State;
@@ -12,6 +14,34 @@ use tauri::State;
 const MINIMUM_SCORE: i16 = 20;
 
 const FILTERED_STRINGS: [&str; 3] = ["$$_systemapps_", "shared.index", "com."]; // Replace with the actual strings you want
+
+// Function to tokenize a filename (simplified example)
+fn tokenize(filename: &str) -> Vec<String> {
+    filename
+        .split(|c: char| !c.is_alphanumeric())
+        .filter(|&s| !s.is_empty())
+        .map(|s| s.to_lowercase())
+        .collect()
+}
+
+// Function to build a token index
+fn build_token_index(
+    system_cache: &HashMap<String, Vec<CachedPath>>,
+) -> HashMap<String, Vec<String>> {
+    let mut token_index = HashMap::new();
+
+    for (filename, _) in system_cache.iter() {
+        let tokens = tokenize(filename);
+        for token in tokens {
+            token_index
+                .entry(token)
+                .or_insert_with(Vec::new)
+                .push(filename.clone());
+        }
+    }
+
+    token_index
+}
 
 /// Gives a filename a fuzzy matcher score
 /// Returns 1000 if there is an exact match for prioritizing
@@ -36,19 +66,9 @@ fn check_file(
     }
 
     let filename_path = Path::new(filename);
-    let cleaned_filename = filename_path
-        .file_stem()
-        .and_then(|stem| stem.to_str())
-        .unwrap_or("");
 
     let has_extension_in_query = query.contains('.');
     let extension = query.split('.').last().unwrap_or_default();
-
-    let file_extension = filename_path
-        .extension()
-        .unwrap_or_default()
-        .to_string_lossy()
-        .to_lowercase();
 
     for filter in &FILTERED_STRINGS {
         if filename.contains(filter) {
@@ -131,19 +151,43 @@ pub async fn search_directory(
     accept_files: bool,
     accept_directories: bool,
 ) -> Result<SearchResult, ()> {
-    let start_time = Instant::now();
+    let state = state_mux.lock().unwrap();
+    let system_cache = state.system_cache.get(&mount_pnt).unwrap();
+    let token_index = build_token_index(&system_cache);
 
+    // Tokenize the query and find matching filenames
+    let query_tokens = tokenize(&query);
+    let mut candidate_files = Vec::new();
+
+    for token in query_tokens {
+        if let Some(filenames) = token_index.get(&token) {
+            candidate_files.extend(filenames);
+        }
+    }
+
+    candidate_files.sort();
+    candidate_files.dedup(); // Remove duplicates
+
+    // Now candidate_files contains filenames that might be a match.
+    // You can now proceed to score them using your existing logic.
     let mut results: Vec<_> = Vec::new();
     let mut fuzzy_scores: Vec<i16> = Vec::new();
     let matcher = SkimMatcherV2::default().smart_case();
 
-    let state = state_mux.lock().unwrap();
     let query = query.to_lowercase();
 
     let mut results_exceeded = false; // this flag will indicate whether the results exceeded the threshold
 
-    let system_cache = state.system_cache.get(&mount_pnt).unwrap();
-    'outer: for (filename, paths) in system_cache {
+    let start_time = Instant::now();
+    let start_cpu = sys_info::cpu_num().unwrap_or(0);
+    let start_ram = sys_info::mem_info().unwrap().avail;
+
+    'outer: for filename in candidate_files.iter() {
+        let paths = match system_cache.get(*filename) {
+            Some(p) => p,
+            None => continue,
+        };
+
         for path in paths {
             let file_type = &path.file_type;
             let file_path = &path.file_path;
@@ -161,7 +205,7 @@ pub async fn search_directory(
                     &mut fuzzy_scores,
                 );
 
-                if results.len() >= 10000 {
+                if results.len() >= 500 {
                     println!("Over limit");
                     results_exceeded = true; // set the flag to true
                     break 'outer; // this will break out of both loops
@@ -206,7 +250,7 @@ pub async fn search_directory(
             ));
             fuzzy_scores.push(score);
 
-            if results.len() >= 10000 {
+            if results.len() >= 500 {
                 println!("Over limit");
                 results_exceeded = true; // set the flag to true
                 break 'outer; // this will break out of both loops
@@ -215,7 +259,14 @@ pub async fn search_directory(
     }
 
     let end_time = Instant::now();
+    let end_cpu = sys_info::cpu_num().unwrap_or(0);
+    let end_ram = sys_info::mem_info().unwrap().avail;
+
     println!("Elapsed time: {:?}", end_time - start_time);
+    println!("CPU cores at start: {}", start_cpu);
+    println!("CPU cores at end: {}", end_cpu);
+    println!("RAM available at start: {} KB", start_ram);
+    println!("RAM available at end: {:?} KB", end_ram);
 
     // Sort by best match first.
     let mut tuples: Vec<(usize, _)> = fuzzy_scores.iter().enumerate().collect();

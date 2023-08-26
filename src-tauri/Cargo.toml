@@ -36,6 +36,7 @@ graphql_client = "0.13.0"
 open = "5.0.0"
 thiserror = "1.0.47"
 fuzzy-matcher = "0.3.7"
+sys-info = "0.9.1"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem

@@ -22,7 +22,7 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isMac, setIsMac] = useState(false);
 
-  useHotkey('CommandOrControl+Space', (_shortcut) => {
+  useHotkey('CommandOrControl+Shift+Space', (_shortcut) => {
     setRuntime({
       ...runtime,
       searchOpen: true,
@@ -172,7 +172,10 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
                   />
                 </svg>
                 <p className="text-sm opacity-50 ml-4">
-                  Search <span className="text-xs bg-gray-600 py-1 px-2 rounded ml-2">ctrl + space</span>
+                  Search{' '}
+                  <span className="text-xs bg-gray-600 py-1 px-2 rounded ml-2">
+                    {isMac ? '⌘' : 'ctrl'} + shift + space
+                  </span>
                 </p>
               </div>
               <div className="section-title text-sm flex justify-between items-center">
