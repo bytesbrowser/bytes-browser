@@ -2,7 +2,7 @@ import { invoke } from '@tauri-apps/api';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import Moment from 'react-moment';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Tooltip } from 'react-tooltip';
 import { useRecoilState } from 'recoil';
 
