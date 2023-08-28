@@ -81,7 +81,6 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
       acceptDirectories: searchOptions.directories,
     })
       .then((res) => {
-        console.log(res);
         setSearching(false);
 
         let sorted: DirectoryContents[] = [];
@@ -156,16 +155,6 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
     if (device) {
       setShow(false);
 
-      console.log(
-        result['Directory']
-          ? result['Directory']![1] === '/'
-            ? ''
-            : removeAllAfterLastSlash(result['Directory']![1].replace(result['Directory']![1].slice(0, 2), ''))
-          : result['File']![1] === '/'
-          ? ''
-          : removeAllAfterLastSlash(result['File']![1].replace(device?.mount_point, '')),
-      );
-
       navigate(
         `/drive/${deviceIndex}?path=${encodeURIComponent(
           result['Directory']
@@ -179,8 +168,6 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
       );
     }
   };
-
-  console.log(searchOptions);
 
   return (
     <Modal

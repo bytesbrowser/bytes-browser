@@ -52,17 +52,23 @@ export const Auth = () => {
             },
           },
           fetchPolicy: 'no-cache',
-        }).then((res) => {
-          if (res.data?.getSubscriptionStatus.active) {
-            navigate('/drive/' + 0);
-          } else {
-            navigate('/no-subscription');
-          }
-        });
-      }
-    }
+        })
+          .then((res) => {
+            setCheckedAuth(true);
 
-    setCheckedAuth(true);
+            if (res.data?.getSubscriptionStatus.active) {
+              navigate('/drive/' + 0);
+            } else {
+              navigate('/no-subscription');
+            }
+          })
+          .catch((err) => {
+            toast.error('There was an issue checking your subscription status. Please try again later.');
+          });
+      }
+    } else {
+      setCheckedAuth(true);
+    }
 
     checkNetwork();
   };

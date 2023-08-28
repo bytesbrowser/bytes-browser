@@ -24,7 +24,6 @@ body {
   justify-content: space-between;
   position: fixed;
   align-items: center;
-  padding-right: 5px;
   top: 0;
   left: 0;
   right: 0;
@@ -71,6 +70,7 @@ body {
 
 #titlebar-close:hover {
   background: #ff5f56;
+  border-top-right-radius: 8px;
 
   svg {
     fill: white;
