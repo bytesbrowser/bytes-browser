@@ -70,7 +70,7 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
       query: overide ? overide : searchValue,
       mountPnt: runtime.currentDrive?.mount_point,
       acceptFiles: true,
-      acceptDirectories: false,
+      acceptDirectories: true,
     })
       .then((res) => {
         console.log(res);
@@ -102,23 +102,37 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
   const clickedSearch = (result: DirectoryContents) => {
     const device = runtime.devices.find((device) => {
       return device.mount_point.includes(
-        result['Directory'] ? result['Directory']![1].slice(1, 2) : result['File']![1].slice(0, 2),
+        result['Directory'] ? result['Directory']![1].slice(0, 1) : result['File']![1].slice(0, 2),
       );
     });
 
     const deviceIndex = runtime.devices.findIndex((device) => {
       return device.mount_point.includes(
-        result['Directory'] ? result['Directory']![1].slice(1, 2) : result['File']![1].slice(0, 2),
+        result['Directory'] ? result['Directory']![1].slice(0, 1) : result['File']![1].slice(0, 2),
       );
     });
 
     if (device) {
       setShow(false);
 
+      console.log(
+        result['Directory']
+          ? result['Directory']![1] === '/'
+            ? ''
+            : removeAllAfterLastSlash(result['Directory']![1].replace(result['Directory']![1].slice(0, 2), ''))
+          : result['File']![1] === '/'
+          ? ''
+          : removeAllAfterLastSlash(result['File']![1].replace(device?.mount_point, '')),
+      );
+
       navigate(
         `/drive/${deviceIndex}?path=${encodeURIComponent(
           result['Directory']
-            ? removeAllAfterLastSlash(result['Directory']![1].replace(device?.mount_point, ''))
+            ? result['Directory']![1] === '/'
+              ? ''
+              : removeAllAfterLastSlash(result['Directory']![1].replace(result['Directory']![1].slice(0, 2), ''))
+            : result['File']![1] === '/'
+            ? ''
             : removeAllAfterLastSlash(result['File']![1].replace(device?.mount_point, '')),
         )}&mount=${encodeURIComponent(device.mount_point)}`,
       );
@@ -257,8 +271,8 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
                     </>
                     <p className="w-1/2 flex items-center justify-end mr-2">
                       {result['Directory']
-                        ? removeLastCharOf(formatLongText(result['Directory']![1], 50).replace(searchValue, ''))
-                        : removeLastCharOf(formatLongText(result['File']![1], 50).replace(searchValue, ''))}
+                        ? removeLastCharOf(formatLongText(result['Directory']![1], 45))
+                        : removeLastCharOf(formatLongText(result['File']![1], 45))}
                     </p>
                     <p></p>
                   </div>
