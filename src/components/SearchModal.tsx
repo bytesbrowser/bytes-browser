@@ -3,8 +3,10 @@ import { FormEvent, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { InfinitySpin } from 'react-loader-spinner';
 import Modal from 'react-modal';
+import { useNavigate } from 'react-router-dom';
 import { useRecoilState } from 'recoil';
 
+import RuntimeEmitter from '../lib/emitters/runtime.emitter';
 import { runtimeState } from '../lib/state/runtime.state';
 import { DirectoryContents, ProfileStore, SearchResult } from '../lib/types';
 import { formatLongText } from '../lib/utils/formatLongText';
@@ -18,6 +20,8 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
   const [searchValue, setSearchValue] = useState<string>('');
   const [searching, setSearching] = useState<boolean>(false);
   const [results, setResults] = useState<SearchResult | null>(null);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (runtime.store) {
@@ -96,26 +100,29 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
   };
 
   const clickedSearch = (result: DirectoryContents) => {
-    invoke('open_file', {
-      path: result['File']![1],
+    const device = runtime.devices.find((device) => {
+      return device.mount_point.includes(
+        result['Directory'] ? result['Directory']![1].slice(1, 2) : result['File']![1].slice(0, 2),
+      );
     });
 
-    // const device = runtime.devices.find((device) => {
-    //   return device.mount_point.includes(
-    //     result['Directory'] ? result['Directory']![1].slice(1, 2) : result['File']![1].slice(0, 2),
-    //   );
-    // });
+    const deviceIndex = runtime.devices.findIndex((device) => {
+      return device.mount_point.includes(
+        result['Directory'] ? result['Directory']![1].slice(1, 2) : result['File']![1].slice(0, 2),
+      );
+    });
 
-    // setRuntime({
-    //   ...runtime,
-    //   currentDrive: device ?? null,
-    //   currentDriveName: device?.name,
-    //   currentPath: result['Directory']
-    //     ? removeAllAfterLastSlash(result['Directory']![1])
-    //     : removeAllAfterLastSlash(result['File']![1]),
-    // });
+    if (device) {
+      setShow(false);
 
-    // setShow(false);
+      navigate(
+        `/drive/${deviceIndex}?path=${encodeURIComponent(
+          result['Directory']
+            ? removeAllAfterLastSlash(result['Directory']![1].replace(device?.mount_point, ''))
+            : removeAllAfterLastSlash(result['File']![1].replace(device?.mount_point, '')),
+        )}&mount=${encodeURIComponent(device.mount_point)}`,
+      );
+    }
   };
 
   return (

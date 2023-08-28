@@ -11,6 +11,9 @@ use std::path::Path;
 use std::time::Instant;
 use tauri::State;
 
+#[cfg(target_os = "windows")]
+use std::os::windows::fs::MetadataExt;
+
 const MINIMUM_SCORE: i16 = 20;
 
 const FILTERED_STRINGS: [&str; 3] = ["$$_systemapps_", "shared.index", "com."]; // Replace with the actual strings you want
@@ -151,9 +154,30 @@ pub async fn search_directory(
     accept_files: bool,
     accept_directories: bool,
 ) -> Result<SearchResult, ()> {
+    let start_time = Instant::now();
+
     let state = state_mux.lock().unwrap();
-    let system_cache = state.system_cache.get(&mount_pnt).unwrap();
-    let token_index = build_token_index(&system_cache);
+
+    let mut all_tokens: Vec<HashMap<String, Vec<String>>> = Vec::new();
+
+    for (_, cache) in state.system_cache.iter() {
+        let token_index = build_token_index(&cache);
+        all_tokens.push(token_index);
+    }
+
+    let mut token_index = HashMap::new();
+
+    for token in all_tokens {
+        for (key, value) in token {
+            token_index
+                .entry(key)
+                .or_insert_with(Vec::new)
+                .extend(value);
+        }
+    }
+
+    // let system_cache = state.system_cache.get(&mount_pnt).unwrap();
+    // let token_index = build_token_index(&system_cache);
 
     // Tokenize the query and find matching filenames
     let query_tokens = tokenize(&query);
@@ -161,6 +185,7 @@ pub async fn search_directory(
 
     for token in query_tokens {
         if let Some(filenames) = token_index.get(&token) {
+            println!("Found token: {}", token);
             candidate_files.extend(filenames);
         }
     }
@@ -178,12 +203,23 @@ pub async fn search_directory(
 
     let mut results_exceeded = false; // this flag will indicate whether the results exceeded the threshold
 
-    let start_time = Instant::now();
-    let start_cpu = sys_info::cpu_num().unwrap_or(0);
-    let start_ram = sys_info::mem_info().unwrap().avail;
+    let mut combined_cache: HashMap<String, Vec<&CachedPath>> = HashMap::new();
+
+    // let system_cache = state.system_cache.get(&mount_pnt).unwrap();
+
+    for (_, volume) in state.system_cache.iter() {
+        for (file_type, cached_paths) in volume.iter() {
+            for cached_path in cached_paths.iter() {
+                combined_cache
+                    .entry(file_type.clone())
+                    .or_insert_with(Vec::new)
+                    .push(cached_path.clone());
+            }
+        }
+    }
 
     'outer: for filename in candidate_files.iter() {
-        let paths = match system_cache.get(*filename) {
+        let paths = match combined_cache.get(*filename) {
             Some(p) => p,
             None => continue,
         };
@@ -263,10 +299,6 @@ pub async fn search_directory(
     let end_ram = sys_info::mem_info().unwrap().avail;
 
     println!("Elapsed time: {:?}", end_time - start_time);
-    println!("CPU cores at start: {}", start_cpu);
-    println!("CPU cores at end: {}", end_cpu);
-    println!("RAM available at start: {} KB", start_ram);
-    println!("RAM available at end: {:?} KB", end_ram);
 
     // Sort by best match first.
     let mut tuples: Vec<(usize, _)> = fuzzy_scores.iter().enumerate().collect();

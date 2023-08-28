@@ -2,13 +2,14 @@ import { invoke } from '@tauri-apps/api';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import Moment from 'react-moment';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { Tooltip } from 'react-tooltip';
 import { useRecoilState } from 'recoil';
 
 import { SmartFileIcon } from '../components/SmartFileIcon';
+import RuntimeEmitter from '../lib/emitters/runtime.emitter';
 import { runtimeState } from '../lib/state/runtime.state';
-import { DirectoryContents } from '../lib/types';
+import { Device, DirectoryContents } from '../lib/types';
 import { formatBytes } from '../lib/utils/formatBytes';
 import { secondsAgoToDate } from '../lib/utils/secondsToTimestamp';
 
@@ -21,13 +22,72 @@ export const FolderExplorer = () => {
   });
   const currentIndex = location.pathname.split('/')[2];
 
+  const { driveId } = useParams();
+
+  const loc = useLocation();
+
+  useEffect(() => {
+    const query = new URLSearchParams(loc.search);
+
+    const mount = query.get('mount');
+    const path = query.get('path');
+
+    const device = runtime.devices[driveId as any];
+
+    if (mount && path) {
+      console.log('opening dir');
+      invoke('open_directory', { path: mount + path }).then((res: any) => {
+        setRuntime({
+          ...runtime,
+          currentDrive: device,
+          currentDriveName: device?.name,
+          currentPath: path,
+        });
+
+        console.log(res.data);
+
+        setDirectories(res.data as DirectoryContents[]);
+      });
+    }
+  }, [loc]);
+
+  useEffect(() => {
+    const query = new URLSearchParams(loc.search);
+
+    const mount = query.get('mount');
+    const path = query.get('path');
+
+    console.log('YEET');
+
+    if (mount || path) return;
+
+    const device = runtime.devices[driveId as any];
+
+    setRuntime({
+      ...runtime,
+      currentDrive: device,
+      currentDriveName: device?.name,
+    });
+
+    invoke('open_directory', { path: device.mount_point }).then((res: any) => {
+      setRuntime({
+        ...runtime,
+        currentDrive: device,
+        currentDriveName: device?.name,
+        currentPath: '',
+      });
+
+      setDirectories(res.data as DirectoryContents[]);
+    });
+  }, [driveId]);
+
   useEffect(() => {
     if (runtime.currentDrive) {
       invoke('open_directory', { path: runtime.currentDrive.mount_point + runtime.currentPath }).then((res: any) => {
         setDirectories(res.data as DirectoryContents[]);
       });
     }
-  }, [runtime.currentDrive]);
+  }, []);
 
   useEffect(() => {
     if (runtime.currentPath === '' && runtime.currentDrive) {
@@ -40,6 +100,24 @@ export const FolderExplorer = () => {
       });
     }
   }, [runtime.currentPath]);
+
+  useEffect(() => {
+    if (
+      runtime.currentDrive &&
+      runtime.devices[driveId as any] &&
+      runtime.currentDrive.name !== runtime.devices[driveId as any].name
+    ) {
+      setRuntime({
+        ...runtime,
+        currentDrive: runtime.devices[driveId as any],
+      });
+      RuntimeEmitter.emit('open_dir', {
+        path: runtime.currentPath,
+        mount: runtime.devices[driveId as any].mount_point,
+        device: runtime.devices[driveId as any],
+      });
+    }
+  }, [driveId]);
 
   return (
     <div className="folder-explorer h-[96.5vh] overflow-hidden animate__animated animate__fadeIn animate__faster">

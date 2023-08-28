@@ -22,14 +22,14 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isMac, setIsMac] = useState(false);
 
+  const { driveId, path, mount } = useParams();
+
   useHotkey('CommandOrControl+Shift+Space', (_shortcut) => {
     setRuntime({
       ...runtime,
       searchOpen: true,
     });
   });
-
-  const { driveId } = useParams();
 
   const [tags, setTags] = useState<TagDoc[]>([]);
   const [bookmarks, setBookmarks] = useState<BookmarkDoc[]>([]);
@@ -63,7 +63,7 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
     ) {
       setRuntime({
         ...runtime,
-        currentDrive: runtime.devices[driveId as any] ?? null,
+        currentDrive: runtime.devices[driveId as any],
       });
     }
   }, [driveId]);
