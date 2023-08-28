@@ -30,6 +30,7 @@ pub type VolumeCache = HashMap<String, Vec<CachedPath>>;
 #[derive(Default)]
 pub struct AppState {
     system_cache: HashMap<String, VolumeCache>,
+    token_cache: HashMap<String, Vec<String>>,
 }
 
 pub type StateSafe = Arc<Mutex<AppState>>;

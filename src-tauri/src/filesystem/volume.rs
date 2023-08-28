@@ -16,6 +16,8 @@ use tauri::State;
 use tokio::task::block_in_place;
 use walkdir::WalkDir;
 
+use super::cache::build_token_index_root;
+
 #[derive(Serialize)]
 pub struct Volume {
     name: String,
@@ -177,8 +179,11 @@ pub async fn get_volumes(state_mux: State<'_, StateSafe>) -> Result<Vec<Volume>,
 
     if !cache_exists {
         save_system_cache(&state_mux);
-        run_cache_interval(&state_mux);
     };
+
+    run_cache_interval(&state_mux);
+
+    build_token_index_root(&state_mux);
 
     Ok(volumes)
 }

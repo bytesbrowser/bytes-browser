@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, MutexGuard};
 
 use crate::filesystem::{DIRECTORY, FILE};
+use crate::search::build_token_index;
 use crate::{AppState, CachedPath, StateSafe, VolumeCache};
 use lazy_static::lazy_static;
 use notify::event::{CreateKind, ModifyKind, RenameMode};
@@ -162,6 +163,30 @@ pub fn run_cache_interval(state_mux: &StateSafe) {
 pub fn save_system_cache(state_mux: &StateSafe) {
     let state = &mut state_mux.lock().unwrap();
     save_to_cache(state);
+}
+
+pub fn build_token_index_root(state_mux: &StateSafe) {
+    let mut state = state_mux.lock().unwrap();
+
+    let mut all_tokens: Vec<HashMap<String, Vec<String>>> = Vec::new();
+
+    for (_, cache) in state.system_cache.iter() {
+        let token_index = build_token_index(&cache);
+        all_tokens.push(token_index);
+    }
+
+    let mut token_index = HashMap::new();
+
+    for token in all_tokens {
+        for (key, value) in token {
+            token_index
+                .entry(key)
+                .or_insert_with(Vec::new)
+                .extend(value);
+        }
+    }
+
+    state.token_cache = token_index;
 }
 
 /// Gets the cache from the state (in memory), encodes and saves it to the cache file path.

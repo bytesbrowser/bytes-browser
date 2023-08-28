@@ -28,7 +28,7 @@ fn tokenize(filename: &str) -> Vec<String> {
 }
 
 // Function to build a token index
-fn build_token_index(
+pub fn build_token_index(
     system_cache: &HashMap<String, Vec<CachedPath>>,
 ) -> HashMap<String, Vec<String>> {
     let mut token_index = HashMap::new();
@@ -158,33 +158,12 @@ pub async fn search_directory(
 
     let state = state_mux.lock().unwrap();
 
-    let mut all_tokens: Vec<HashMap<String, Vec<String>>> = Vec::new();
-
-    for (_, cache) in state.system_cache.iter() {
-        let token_index = build_token_index(&cache);
-        all_tokens.push(token_index);
-    }
-
-    let mut token_index = HashMap::new();
-
-    for token in all_tokens {
-        for (key, value) in token {
-            token_index
-                .entry(key)
-                .or_insert_with(Vec::new)
-                .extend(value);
-        }
-    }
-
-    // let system_cache = state.system_cache.get(&mount_pnt).unwrap();
-    // let token_index = build_token_index(&system_cache);
-
     // Tokenize the query and find matching filenames
     let query_tokens = tokenize(&query);
     let mut candidate_files = Vec::new();
 
     for token in query_tokens {
-        if let Some(filenames) = token_index.get(&token) {
+        if let Some(filenames) = state.token_cache.get(&token) {
             println!("Found token: {}", token);
             candidate_files.extend(filenames);
         }
