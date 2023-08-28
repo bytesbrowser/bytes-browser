@@ -4,9 +4,9 @@ import { toast } from 'react-hot-toast';
 import { InfinitySpin } from 'react-loader-spinner';
 import Modal from 'react-modal';
 import { useNavigate } from 'react-router-dom';
+import Select from 'react-select';
 import { useRecoilState } from 'recoil';
 
-import RuntimeEmitter from '../lib/emitters/runtime.emitter';
 import { runtimeState } from '../lib/state/runtime.state';
 import { DirectoryContents, ProfileStore, SearchResult } from '../lib/types';
 import { formatLongText } from '../lib/utils/formatLongText';
@@ -20,6 +20,14 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
   const [searchValue, setSearchValue] = useState<string>('');
   const [searching, setSearching] = useState<boolean>(false);
   const [results, setResults] = useState<SearchResult | null>(null);
+  const [sortedResults, setSortedResults] = useState<SearchResult | null>(null);
+
+  const [showFilterForm, setShowFilterForm] = useState<boolean>(false);
+  const [searchOptions, setSearchOptions] = useState({
+    directories: false,
+    files: true,
+  });
+  const [sortBy, setSortBy] = useState<'Name' | 'Date' | 'Size' | 'Relevance'>('Name');
 
   const navigate = useNavigate();
 
@@ -69,12 +77,44 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
     invoke<SearchResult>('search_directory', {
       query: overide ? overide : searchValue,
       mountPnt: runtime.currentDrive?.mount_point,
-      acceptFiles: true,
-      acceptDirectories: true,
+      acceptFiles: searchOptions.files,
+      acceptDirectories: searchOptions.directories,
     })
       .then((res) => {
         console.log(res);
         setSearching(false);
+
+        let sorted: DirectoryContents[] = [];
+
+        if (sortBy === 'Name') {
+          sorted = [...res.results].sort((a, b) => {
+            const nameA = a.Directory ? a.Directory[0] : a.File ? a.File[0] : '';
+            const nameB = b.Directory ? b.Directory[0] : b.File ? b.File[0] : '';
+
+            return nameA.localeCompare(nameB);
+          });
+        } else if (sortBy === 'Date') {
+          sorted = [...res.results].sort((a, b) => {
+            const nameA = a.Directory ? a.Directory[3] : a.File ? a.File[3] : '';
+            const nameB = b.Directory ? b.Directory[3] : b.File ? b.File[3] : '';
+
+            return nameA < nameB ? 1 : -1;
+          });
+        } else if (sortBy === 'Size') {
+          sorted = [...res.results].sort((a, b) => {
+            const nameA = a.Directory ? a.Directory[2] : a.File ? a.File[2] : '';
+            const nameB = b.Directory ? b.Directory[2] : b.File ? b.File[2] : '';
+
+            return nameA < nameB ? 1 : -1;
+          });
+        } else if (sortBy === 'Relevance') {
+          sorted = [...res.results];
+        }
+
+        setSortedResults({
+          ...res,
+          results: sorted,
+        });
         setResults(res);
       })
       .catch((err) => {
@@ -82,6 +122,7 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
         toast.error('There was an error with your search.');
         setSearching(false);
         setResults(null);
+        setSortedResults(null);
       });
 
     updateRecentSearches(searchValue);
@@ -139,6 +180,8 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
     }
   };
 
+  console.log(searchOptions);
+
   return (
     <Modal
       isOpen={show}
@@ -160,7 +203,7 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
         },
       }}
     >
-      <div className="animate__animated animate__fadeIn animate__faster">
+      <div className="animate__animated animate__fadeIn animate__faster pb-8">
         <div className="top border-b border-white border-opacity-10 p-4 flex items-center justify-between">
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path
@@ -174,6 +217,7 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
               value={searchValue}
               onChange={(e) => {
                 setResults(null);
+                setSortedResults(null);
                 setSearchValue(e.target.value);
               }}
               required
@@ -184,6 +228,7 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
             />
           </form>
           <svg
+            onClick={() => setShowFilterForm(!showFilterForm)}
             xmlns="http://www.w3.org/2000/svg"
             width="24"
             height="24"
@@ -195,6 +240,110 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
               d="M14 12v7.88c.04.3-.06.62-.29.83a.996.996 0 0 1-1.41 0l-2.01-2.01a.989.989 0 0 1-.29-.83V12h-.03L4.21 4.62a1 1 0 0 1 .17-1.4c.19-.14.4-.22.62-.22h14c.22 0 .43.08.62.22a1 1 0 0 1 .17 1.4L14.03 12H14Z"
             />
           </svg>
+        </div>
+        <div
+          className="filters p-4 animate__animated animate__fadeIn"
+          style={{
+            display: showFilterForm ? 'block' : 'none',
+          }}
+        >
+          <p className="text-xs">Search Options</p>
+          <div className="options mt-4">
+            <div className="option flex items-center flex-col">
+              <div className="flex justify-between w-full">
+                <p className="text-sm opacity-80 font-light">Include Files In Results</p>
+                <input
+                  checked={searchOptions.files}
+                  onChange={(e) => {
+                    setSearchOptions({
+                      ...searchOptions,
+                      directories:
+                        searchOptions.directories === false && !e.target.checked ? true : searchOptions.directories,
+                      files: e.target.checked,
+                    });
+                  }}
+                  className="mr-2"
+                  type="checkbox"
+                  name="files"
+                  id="files"
+                />
+              </div>
+              <div className="flex justify-between w-full mt-4">
+                <p className="text-sm opacity-80 font-light">Include Directories In Results</p>
+                <input
+                  checked={searchOptions.directories}
+                  onChange={(e) => {
+                    setSearchOptions({
+                      ...searchOptions,
+                      files: searchOptions.files === false && !e.target.checked ? true : searchOptions.files,
+                      directories: e.target.checked,
+                    });
+                  }}
+                  className="mr-2"
+                  type="checkbox"
+                  name="directories"
+                  id="directories"
+                />
+              </div>
+              <div className="flex justify-between w-full mt-4">
+                <p className="text-sm opacity-80 font-light">Sort By</p>
+
+                <Select
+                  value={
+                    sortBy === 'Name'
+                      ? { value: 'Name', label: 'Name' }
+                      : sortBy === 'Date'
+                      ? { value: 'Date', label: 'Date' }
+                      : sortBy === 'Size'
+                      ? { value: 'Size', label: 'Size' }
+                      : { value: 'Relevance', label: 'Relevance' }
+                  }
+                  styles={{
+                    option: (styles) => ({
+                      ...styles,
+                      color: '#FFFFFF',
+                      backgroundColor: '#1C1B20',
+                      '&:hover': {
+                        backgroundColor: '#27272D',
+                      },
+                      fontSize: '12px',
+                    }),
+                    container: (styles) => ({
+                      ...styles,
+                      width: '200px',
+                      backgroundColor: '#1C1B20',
+                      fontSize: '12px',
+                    }),
+                    control: (styles) => ({
+                      ...styles,
+                      backgroundColor: '#1C1B20',
+                      borderColor: '#27272D',
+                    }),
+                    singleValue: (styles) => ({
+                      ...styles,
+                      color: '#FFFFFF',
+                    }),
+                    menu: (styles) => ({
+                      ...styles,
+                      backgroundColor: '#1C1B20',
+                    }),
+                  }}
+                  options={[
+                    { value: 'Name', label: 'Name' },
+                    {
+                      value: 'Date',
+                      label: 'Date',
+                    },
+                    { value: 'Size', label: 'Size' },
+                    { value: 'Relevance', label: 'Relevance' },
+                  ]}
+                  onChange={(e) => {
+                    setSortBy(e?.value as any);
+                  }}
+                />
+              </div>
+            </div>
+          </div>
         </div>
         <div className="results p-4">
           <div className="recent">
@@ -208,6 +357,8 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
                     onClick={() => {
                       setSearchValue(search);
                       onSearch(undefined, search);
+                      setResults(null);
+                      setSortedResults(null);
                     }}
                     className="text-sm mr-2 hover:underline transition-all"
                   >
@@ -237,10 +388,10 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
               <InfinitySpin color="white" />
             </div>
           )}
-          {results && results.results.length > 0 && (
+          {sortedResults && sortedResults.results.length > 0 && (
             <>
               <p className="text-xs mt-2">
-                <span className="opacity-50">Results</span> {results.results.length}
+                <span className="opacity-50">Results</span> {sortedResults.results.length}
               </p>
               {results && results.more && (
                 <p className="text-xs mt-2 mb-4">
@@ -250,7 +401,7 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
                 </p>
               )}
               <div className="result-list max-h-[500px] overflow-y-auto overflow-x-hidden">
-                {results.results.map((result, key) => (
+                {sortedResults.results.map((result, key) => (
                   <div
                     onClick={() => clickedSearch(result)}
                     key={key}

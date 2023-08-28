@@ -220,7 +220,7 @@ pub async fn search_directory(
                     &mut fuzzy_scores,
                 );
 
-                if results.len() >= 500 {
+                if results.len() >= 250 {
                     println!("Over limit");
                     results_exceeded = true; // set the flag to true
                     break 'outer; // this will break out of both loops
@@ -265,7 +265,7 @@ pub async fn search_directory(
             ));
             fuzzy_scores.push(score);
 
-            if results.len() >= 500 {
+            if results.len() >= 250 {
                 println!("Over limit");
                 results_exceeded = true; // set the flag to true
                 break 'outer; // this will break out of both loops
@@ -274,8 +274,6 @@ pub async fn search_directory(
     }
 
     let end_time = Instant::now();
-    let end_cpu = sys_info::cpu_num().unwrap_or(0);
-    let end_ram = sys_info::mem_info().unwrap().avail;
 
     println!("Elapsed time: {:?}", end_time - start_time);
 

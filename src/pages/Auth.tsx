@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { Triangle } from 'react-loader-spinner';
 import { useNavigate } from 'react-router-dom';
 import { useRecoilState } from 'recoil';
 
@@ -17,6 +18,7 @@ export const Auth = () => {
   const [getUserQuery] = useGetUserLazyQuery();
   const [activatedProduct, setActivatedProduct] = useState<string>('');
   const [getSubStatus] = useGetSubscriptionStatusLazyQuery();
+  const [checkedAuth, setCheckedAuth] = useState<boolean>(false);
 
   useEffect(() => {
     checkAuth();
@@ -59,6 +61,8 @@ export const Auth = () => {
         });
       }
     }
+
+    setCheckedAuth(true);
 
     checkNetwork();
   };
@@ -184,6 +188,22 @@ export const Auth = () => {
       }
     }
   };
+
+  if (!checkedAuth) {
+    return (
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <Triangle color="white" />
+      </div>
+    );
+  }
 
   if (!hasNetwork) {
     return (

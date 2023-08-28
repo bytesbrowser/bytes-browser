@@ -5,7 +5,6 @@ import 'animate.css/animate.min.css';
 import Feedback from 'feeder-react-feedback';
 import { useEffect, useState } from 'react';
 import { Toaster } from 'react-hot-toast';
-import ReactModal from 'react-modal';
 import { BrowserRouter } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
 
@@ -32,7 +31,7 @@ const App = () => {
         } else {
           const titlebarLeft = document.getElementById('titlebar-left')!;
           if (titlebarLeft) {
-            titlebarLeft.setAttribute('style', 'background-color: #27272D;');
+            titlebarLeft.setAttribute('style', 'padding-left: 0;');
           }
 
           setUseTitlebar(true);
@@ -49,17 +48,12 @@ const App = () => {
     if (runtime.readVolumes && useTitlebar) {
       const titlebarLeft = document.getElementById('titlebar-left')!;
       if (titlebarLeft) {
-        titlebarLeft.setAttribute('style', 'background-color: #1c1b20;');
+        titlebarLeft.setAttribute('style', 'background-color: #1c1b20; padding-left: 270px;');
       }
       const app = document.getElementsByClassName('app')[0];
       if (app) {
         app.setAttribute('style', 'margin-top: 30px;');
       }
-
-      // const content = document.getElementsByClassName('content')[0];
-      // if (content) {
-      //   content.setAttribute('style', 'margin-top: 30px;');
-      // }
     }
   }, [runtime]);
 
