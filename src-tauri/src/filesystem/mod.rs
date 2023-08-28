@@ -1,5 +1,6 @@
 pub mod cache;
 pub mod explorer;
+pub mod utils;
 pub mod volume;
 
 pub const DIRECTORY: &str = "directory";

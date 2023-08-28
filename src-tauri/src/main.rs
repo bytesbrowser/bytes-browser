@@ -5,7 +5,7 @@ mod error;
 mod filesystem;
 mod search;
 
-use filesystem::explorer::{open_directory, open_file};
+use filesystem::explorer::{delete_file, get_file_preview, open_directory, open_file};
 use filesystem::volume::{get_volumes, safely_eject_removable};
 use search::search_directory;
 use serde::{Deserialize, Serialize};
@@ -52,7 +52,9 @@ async fn main() {
             open_directory,
             open_file,
             search_directory,
-            get_volume_for_path
+            get_volume_for_path,
+            delete_file,
+            get_file_preview
         ])
         .manage(Arc::new(Mutex::new(AppState::default())))
         .plugin(tauri_plugin_store::Builder::default().build())

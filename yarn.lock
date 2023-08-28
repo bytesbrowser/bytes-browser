@@ -1481,6 +1481,13 @@
   dependencies:
     "@types/react" "*"
 
+"@types/react-image-magnify@^2.7.1":
+  version "2.7.1"
+  resolved "https://registry.yarnpkg.com/@types/react-image-magnify/-/react-image-magnify-2.7.1.tgz#c55f4f9681cb8e00141a37d85a82c6813bf651c7"
+  integrity sha512-khmKrYFfOsa1y4dSVDWiBIQaGfdSq9tk2Fm44cJemqwVfhaz+b/3R6kx5tBpT6nFlSK5iNoPwlzyePuz4ZJ+Yw==
+  dependencies:
+    "@types/react" "*"
+
 "@types/react-modal@^3.16.0":
   version "3.16.0"
   resolved "https://registry.yarnpkg.com/@types/react-modal/-/react-modal-3.16.0.tgz#b8d6be10de894139a2ea9f4a2505b1b5d02023df"
