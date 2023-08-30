@@ -44,7 +44,7 @@ export const SidebarBookmarks = ({ bookmarks, loading }: { bookmarks: BookmarkDo
           <span className="truncate max-w-[200px]">{bookmark.identifier}</span>
         </Link>
       ))}
-      <Tooltip id="bookmark-tooltip" place="right" className="tooltip z-[999]" opacity={'100%'} />
+      <Tooltip id="bookmark-tooltip" className="tooltip z-[999]" opacity={'100%'} />
     </div>
   );
 };

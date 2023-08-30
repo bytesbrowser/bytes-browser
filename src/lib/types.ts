@@ -10,9 +10,14 @@ export interface Device {
   recycle_bin_path: string;
 }
 
+export interface TagDocPath {
+  path: string;
+  mount_point: string;
+}
+
 export interface TagDoc {
   uuid: string;
-  file_paths: string[];
+  file_paths: TagDocPath[];
   identifier: string;
   color_hex: string;
 }

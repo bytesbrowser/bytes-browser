@@ -7,6 +7,7 @@ import { useRecoilState } from 'recoil';
 
 import { useHotkey } from '../lib/commands';
 import BookmarksEmitter from '../lib/emitters/bookmarks.emitter';
+import TagsEmitter from '../lib/emitters/tags.emitter';
 import useTimer from '../lib/hooks/useTimer';
 import { runtimeState } from '../lib/state/runtime.state';
 import { BookmarkDoc, Device as DeviceInterface, Profile, ProfileStore, TagDoc } from '../lib/types';
@@ -73,6 +74,8 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
     if (runtime.store) {
       const db = await runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`);
 
+      console.log('WOO', db);
+
       if (db) {
         setTags(db.tags ?? []);
         setBookmarks(db.bookmarks ?? []);
@@ -82,6 +85,10 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     BookmarksEmitter.on('change', () => {
+      getUserStore();
+    });
+
+    TagsEmitter.on('change', () => {
       getUserStore();
     });
   }, []);
@@ -178,7 +185,15 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
                     fill-opacity="0.6"
                   />
                 </svg>
-                <p className="text-sm opacity-50 ml-4">
+                <p
+                  className="text-sm opacity-50 ml-4"
+                  onClick={() => {
+                    setRuntime({
+                      ...runtime,
+                      searchOpen: true,
+                    });
+                  }}
+                >
                   Search{' '}
                   <span className="text-xs bg-gray-600 py-1 px-2 rounded ml-2">
                     {isMac ? '⌘' : 'ctrl'} + shift + space

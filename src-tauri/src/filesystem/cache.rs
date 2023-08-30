@@ -200,6 +200,8 @@ pub fn build_token_index_root(state_mux: &StateSafe) {
 fn save_to_cache(state: &mut MutexGuard<AppState>) {
     let serialized_cache = serde_bencode::to_string(&state.system_cache).unwrap();
 
+    println!("Saving cache to disk.");
+
     let mut file = fs::OpenOptions::new()
         .write(true)
         .truncate(true)
@@ -233,7 +235,10 @@ pub fn load_system_cache(state_mux: &StateSafe) -> bool {
     let system_cache_result: Result<HashMap<String, VolumeCache>, _> =
         serde_bencode::from_bytes(&decompressed.unwrap());
     if system_cache_result.is_err() {
-        println!("Failed to deserialize the volume cache from disk.");
+        println!(
+            "Failed to deserialize the volume cache from disk. {}",
+            system_cache_result.err().unwrap().to_string()
+        );
         return false;
     }
 

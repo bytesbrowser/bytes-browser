@@ -1,3 +1,4 @@
+import { isArray } from '@apollo/client/utilities';
 import { invoke } from '@tauri-apps/api';
 import { useEffect, useState } from 'react';
 import { Item, Menu, Separator, Submenu } from 'react-contexify';
@@ -7,16 +8,20 @@ import ReactModal from 'react-modal';
 import { useRecoilState } from 'recoil';
 
 import DirectoryEmitter from '../lib/emitters/directory.emitter';
+import TagsEmitter from '../lib/emitters/tags.emitter';
 import { currentContextState } from '../lib/state/currentContext.state';
-import { DirectoryContents, GitMeta } from '../lib/types';
+import { runtimeState } from '../lib/state/runtime.state';
+import { DirectoryContents, GitMeta, ProfileStore, TagDoc, TagDocPath } from '../lib/types';
 
 export const ContextMenu = () => {
+  const [runtime, setRuntime] = useRecoilState(runtimeState);
   const [currentContext, setCurrentContext] = useRecoilState(currentContextState);
   const [preview, setPreview] = useState({ value: '', loading: true });
   const [gitMeta, setGitMeta] = useState<GitMeta | null>(null);
   const [commitMessage, setCommitMessage] = useState('');
   const [show, setShow] = useState(false);
   const [commitItem, setCommitItem] = useState<DirectoryContents | null>(null);
+  const [tags, setTags] = useState<TagDoc[]>([]);
 
   const onDelete = async () => {
     if (currentContext.currentItem) {
@@ -287,6 +292,54 @@ export const ContextMenu = () => {
     }
   };
 
+  const addTag = async (tag: TagDoc, item: DirectoryContents) => {
+    runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then(async (db) => {
+      if (db) {
+        const updated_tag = { ...tag };
+
+        updated_tag.file_paths.push({
+          mount_point: runtime.currentDrive?.mount_point,
+          path: item.File!['1'].replace(runtime.currentDrive?.mount_point!, ''),
+        });
+
+        const tags = db.tags ? db.tags : [];
+
+        const index = tags.findIndex((doc) => doc.uuid === tag.uuid);
+
+        tags[index] = updated_tag;
+
+        await runtime.store.set(`profile-store-${runtime.currentUser}`, {
+          ...db,
+          tags,
+        });
+
+        await runtime.store.save();
+
+        toast.success(`Added ${item['File']![0]} to ${tag.identifier} tag group.`);
+      }
+    });
+  };
+
+  useEffect(() => {
+    runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then((db) => {
+      if (db) {
+        setTags(db.tags);
+      } else {
+        setTags([]);
+      }
+    });
+
+    TagsEmitter.on('change', () => {
+      runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then((db) => {
+        if (db) {
+          setTags(db.tags);
+        } else {
+          setTags([]);
+        }
+      });
+    });
+  }, []);
+
   return (
     <>
       <Menu
@@ -335,9 +388,46 @@ export const ContextMenu = () => {
           </p>
         </div>
         <Separator />
-        <Submenu label="Assign Tag">
-          <Item id="tag1">Tag 1</Item>
-          <Item id="tag2">Tag 2</Item>
+        <Submenu
+          label="Tags"
+          disabled={() => {
+            if (tags.length < 1) return true;
+
+            if (currentContext.currentItem) {
+              if (currentContext.currentItem['Directory']) {
+                return true;
+              }
+            }
+
+            return false;
+          }}
+        >
+          {tags.map((tag, key) => (
+            <Item
+              onClick={() => addTag(tag, currentContext.currentItem!)}
+              id="tag"
+              key={key}
+              disabled={() => {
+                if (currentContext.currentItem && currentContext.currentItem['Directory']) {
+                  return true;
+                }
+
+                const found = tag.file_paths.find(
+                  (doc) => doc.mount_point + doc.path === currentContext.currentItem?.File!['1'],
+                );
+
+                return found ? true : false;
+              }}
+            >
+              <div
+                className="circle rounded-full w-[12px] h-[12px] mr-4"
+                style={{
+                  backgroundColor: tag.color_hex,
+                }}
+              ></div>
+              <span>{tag.identifier}</span>
+            </Item>
+          ))}
         </Submenu>
         <Separator />
         <Item id="open">Open</Item>

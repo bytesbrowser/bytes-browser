@@ -79,6 +79,28 @@ export const PageContextMenu = () => {
 
           BookmarksEmitter.emit('change', {});
         }
+      } else {
+        if (!runtime.currentDrive) {
+          return;
+        }
+
+        await runtime.store.set(`profile-store-${runtime.currentUser}`, {
+          bookmarks: [
+            {
+              file_path: runtime.currentPath,
+              identifier: runtime.currentPath,
+              uuid: generateUUID(),
+              mount_point: runtime.currentDrive.mount_point,
+            },
+          ],
+        });
+
+        await runtime.store.save();
+
+        setIsBookMarked(true);
+        toast.success(`${runtime.currentDrive.mount_point + runtime.currentPath} added to bookmarks`);
+
+        BookmarksEmitter.emit('change', {});
       }
     });
   };
