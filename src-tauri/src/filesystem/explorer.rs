@@ -1,6 +1,7 @@
 use futures::future;
 use serde::Serialize;
 use std::borrow::Cow;
+use std::collections::HashMap;
 use std::fs::{self, DirEntry};
 use std::io::{self};
 use std::ops::Deref;
@@ -552,4 +553,59 @@ pub async fn clear_recycle_bin(window: tauri::Window) -> Result<(), Error> {
     }
 
     Ok(())
+}
+
+#[tauri::command]
+pub async fn get_files_for_paths(
+    paths: Vec<String>,
+) -> Result<HashMap<String, DirectoryResult>, Error> {
+    let mut result_map: HashMap<String, DirectoryResult> = HashMap::new();
+
+    for path in &paths {
+        let path_obj = std::path::Path::new(path);
+        let file_name = match path_obj.file_name() {
+            Some(name) => name.to_string_lossy().to_string(),
+            None => continue, // Skip this entry if it doesn't have a file name
+        };
+
+        let file_result = match fs::metadata(path) {
+            Ok(metadata) => {
+                if metadata.is_file() {
+                    let size = metadata.len();
+                    let last_modified_sys_time = metadata.modified()?;
+                    let last_modified = last_modified_sys_time.elapsed().unwrap().as_secs();
+                    let extension = std::path::Path::new(path)
+                        .extension()
+                        .unwrap_or_default()
+                        .to_string_lossy()
+                        .to_string();
+                    let file_type = get_file_description(&extension);
+
+                    DirectoryResult {
+                        data: Some(vec![DirectoryChild::File(
+                            file_name,
+                            path.to_string(),
+                            size,
+                            last_modified,
+                            file_type.to_string(),
+                        )]),
+                        error: None,
+                    }
+                } else {
+                    DirectoryResult {
+                        data: None,
+                        error: Some("Not a file".to_string()),
+                    }
+                }
+            }
+            Err(err) => DirectoryResult {
+                data: None,
+                error: Some(err.to_string()),
+            },
+        };
+
+        result_map.insert(path.clone(), file_result);
+    }
+
+    Ok(result_map)
 }

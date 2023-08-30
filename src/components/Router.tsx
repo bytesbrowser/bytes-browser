@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router-dom';
 import { Auth } from '../pages/Auth';
 import { FolderExplorer } from '../pages/FolderExplorer';
 import { Settings } from '../pages/Settings';
+import { Tags } from '../pages/Tags';
 import { RouterLayout } from './RouterLayout';
 
 const Router = () => {
@@ -30,6 +31,14 @@ const Router = () => {
         element={
           <RouterLayout>
             <p>Uh Oh!</p>
+          </RouterLayout>
+        }
+      />
+      <Route
+        path="/tags/:tagId"
+        element={
+          <RouterLayout>
+            <Tags />
           </RouterLayout>
         }
       />
