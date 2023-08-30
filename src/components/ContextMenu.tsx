@@ -8,7 +8,7 @@ import { useRecoilState } from 'recoil';
 
 import DirectoryEmitter from '../lib/emitters/directory.emitter';
 import { currentContextState } from '../lib/state/currentContext.state';
-import { GitMeta } from '../lib/types';
+import { DirectoryContents, GitMeta } from '../lib/types';
 
 export const ContextMenu = () => {
   const [currentContext, setCurrentContext] = useRecoilState(currentContextState);
@@ -16,6 +16,7 @@ export const ContextMenu = () => {
   const [gitMeta, setGitMeta] = useState<GitMeta | null>(null);
   const [commitMessage, setCommitMessage] = useState('');
   const [show, setShow] = useState(false);
+  const [commitItem, setCommitItem] = useState<DirectoryContents | null>(null);
 
   const onDelete = async () => {
     if (currentContext.currentItem) {
@@ -166,8 +167,6 @@ export const ContextMenu = () => {
   };
 
   const onPull = () => {
-    console.log(gitMeta);
-
     const item = currentContext.currentItem;
 
     if (!item) return;
@@ -183,7 +182,8 @@ export const ContextMenu = () => {
                 setGitMeta(res);
               });
             })
-            .catch(() => {
+            .catch((err) => {
+              console.log(err);
               toast.error('Cannot pull changes.');
             });
         }
@@ -240,27 +240,27 @@ export const ContextMenu = () => {
   };
 
   const onCommit = () => {
-    const item = currentContext.currentItem;
+    const item = commitItem;
 
     if (!item) return;
 
     if (item['Directory']) {
       invoke<GitMeta>('get_git_meta_for_directory', { path: item['Directory']![1] }).then((res) => {
-        if (res.can_stash) {
-          invoke('commit_changes_for_directory', { path: item['Directory']![1], message: commitMessage })
-            .then((res) => {
-              console.log('BRUH', res);
-              toast.success(`Made a commit in ` + item['Directory']![0] + '.' + res);
+        invoke('commit_changes_for_directory', { path: item['Directory']![1], message: commitMessage })
+          .then((res) => {
+            toast.success(`Made a commit in ` + item['Directory']![0] + '.' + res);
 
-              invoke<GitMeta>('get_git_meta_for_directory', { path: item['Directory']![1] }).then((res) => {
-                setGitMeta(res);
-              });
-            })
-            .catch((err) => {
-              console.log('BRUH', err);
-              toast.error('Cannot commit changes.');
+            setCommitItem(null);
+
+            invoke<GitMeta>('get_git_meta_for_directory', { path: item['Directory']![1] }).then((res) => {
+              setGitMeta(res);
             });
-        }
+          })
+          .catch(() => {
+            setCommitItem(null);
+
+            toast.error('Cannot commit changes.');
+          });
       });
     }
   };
@@ -272,21 +272,17 @@ export const ContextMenu = () => {
 
     if (item['Directory']) {
       invoke<GitMeta>('get_git_meta_for_directory', { path: item['Directory']![1] }).then((res) => {
-        if (res.can_stash) {
-          invoke('add_all_changes', { path: item['Directory']![1] })
-            .then((res) => {
-              console.log('BRUH', res);
-              toast.success(`Added all changes in ` + item['Directory']![0] + '.' + res);
+        invoke('add_all_changes', { path: item['Directory']![1] })
+          .then((res) => {
+            toast.success(`Added all changes in ` + item['Directory']![0] + '.' + res);
 
-              invoke<GitMeta>('get_git_meta_for_directory', { path: item['Directory']![1] }).then((res) => {
-                setGitMeta(res);
-              });
-            })
-            .catch((err) => {
-              console.error('BRUH', err);
-              toast.error('Cannot add changes.');
+            invoke<GitMeta>('get_git_meta_for_directory', { path: item['Directory']![1] }).then((res) => {
+              setGitMeta(res);
             });
-        }
+          })
+          .catch(() => {
+            toast.error('Cannot add changes.');
+          });
       });
     }
   };
@@ -387,7 +383,14 @@ export const ContextMenu = () => {
           <Item id="commit" onClick={addAllChanges}>
             Add All Changes
           </Item>
-          <Item id="commit" disabled={!gitMeta?.can_commit} onClick={() => setShow(true)}>
+          <Item
+            id="commit"
+            disabled={!gitMeta?.can_commit}
+            onClick={() => {
+              setCommitItem(currentContext.currentItem);
+              setShow(true);
+            }}
+          >
             Commit Changes
           </Item>
           <Item id="push" disabled={!gitMeta?.can_push} onClick={onPush}>

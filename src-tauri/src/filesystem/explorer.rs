@@ -419,7 +419,7 @@ pub async fn commit_changes_for_directory(path: String, message: String) -> Resu
 
 #[tauri::command]
 pub async fn push_changes_for_directory(path: String) -> Result<String, Error> {
-    let mut repo = Repository::open(&path)
+    let repo = Repository::open(&path)
         .map_err(GitError::OpenRepoError)
         .unwrap();
 
@@ -450,7 +450,24 @@ pub async fn push_changes_for_directory(path: String) -> Result<String, Error> {
 
 #[tauri::command]
 pub async fn pull_changes_for_directory(path: String) -> Result<String, Error> {
-    let output = Command::new("git").arg("pull").current_dir(path).output()?;
+    let repo = Repository::open(&path)
+        .map_err(GitError::OpenRepoError)
+        .unwrap();
+
+    let mut current_branch = String::new();
+
+    if let Ok(head) = repo.head() {
+        if let Some(branch) = head.shorthand() {
+            current_branch = branch.to_string();
+        }
+    }
+
+    let output = Command::new("git")
+        .arg("pull")
+        .arg("origin")
+        .arg(format!("{}", current_branch))
+        .current_dir(path)
+        .output()?;
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);
