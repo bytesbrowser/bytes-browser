@@ -1,29 +1,48 @@
-use futures::{future, TryFutureExt};
-use image::{ImageBuffer, Rgb};
+use futures::future;
 use serde::Serialize;
+use std::borrow::Cow;
 use std::fs::{self, DirEntry};
-use std::io::{self, Read};
+use std::io::{self};
 use std::ops::Deref;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::process::Command;
 use tokio::fs::File;
-use tokio::io::{AsyncBufReadExt, AsyncReadExt, BufReader};
+use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::task;
+use tokio::task::spawn_blocking;
 
-use crate::error::Error;
+use crate::error::{Error, GitError};
 use crate::StateSafe;
 
+use super::audio::generate_waveform;
 use super::cache::FsEventHandler;
-use super::get_file_description;
+use super::git_utils::{get_home_dir, get_user_git_config_signature};
 use super::utils::get_mount_point;
 use super::volume::DirectoryChild;
+use super::{get_file_description, AUDIO_EXTENSIONS, IMAGE_EXTENSIONS, TEXT_EXTENSIONS};
+use git2::{
+    Config, Cred, ErrorCode, FetchOptions, RemoteCallbacks, Repository, Signature, StashFlags,
+};
 use tauri::State;
-
-use minimp3::{Decoder, Frame};
 
 #[derive(Serialize)]
 pub struct DirectoryResult {
     data: Option<Vec<DirectoryChild>>,
     error: Option<String>,
+}
+
+pub type GitResult<T> = std::result::Result<T, GitError>;
+
+#[derive(Serialize)]
+pub struct GitMeta {
+    can_commit: bool,
+    can_fetch: bool,
+    can_pull: bool,
+    can_init: bool,
+    can_push: bool,
+    can_stash: bool,
+    branches: Vec<String>,
+    current_branch: String,
 }
 
 #[tauri::command]
@@ -42,147 +61,73 @@ pub async fn open_directory(path: String) -> DirectoryResult {
 
 #[tauri::command]
 pub async fn get_file_preview(path: String) -> Result<String, Error> {
-    let extension = Path::new(&path)
-        .extension()
-        .unwrap_or_default()
-        .to_string_lossy()
-        .to_lowercase();
+    let extension = get_extension(&path).to_lowercase();
 
-    if extension == "png" || extension == "jpg" || extension == "gif" || extension == "jpeg" {
-        let img = image::open(&path).map_err(|e| Error::Custom(e.to_string()))?;
-        let thumbnail = img.resize(150, 150, image::imageops::FilterType::Gaussian);
-
-        // Convert image to bytes
-        let mut buffer = std::io::Cursor::new(Vec::new());
-        thumbnail
-            .write_to(&mut buffer, image::ImageOutputFormat::Png)
-            .map_err(|e| Error::Custom(e.to_string()))?;
-
-        let base64_image = base64::encode(buffer.get_ref());
-        Ok(format!("data:image/png;base64,{}", base64_image))
-    } else if extension == "txt"
-        || extension == "md"
-        || extension == "rs"
-        || extension == "js"
-        || extension == "html"
-        || extension == "css"
-        || extension == "toml"
-        || extension == "ts"
-        || extension == "tsx"
-        || extension == "jsx"
-    {
-        // handle text files (just like before)
-        let file = File::open(&path)
-            .await
-            .map_err(|e| Error::Custom(e.to_string()))?;
-        let mut reader = BufReader::new(file);
-        let mut preview = String::new();
-        for _ in 0..10 {
-            let mut line = String::new();
-            match reader.read_line(&mut line).await {
-                Ok(bytes) => {
-                    if bytes == 0 {
-                        break; // EOF reached
-                    }
-                    preview.push_str(&line);
-                }
-                Err(e) => return Err(Error::Custom(e.to_string())),
-            }
-        }
-        Ok(preview)
-    } else if extension == "wav" || extension == "mp3" {
-        match generate_waveform(Path::new(&path)) {
-            Ok(img) => {
-                // Convert image to bytes
-                let mut buffer = std::io::Cursor::new(Vec::new());
-                img.write_to(&mut buffer, image::ImageOutputFormat::Png)
-                    .map_err(|e| Error::Custom(e.to_string()))?;
-                let base64_image = base64::encode(buffer.get_ref());
-                Ok(format!("data:image/png;base64,{}", base64_image))
-            }
-            Err(e) => Err(Error::Custom(e)),
-        }
+    if IMAGE_EXTENSIONS.contains(&extension.as_str()) {
+        process_image(&path).await
+    } else if TEXT_EXTENSIONS.contains(&extension.as_str()) {
+        process_text(&path).await
+    } else if AUDIO_EXTENSIONS.contains(&extension.as_str()) {
+        process_audio(&path).await
     } else {
         Err(Error::Custom("Unsupported file type".to_string()))
     }
 }
 
-fn read_mp3_samples(file_path: &str) -> Result<Vec<i16>, String> {
-    let mut file = std::fs::File::open(file_path).map_err(|e| e.to_string())?;
-    let mut mp3_data = Vec::new();
-    file.read_to_end(&mut mp3_data).map_err(|e| e.to_string())?;
-
-    let mut decoder = Decoder::new(mp3_data.as_slice());
-    let mut samples = Vec::new();
-
-    loop {
-        match decoder.next_frame() {
-            Ok(Frame { data, .. }) => {
-                samples.extend_from_slice(&data);
-            }
-            Err(minimp3::Error::Eof) => break,
-            Err(e) => return Err(e.to_string()),
-        }
-    }
-
-    Ok(samples)
-}
-
-fn generate_waveform(path: &Path) -> Result<ImageBuffer<Rgb<u8>, Vec<u8>>, String> {
-    let extension = path
+fn get_extension(path: &str) -> Cow<str> {
+    Path::new(path)
         .extension()
         .unwrap_or_default()
         .to_string_lossy()
-        .to_lowercase();
+}
 
-    let mut samples: Vec<f32> = vec![];
-
-    if extension == "wav" {
-        let mut reader = hound::WavReader::open(path).map_err(|e| e.to_string())?;
-        samples = reader
-            .samples::<i16>()
-            .map(|s| s.map(|s| s as f32).unwrap_or(0.0))
-            .collect();
-    } else if extension == "mp3" {
-        let mp3_samples = read_mp3_samples(path.to_str().ok_or("Invalid path")?)?;
-        samples = mp3_samples.iter().map(|&s| s as f32).collect();
-    } else {
-        return Err("Unsupported audio format".to_string());
-    }
-
-    // Normalize samples
-    let max_sample = samples.iter().cloned().fold(f32::MIN, f32::max).abs();
-    for sample in &mut samples {
-        *sample /= max_sample;
-    }
-
-    // Create an image buffer
-    let width = 800;
-    let height = 200;
-    let mut img = ImageBuffer::new(width, height);
-
-    let sample_count = samples.len();
-    let samples_per_pixel = sample_count / width as usize;
-
-    for x in 0..width {
-        let start = x as usize * samples_per_pixel;
-        let end = (x as usize + 1) * samples_per_pixel;
-        let slice = &samples[start..end];
-
-        let min = slice.iter().cloned().fold(f32::INFINITY, f32::min);
-        let max = slice.iter().cloned().fold(f32::NEG_INFINITY, f32::max);
-
-        let y_min = ((1.0 + min) * 0.5 * (height as f32)) as u32;
-        let y_max = ((1.0 + max) * 0.5 * (height as f32)) as u32;
-
-        for y in y_min..=y_max {
-            if y < height {
-                img.put_pixel(x, height - y - 1, Rgb([255, 255, 255]));
+async fn process_text(path: &str) -> Result<String, Error> {
+    let file = File::open(&path)
+        .await
+        .map_err(|e| Error::Custom(e.to_string()))?;
+    let mut reader = BufReader::new(file);
+    let mut preview = String::new();
+    for _ in 0..10 {
+        let mut line = String::new();
+        match reader.read_line(&mut line).await {
+            Ok(bytes) => {
+                if bytes == 0 {
+                    break; // EOF reached
+                }
+                preview.push_str(&line);
             }
+            Err(e) => return Err(Error::Custom(e.to_string())),
         }
     }
+    Ok(preview)
+}
 
-    Ok(img)
+async fn process_image(path: &str) -> Result<String, Error> {
+    let img = image::open(&path).map_err(|e| Error::Custom(e.to_string()))?;
+    let thumbnail = img.resize(150, 150, image::imageops::FilterType::Gaussian);
+
+    // Convert image to bytes
+    let mut buffer = std::io::Cursor::new(Vec::new());
+    thumbnail
+        .write_to(&mut buffer, image::ImageOutputFormat::Png)
+        .map_err(|e| Error::Custom(e.to_string()))?;
+
+    let base64_image = base64::encode(buffer.get_ref());
+    Ok(format!("data:image/png;base64,{}", base64_image))
+}
+
+async fn process_audio(path: &str) -> Result<String, Error> {
+    match generate_waveform(Path::new(&path)) {
+        Ok(img) => {
+            // Convert image to bytes
+            let mut buffer = std::io::Cursor::new(Vec::new());
+            img.write_to(&mut buffer, image::ImageOutputFormat::Png)
+                .map_err(|e| Error::Custom(e.to_string()))?;
+            let base64_image = base64::encode(buffer.get_ref());
+            Ok(format!("data:image/png;base64,{}", base64_image))
+        }
+        Err(e) => Err(Error::Custom(e)),
+    }
 }
 
 #[tauri::command]
@@ -272,12 +217,15 @@ async fn handle_entry(entry: DirEntry) -> io::Result<Vec<DirectoryChild>> {
             file_type.to_string(),
         )])
     } else {
+        let is_git = is_git_directory(&path).unwrap_or(false);
+
         Ok(vec![DirectoryChild::Directory(
             file_name,
-            path,
+            path.clone(),
             size,
             last_modified,
             "File".to_string(),
+            is_git,
         )])
     }
 }
@@ -301,4 +249,251 @@ pub async fn open_file(path: String) -> Result<(), Error> {
     let err_msg = String::from_utf8(output.stderr)
         .unwrap_or(String::from("Failed to open file and deserialize stderr."));
     Err(Error::Custom(err_msg))
+}
+
+pub fn is_git_directory(path: &str) -> Result<bool, io::Error> {
+    let path = Path::new(path);
+    if !path.is_dir() {
+        return Ok(false);
+    }
+
+    let entries = fs::read_dir(path)?;
+
+    for entry in entries {
+        match entry {
+            Ok(entry) => {
+                let path = entry.path();
+                if path.is_dir() && path.file_name().unwrap() == ".git" {
+                    return Ok(true);
+                }
+            }
+            Err(_) => {}
+        }
+    }
+
+    Ok(false)
+}
+
+#[tauri::command]
+pub async fn get_git_meta_for_directory(path: &str) -> Result<GitMeta, Error> {
+    let path = Path::new(path);
+    if !path.is_dir() {
+        return Err(Error::Custom("Not a directory".to_string()));
+    }
+
+    let mut can_init = !path.join(".git").exists();
+
+    let repo = Repository::open(path);
+    match repo {
+        Ok(repo) => {
+            // The directory is a Git repository
+            can_init = false;
+
+            let mut branches = Vec::new();
+            let mut current_branch = String::new();
+
+            if let Ok(head) = repo.head() {
+                if let Some(branch) = head.shorthand() {
+                    current_branch = branch.to_string();
+                }
+            }
+
+            for b in repo.branches(None).unwrap() {
+                let (branch, _) = b.unwrap();
+                if let Some(name) = branch.name().unwrap() {
+                    branches.push(name.to_string());
+                }
+            }
+
+            let mut index = repo.index().unwrap();
+            let can_commit = index.has_conflicts() || !index.is_empty();
+
+            let mut can_push = false;
+            if let Ok(head) = repo.head() {
+                if let Some(branch) = head.shorthand() {
+                    current_branch = branch.to_string();
+                    if let Ok(branch_ref) =
+                        repo.find_branch(&current_branch, git2::BranchType::Local)
+                    {
+                        can_push = branch_ref.upstream().is_ok();
+                    }
+                }
+            }
+
+            Ok(GitMeta {
+                can_commit: can_commit,
+                can_fetch: true,
+                can_pull: true,
+                can_init,
+                can_push: can_push,
+                can_stash: true,
+                branches,
+                current_branch,
+            })
+        }
+        Err(e) => {
+            if e.code() == ErrorCode::NotFound {
+                // The directory is not a Git repository
+                Ok(GitMeta {
+                    can_commit: false,
+                    can_fetch: false,
+                    can_pull: false,
+                    can_init,
+                    can_push: false,
+                    can_stash: false,
+                    branches: Vec::new(),
+                    current_branch: String::new(),
+                })
+            } else {
+                Err(Error::Custom("Something went wrong".to_string()))
+            }
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn init_git_repo_in_directory(path: &str) -> Result<(), Error> {
+    let path = Path::new(path);
+    if !path.is_dir() {
+        return Err(Error::Custom("Not a directory".to_string()));
+    }
+
+    let repo = Repository::init(path);
+    match repo {
+        Ok(_) => Ok(()),
+        Err(e) => Err(Error::Custom(e.to_string())),
+    }
+}
+
+#[tauri::command]
+pub async fn fetch_repo_for_directory(path: String) -> Result<(), Error> {
+    let status = Command::new("git")
+        .arg("fetch")
+        .current_dir(path)
+        .status()?;
+
+    if status.success() {
+        Ok(())
+    } else {
+        Err(Error::Custom(
+            "Failed to fetch the git repository".to_string(),
+        ))
+    }
+}
+
+#[tauri::command]
+pub async fn stash_changes_for_directory(path: String) -> GitResult<()> {
+    // Open the repository
+    let mut repo = Repository::open(&path).map_err(GitError::OpenRepoError)?;
+
+    let signature = get_user_git_config_signature().await?;
+
+    // Stash the changes
+    repo.stash_save(
+        &signature,
+        "Stashed by BytesBrowser",
+        Some(StashFlags::INCLUDE_UNTRACKED),
+    )
+    .map_err(GitError::StashError)?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn commit_changes_for_directory(path: String, message: String) -> Result<String, Error> {
+    let output = Command::new("git")
+        .arg("commit")
+        .arg(format!("-m '{}'", message))
+        .current_dir(path)
+        .output()?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    if output.status.success() {
+        Ok(stdout.to_string())
+    } else {
+        Err(Error::Custom(stderr.to_string()))
+    }
+}
+
+#[tauri::command]
+pub async fn push_changes_for_directory(path: String) -> Result<String, Error> {
+    let mut repo = Repository::open(&path)
+        .map_err(GitError::OpenRepoError)
+        .unwrap();
+
+    let mut current_branch = String::new();
+
+    if let Ok(head) = repo.head() {
+        if let Some(branch) = head.shorthand() {
+            current_branch = branch.to_string();
+        }
+    }
+
+    let output = Command::new("git")
+        .arg("push")
+        .arg("origin")
+        .arg(current_branch)
+        .current_dir(path)
+        .output()?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    if output.status.success() {
+        Ok(stdout.to_string())
+    } else {
+        Err(Error::Custom(stderr.to_string()))
+    }
+}
+
+#[tauri::command]
+pub async fn pull_changes_for_directory(path: String) -> Result<String, Error> {
+    let output = Command::new("git").arg("pull").current_dir(path).output()?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    if output.status.success() {
+        Ok(stdout.to_string())
+    } else {
+        Err(Error::Custom(stderr.to_string()))
+    }
+}
+
+#[tauri::command]
+pub async fn checkout_branch_for_directory(path: String, branch: String) -> Result<String, Error> {
+    let output = Command::new("git")
+        .arg("checkout")
+        .arg(format!("{}", branch))
+        .current_dir(path)
+        .output()?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    if output.status.success() {
+        Ok(stdout.to_string())
+    } else {
+        Err(Error::Custom(stderr.to_string()))
+    }
+}
+
+#[tauri::command]
+pub async fn add_all_changes(path: String) -> Result<String, Error> {
+    let output = Command::new("git")
+        .arg("add")
+        .arg(".")
+        .current_dir(path)
+        .output()?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    if output.status.success() {
+        Ok(stdout.to_string())
+    } else {
+        Err(Error::Custom(stderr.to_string()))
+    }
 }

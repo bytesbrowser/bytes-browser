@@ -1,3 +1,4 @@
+use crate::filesystem::explorer::is_git_directory;
 use crate::filesystem::get_file_description;
 use crate::CachedPath;
 use crate::{filesystem::volume::DirectoryChild, StateSafe};
@@ -262,6 +263,8 @@ pub async fn search_directory(
                 size,
                 last_modified,
                 file_type.to_string(),
+                // We don't care in the search results
+                false,
             ));
             fuzzy_scores.push(score);
 

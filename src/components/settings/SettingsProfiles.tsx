@@ -127,6 +127,8 @@ export const SettingsProfiles = () => {
 
         await runtime.profileStore.set('profiles', profiles);
 
+        await runtime.profileStore.save();
+
         setForm({
           email: { value: '', valid: true },
           password: { value: '', valid: true },
@@ -179,9 +181,14 @@ export const SettingsProfiles = () => {
         if (profiles) {
           profiles.splice(index, 1);
 
-          runtime.profileStore.set('profiles', profiles).then(() => {
-            setProfiles(profiles);
-          });
+          runtime.profileStore
+            .set('profiles', profiles)
+            .then(() => {
+              setProfiles(profiles);
+            })
+            .then(() => {
+              runtime.profileStore.save();
+            });
         }
       });
     }

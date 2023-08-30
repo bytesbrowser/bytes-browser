@@ -172,6 +172,8 @@ export const Auth = () => {
 
         await runtime.profileStore.set('profiles', profiles);
 
+        await runtime.profileStore.save();
+
         navigate('/drive/0');
       } else {
         await runtime.profileStore.set('profiles', [
@@ -184,6 +186,8 @@ export const Auth = () => {
             email: user.email,
           },
         ]);
+
+        await runtime.profileStore.save();
 
         setRuntime({
           ...runtime,

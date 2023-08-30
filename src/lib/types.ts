@@ -38,11 +38,22 @@ export interface Profile {
 }
 
 export interface DirectoryContents {
-  Directory?: [string, string, number, number, string];
+  Directory?: [string, string, number, number, string, boolean];
   File?: [string, string, number, number, string];
 }
 
 export interface SearchResult {
   results: DirectoryContents[];
   more: boolean;
+}
+
+export interface GitMeta {
+  can_commit: boolean;
+  can_fetch: boolean;
+  can_pull: boolean;
+  can_init: boolean;
+  can_push: boolean;
+  can_stash: boolean;
+  branches: string[];
+  current_branch: string;
 }

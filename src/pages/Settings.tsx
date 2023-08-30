@@ -53,6 +53,9 @@ export const Settings = () => {
 
         profiles = profiles.filter((_, index) => index !== runtime.currentUser);
         await runtime.profileStore.set('profiles', profiles);
+
+        await runtime.profileStore.save();
+
         setRuntime({
           ...runtime,
           currentUser: 0,

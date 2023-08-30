@@ -1,10 +1,27 @@
+pub mod audio;
 pub mod cache;
 pub mod explorer;
+pub mod git_utils;
 pub mod utils;
 pub mod volume;
 
 pub const DIRECTORY: &str = "directory";
 pub const FILE: &str = "file";
+
+pub const IMAGE_EXTENSIONS: &[&str] = &[
+    "png", "jpg", "gif", "jpeg", "bmp", "webp", "tiff", "ico", "jfif", "svg",
+];
+
+pub const TEXT_EXTENSIONS: &[&str] = &[
+    "txt", "md", "rs", "js", "html", "css", "toml", "ts", "tsx", "jsx", "json", "xml", "yml",
+    "yaml", "ini", "cpp", "c", "h", "java", "py", "sh", "bash", "rb", "pl", "php", "asp", "aspx",
+    "jsp", "go", "f", "f90", "r", "swift", "m", "mm", "kt", "kts", "scala", "cs", "vb", "lua",
+    "groovy", "sql", "ps1",
+];
+
+pub const AUDIO_EXTENSIONS: &[&str] = &[
+    "wav", "mp3", "ogg", "flac", "aac", "m4a", "wma", "opus", "alac",
+];
 
 pub fn get_file_description(extension: &str) -> &'static str {
     match extension.to_lowercase().as_str() {
@@ -101,10 +118,55 @@ pub fn get_file_description(extension: &str) -> &'static str {
         "eps" => "Encapsulated PostScript file",
         "ps" => "PostScript file",
         "odt" => "OpenDocument Text document",
+        "ini" => "INI Configuration file",
+        "ts" => "TypeScript source file",
+        "tsx" => "TypeScript JSX file",
+        "jsx" => "JavaScript JSX file",
+        "lua" => "Lua source file",
+        "swift" => "Swift source file",
+        "h" => "C header file",
+        "hpp" => "C++ header file",
+        "rb" => "Ruby script",
+        "pl" => "Perl script",
+        "php" => "PHP script",
+        "asp" => "Active Server Page",
+        "aspx" => "ASP.NET page",
+        "jsp" => "JavaServer Page",
+        "f" | "f90" => "Fortran source file",
+        "r" => "R source file",
+        "m" => "Objective-C source file",
+        "mm" => "Objective-C++ source file",
+        "kt" | "kts" => "Kotlin source file",
+        "scala" => "Scala source file",
+        "cs" => "C# source file",
+        "vb" => "Visual Basic source file",
+        "groovy" => "Groovy script",
+        "sql" => "SQL file",
+        "vbs" => "VBScript file",
+        "csv" => "CSV file",
+        "tex" => "LaTeX document",
+        "log" => "Log file",
+        "srt" => "SubRip subtitle",
+        "ass" => "Advanced SubStation Alpha subtitle",
+        "vtt" => "WebVTT subtitle",
+        "iso" => "ISO disk image",
+        "dmg" => "Apple Disk Image",
+        "img" => "Disk Image",
+        "jar" => "Java Archive",
+        "swf" => "Adobe Flash",
+        "fla" => "Adobe Flash source",
+        "qt" => "QuickTime video",
+        "rm" => "RealMedia file",
+        "opus" => "Opus audio",
+        "tiff" => "TIFF image",
+        "tif" => "TIFF image",
+        "qbb" => "QuickBooks Backup",
+        "qbw" => "QuickBooks Company",
+        "apk" => "Android Package",
+        "ipa" => "iOS Application Archive",
+        "alac" => "Apple Lossless Audio Codec",
+        "amr" => "AMR audio",
+        "midi" => "MIDI audio",
         _ => "Unknown file type",
     }
-}
-
-pub fn is_hidden(entry: &str) -> bool {
-    entry.chars().next() == Some('.')
 }

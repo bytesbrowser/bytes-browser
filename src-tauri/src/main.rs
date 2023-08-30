@@ -5,7 +5,12 @@ mod error;
 mod filesystem;
 mod search;
 
-use filesystem::explorer::{delete_file, get_file_preview, open_directory, open_file};
+use filesystem::explorer::{
+    add_all_changes, checkout_branch_for_directory, commit_changes_for_directory, delete_file,
+    fetch_repo_for_directory, get_file_preview, get_git_meta_for_directory,
+    init_git_repo_in_directory, open_directory, open_file, pull_changes_for_directory,
+    push_changes_for_directory, stash_changes_for_directory,
+};
 use filesystem::volume::{get_volumes, safely_eject_removable};
 use search::search_directory;
 use serde::{Deserialize, Serialize};
@@ -54,7 +59,16 @@ async fn main() {
             search_directory,
             get_volume_for_path,
             delete_file,
-            get_file_preview
+            get_file_preview,
+            get_git_meta_for_directory,
+            init_git_repo_in_directory,
+            fetch_repo_for_directory,
+            stash_changes_for_directory,
+            checkout_branch_for_directory,
+            commit_changes_for_directory,
+            pull_changes_for_directory,
+            push_changes_for_directory,
+            add_all_changes
         ])
         .manage(Arc::new(Mutex::new(AppState::default())))
         .plugin(tauri_plugin_store::Builder::default().build())
