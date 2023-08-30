@@ -10,7 +10,8 @@
     "dev:win": "for /f %i in ('git rev-parse HEAD') do set REACT_APP_VERSION=%i && concurrently \"vite\" \"tauri dev\"",
     "build:mac": "export REACT_APP_VERSION=$(git rev-parse HEAD) && tsc && vite build",
     "build:win": "for /f %i in ('git rev-parse HEAD') do set REACT_APP_VERSION=%i && tsc && vite build",
-    "codegen:build": "graphql-codegen --config codegen.yml"
+    "codegen:build": "graphql-codegen --config codegen.yml",
+    "tauri": "tauri"
   },
   "dependencies": {
     "@apollo/client": "^3.8.1",

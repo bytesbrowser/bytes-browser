@@ -10,8 +10,9 @@ use crate::{AppState, CachedPath, StateSafe, VolumeCache};
 use lazy_static::lazy_static;
 use notify::event::{CreateKind, ModifyKind, RenameMode};
 use notify::Event;
+use rayon::prelude::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use std::io::Write;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use tokio::time;
 
 lazy_static! {
@@ -166,14 +167,16 @@ pub fn save_system_cache(state_mux: &StateSafe) {
 }
 
 pub fn build_token_index_root(state_mux: &StateSafe) {
+    let start_time = Instant::now();
+    println!("Building token index cache");
+
     let mut state = state_mux.lock().unwrap();
 
-    let mut all_tokens: Vec<HashMap<String, Vec<String>>> = Vec::new();
-
-    for (_, cache) in state.system_cache.iter() {
-        let token_index = build_token_index(&cache);
-        all_tokens.push(token_index);
-    }
+    let all_tokens: Vec<_> = state
+        .system_cache
+        .par_iter()
+        .map(|(_, cache)| build_token_index(&cache))
+        .collect();
 
     let mut token_index = HashMap::new();
 
@@ -185,6 +188,9 @@ pub fn build_token_index_root(state_mux: &StateSafe) {
                 .extend(value);
         }
     }
+
+    let end_time = Instant::now();
+    println!("Build token cache took: {:?}", end_time - start_time);
 
     state.token_cache = token_index;
 }

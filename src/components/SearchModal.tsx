@@ -203,9 +203,10 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
             <input
               value={searchValue}
               onChange={(e) => {
+                setSearchValue(e.target.value);
+
                 setResults(null);
                 setSortedResults(null);
-                setSearchValue(e.target.value);
               }}
               required
               className="w-full mx-4 bg-transparent outline-none text-white"

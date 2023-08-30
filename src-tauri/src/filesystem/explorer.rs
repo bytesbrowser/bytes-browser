@@ -4,25 +4,22 @@ use std::borrow::Cow;
 use std::fs::{self, DirEntry};
 use std::io::{self};
 use std::ops::Deref;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::Command;
 use tokio::fs::File;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::task;
-use tokio::task::spawn_blocking;
 
 use crate::error::{Error, GitError};
 use crate::StateSafe;
 
 use super::audio::generate_waveform;
 use super::cache::FsEventHandler;
-use super::git_utils::{get_home_dir, get_user_git_config_signature};
+use super::git_utils::get_user_git_config_signature;
 use super::utils::get_mount_point;
 use super::volume::DirectoryChild;
 use super::{get_file_description, AUDIO_EXTENSIONS, IMAGE_EXTENSIONS, TEXT_EXTENSIONS};
-use git2::{
-    Config, Cred, ErrorCode, FetchOptions, RemoteCallbacks, Repository, Signature, StashFlags,
-};
+use git2::{ErrorCode, Repository, StashFlags};
 use tauri::State;
 
 #[derive(Serialize)]
@@ -305,7 +302,7 @@ pub async fn get_git_meta_for_directory(path: &str) -> Result<GitMeta, Error> {
                 }
             }
 
-            let mut index = repo.index().unwrap();
+            let index = repo.index().unwrap();
             let can_commit = index.has_conflicts() || !index.is_empty();
 
             let mut can_push = false;
@@ -513,4 +510,46 @@ pub async fn add_all_changes(path: String) -> Result<String, Error> {
     } else {
         Err(Error::Custom(stderr.to_string()))
     }
+}
+
+#[tauri::command]
+pub async fn clear_recycle_bin(window: tauri::Window) -> Result<(), Error> {
+    // Windows-specific code
+    #[cfg(target_os = "windows")]
+    {
+        use std::ptr;
+        use winapi::um::shellapi::SHEmptyRecycleBinA;
+
+        unsafe {
+            SHEmptyRecycleBinA(ptr::null_mut(), ptr::null(), 0);
+        }
+    }
+
+    // macOS-specific code
+    #[cfg(target_os = "macos")]
+    {
+        use objc::runtime::Class;
+        use objc::runtime::Object;
+        use objc_foundation::{INSObject, INSString, NSString};
+        use objc_id::Id;
+
+        unsafe {
+            let pool = Class::get("NSAutoreleasePool").unwrap();
+            let pool: *mut Object = msg_send![pool.alloc().unwrap(), init];
+
+            let file_manager: Id<Object> =
+                msg_send![Class::get("NSFileManager").unwrap().alloc().unwrap(), init];
+            let trash_url: Id<Object> = msg_send![file_manager, URLForDirectory:1
+                                                                           inDomain:1
+                                                                      appropriateFor:nil
+                                                                                 create:false
+                                                                                  error:nil];
+            let trash_path: Id<NSString> = msg_send![trash_url, path];
+            let _: msg_send![file_manager, removeItemAtPath:trash_path error:nil];
+
+            msg_send![pool, release];
+        }
+    }
+
+    Ok(())
 }

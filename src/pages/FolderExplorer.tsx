@@ -9,6 +9,7 @@ import { Tooltip } from 'react-tooltip';
 import { useRecoilState } from 'recoil';
 
 import { ContextMenu } from '../components/ContextMenu';
+import { PageContextMenu } from '../components/PageContextMenu';
 import { SmartFileIcon } from '../components/SmartFileIcon';
 import DirectoryEmitter from '../lib/emitters/directory.emitter';
 import RuntimeEmitter from '../lib/emitters/runtime.emitter';
@@ -36,10 +37,21 @@ export const FolderExplorer = () => {
     id: 'FOLDER_ITEM_MENU',
   });
 
+  const pageMenu = useContextMenu({
+    id: 'PAGE_MENU',
+  });
+
   useEffect(() => {
     DirectoryEmitter.on('delete', () => {
       if (runtime.currentDrive) {
-        console.log(runtime.currentDrive, runtime.currentPath);
+        invoke('open_directory', { path: runtime.currentDrive.mount_point + runtime.currentPath }).then((res: any) => {
+          setDirectories(res.data as DirectoryContents[]);
+        });
+      }
+    });
+
+    DirectoryEmitter.on('refresh', () => {
+      if (runtime.currentDrive) {
         invoke('open_directory', { path: runtime.currentDrive.mount_point + runtime.currentPath }).then((res: any) => {
           setDirectories(res.data as DirectoryContents[]);
         });
@@ -56,6 +68,14 @@ export const FolderExplorer = () => {
     });
 
     show({
+      event,
+    });
+  };
+
+  const handlePageContext = (event: any) => {
+    event.preventDefault();
+
+    pageMenu.show({
       event,
     });
   };
@@ -112,6 +132,8 @@ export const FolderExplorer = () => {
 
   useEffect(() => {
     if (runtime.currentDrive) {
+      console.log(runtime.currentPath, runtime.currentDrive.recycle_bin_path);
+
       invoke('open_directory', { path: runtime.currentDrive.mount_point + runtime.currentPath }).then((res: any) => {
         setDirectories(res.data as DirectoryContents[]);
       });
@@ -119,6 +141,21 @@ export const FolderExplorer = () => {
   }, []);
 
   useEffect(() => {
+    if (
+      runtime.currentDrive &&
+      runtime.currentDrive.mount_point + runtime.currentPath.slice(0, -1) === runtime.currentDrive.recycle_bin_path
+    ) {
+      setRuntime({
+        ...runtime,
+        isInRecycleBin: true,
+      });
+    } else {
+      setRuntime({
+        ...runtime,
+        isInRecycleBin: false,
+      });
+    }
+
     if (runtime.currentPath === '' && runtime.currentDrive) {
       invoke('open_directory', { path: runtime.currentDrive.mount_point }).then((res: any) => {
         setDirectories(res.data as DirectoryContents[]);
@@ -296,6 +333,9 @@ export const FolderExplorer = () => {
           </div>
           <div className="page-options flex items-center min-w-[150px]">
             <svg
+              onClick={(e) => {
+                handlePageContext(e);
+              }}
               width="24"
               height="24"
               viewBox="0 0 24 24"
@@ -513,6 +553,7 @@ export const FolderExplorer = () => {
         </div>
       </div>
       <ContextMenu />
+      <PageContextMenu />
     </>
   );
 };

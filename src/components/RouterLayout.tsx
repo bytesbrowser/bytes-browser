@@ -6,6 +6,7 @@ import { Tooltip } from 'react-tooltip';
 import { useRecoilState } from 'recoil';
 
 import { useHotkey } from '../lib/commands';
+import BookmarksEmitter from '../lib/emitters/bookmarks.emitter';
 import useTimer from '../lib/hooks/useTimer';
 import { runtimeState } from '../lib/state/runtime.state';
 import { BookmarkDoc, Device as DeviceInterface, Profile, ProfileStore, TagDoc } from '../lib/types';
@@ -73,11 +74,17 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
       const db = await runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`);
 
       if (db) {
-        setTags(db.tags);
-        setBookmarks(db.bookmarks);
+        setTags(db.tags ?? []);
+        setBookmarks(db.bookmarks ?? []);
       }
     }
   };
+
+  useEffect(() => {
+    BookmarksEmitter.on('change', () => {
+      getUserStore();
+    });
+  }, []);
 
   const updateProfile = async () => {
     if (runtime.profileStore) {

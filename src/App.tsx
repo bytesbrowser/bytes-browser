@@ -1,4 +1,4 @@
-import { os } from '@tauri-apps/api';
+import { invoke, os } from '@tauri-apps/api';
 import { appWindow } from '@tauri-apps/api/window';
 import 'animate.css/animate.min.css';
 //@ts-ignore

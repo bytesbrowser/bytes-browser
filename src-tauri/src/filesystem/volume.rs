@@ -1,3 +1,4 @@
+use crate::error::Error;
 use crate::filesystem::cache::{
     load_system_cache, run_cache_interval, save_system_cache, FsEventHandler, CACHE_FILE_PATH,
 };
@@ -9,14 +10,18 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::File;
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
+use std::time::Instant;
 use std::{fs, thread};
-use sysinfo::{Disk, DiskExt, System, SystemExt};
+use sysinfo::{Disk, DiskExt, RefreshKind, System, SystemExt};
 use tauri::State;
 use tokio::task::block_in_place;
 use walkdir::WalkDir;
 
 use super::cache::build_token_index_root;
+
+const MACOS_RECYCLE_BIN_NAME: &str = ".Trash";
+
+const WINDOWS_RECYCLE_BIN_NAME: &str = "$Recycle.Bin";
 
 #[derive(Serialize)]
 pub struct Volume {
@@ -28,6 +33,7 @@ pub struct Volume {
     removable: bool,
     file_system_type: String,
     disk_type: String,
+    recycle_bin_path: String,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -39,10 +45,11 @@ pub enum DirectoryChild {
 impl Volume {
     fn from_disk(disk: &Disk) -> Self {
         let name = {
-            let volume_name = disk.name().to_str().unwrap();
-            match volume_name.is_empty() {
-                true => "Local Volume",
-                false => volume_name,
+            let volume_name = disk.name().to_str().unwrap_or("Local Volume");
+            if volume_name.is_empty() {
+                "Local Volume"
+            } else {
+                volume_name
             }
             .to_string()
         };
@@ -51,19 +58,12 @@ impl Volume {
         let mount_point = disk.mount_point().to_path_buf();
         let removable = disk.is_removable();
         let size = disk.total_space();
-        let used = disk.total_space() - disk.available_space();
+        let used = size - available; // Negligible optimization
         let file_system_type_raw = disk.file_system();
 
-        let file_system_type = match std::str::from_utf8(file_system_type_raw) {
-            Ok(s) => s,
-            Err(_) => {
-                // Handle the error if the bytes aren't valid UTF-8
-                // For this example, I'm using a default string
-                "Invalid UTF-8"
-            }
-        }
-        .to_string()
-        .clone();
+        let file_system_type = std::str::from_utf8(file_system_type_raw)
+            .unwrap_or("Invalid UTF-8")
+            .to_string();
 
         let disk_type = match disk.kind() {
             sysinfo::DiskKind::HDD => "HDD",
@@ -71,6 +71,12 @@ impl Volume {
             sysinfo::DiskKind::Unknown(_) => "Unknown",
         }
         .to_string();
+
+        let recycle_bin_path = mount_point.join(match std::env::consts::OS {
+            "macos" => MACOS_RECYCLE_BIN_NAME,
+            "windows" => WINDOWS_RECYCLE_BIN_NAME,
+            _ => "",
+        });
 
         Self {
             name,
@@ -81,25 +87,17 @@ impl Volume {
             used,
             file_system_type,
             disk_type,
+            recycle_bin_path: recycle_bin_path.to_string_lossy().to_string(),
         }
     }
 
     /// This traverses the provided volume and adds the file structure to the cache in memory.
     fn create_cache(&self, state_mux: &StateSafe) {
-        let state = &mut state_mux.lock().unwrap();
-
-        let volume = state
-            .system_cache
-            .entry(self.mount_point.to_string_lossy().to_string())
-            .or_insert_with(HashMap::new);
-
-        let system_cache = Arc::new(Mutex::new(volume));
-
-        WalkDir::new(self.mount_point.clone())
+        let new_entries: Vec<(String, CachedPath)> = WalkDir::new(self.mount_point.clone())
             .into_iter()
             .par_bridge()
             .filter_map(Result::ok)
-            .for_each(|entry| {
+            .map(|entry| {
                 let file_name = entry.file_name().to_string_lossy().to_string();
                 let file_path = entry.path().to_string_lossy().to_string();
 
@@ -111,35 +109,55 @@ impl Volume {
                 }
                 .to_string();
 
-                let cache_guard = &mut system_cache.lock().unwrap();
-                cache_guard
-                    .entry(file_name)
-                    .or_insert_with(Vec::new)
-                    .push(CachedPath {
+                (
+                    file_name,
+                    CachedPath {
                         file_path,
                         file_type,
-                    });
-            });
+                    },
+                )
+            })
+            .collect();
+
+        // Now update the cache with the new information
+        let mut state = state_mux.lock().unwrap();
+        let volume = state
+            .system_cache
+            .entry(self.mount_point.to_string_lossy().to_string())
+            .or_insert_with(HashMap::new);
+
+        for (file_name, new_entry) in new_entries {
+            volume
+                .entry(file_name)
+                .or_insert_with(Vec::new)
+                .push(new_entry);
+        }
     }
-
-    fn watch_changes(&self, state_mux: &StateSafe) {
+    fn watch_changes(&self, state_mux: &StateSafe) -> Result<(), Box<dyn std::error::Error>> {
         let mut fs_event_manager = FsEventHandler::new(state_mux.clone(), self.mount_point.clone());
-
-        let mut watcher = notify::recommended_watcher(move |res| match res {
-            Ok(event) => fs_event_manager.handle_event(event),
-            Err(e) => panic!("Failed to handle event: {}", e),
-        })
-        .unwrap();
-
         let path = self.mount_point.clone();
 
+        let watcher_result = notify::recommended_watcher(move |res| match res {
+            Ok(event) => fs_event_manager.handle_event(event),
+            Err(e) => eprintln!("Failed to handle event: {}", e),
+        });
+
+        let mut watcher = match watcher_result {
+            Ok(w) => w,
+            Err(e) => return Err(Box::new(e)),
+        };
+
         thread::spawn(move || {
-            watcher.watch(&path, RecursiveMode::Recursive).unwrap();
+            if let Err(e) = watcher.watch(&path, RecursiveMode::Recursive) {
+                eprintln!("Failed to watch path: {}", e);
+            }
 
             block_in_place(|| loop {
                 thread::park();
             });
         });
+
+        Ok(())
     }
 }
 
@@ -147,43 +165,56 @@ impl Volume {
 /// If there is a cache stored on volume it is loaded.
 /// If there is no cache stored on volume, one is created as well as stored in memory.
 #[tauri::command]
-pub async fn get_volumes(state_mux: State<'_, StateSafe>) -> Result<Vec<Volume>, ()> {
-    let mut sys = System::new_all();
-    sys.refresh_all();
+pub async fn get_volumes(state_mux: State<'_, StateSafe>) -> Result<Vec<Volume>, Error> {
+    let start_time = Instant::now();
+    println!("Getting volumes...");
+
+    let mut sys = System::new_with_specifics(RefreshKind::new().with_disks());
+    sys.refresh_disks_list();
 
     let cache_exists = if fs::metadata(&CACHE_FILE_PATH[..]).is_ok() {
         load_system_cache(&state_mux)
     } else {
-        File::create(&CACHE_FILE_PATH[..]).unwrap();
+        File::create(&CACHE_FILE_PATH[..])?;
         false
     };
 
+    let start_time_disks = Instant::now();
+    println!("Getting disks...");
+
     let disks = sys.disks();
 
-    // Use futures::future::join_all to await multiple futures concurrently
     let volumes_futures: Vec<_> = disks
-        .iter()
+        .par_iter()
         .map(|disk| async {
             let volume = Volume::from_disk(disk);
             if !cache_exists {
                 volume.create_cache(&state_mux);
             }
             volume.watch_changes(&state_mux);
-            volume
+            Ok(volume) as Result<Volume, Error>
         })
         .collect();
 
     let volumes_results: Vec<_> = futures::future::join_all(volumes_futures).await;
 
-    let volumes: Vec<_> = volumes_results.into_iter().collect();
+    let volumes: Vec<_> = volumes_results.into_iter().filter_map(Result::ok).collect();
+
+    let end_time_disks = Instant::now();
+    println!(
+        "Getting disks took: {:?}",
+        end_time_disks - start_time_disks
+    );
 
     if !cache_exists {
         save_system_cache(&state_mux);
-    };
+    }
 
     run_cache_interval(&state_mux);
-
     build_token_index_root(&state_mux);
+
+    let end_time = Instant::now();
+    println!("Getting volumes took: {:?}", end_time - start_time);
 
     Ok(volumes)
 }

@@ -17,6 +17,7 @@ export const runtimeState = atom<{
   listStyle: 'GRID' | 'LIST' | 'TREE';
   searchOpen: boolean;
   currentDriveName?: string;
+  isInRecycleBin: boolean;
 }>({
   key: 'runtime_state',
   default: {
@@ -33,5 +34,6 @@ export const runtimeState = atom<{
     listStyle: 'LIST',
     searchOpen: false,
     currentDriveName: undefined,
+    isInRecycleBin: false,
   },
 });

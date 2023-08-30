@@ -21,11 +21,60 @@ const FILTERED_STRINGS: [&str; 3] = ["$$_systemapps_", "shared.index", "com."]; 
 
 // Function to tokenize a filename (simplified example)
 fn tokenize(filename: &str) -> Vec<String> {
-    filename
-        .split(|c: char| !c.is_alphanumeric())
-        .filter(|&s| !s.is_empty())
-        .map(|s| s.to_lowercase())
-        .collect()
+    let mut tokens = Vec::new();
+    let mut token_start = 0;
+    let chars: Vec<char> = filename.chars().collect();
+
+    let mut prev_char_type = CharType::Other;
+
+    for (i, c) in chars.iter().enumerate() {
+        let char_type = if c.is_alphabetic() {
+            if c.is_uppercase() {
+                CharType::Uppercase
+            } else {
+                CharType::Lowercase
+            }
+        } else if c.is_numeric() {
+            CharType::Numeric
+        } else {
+            CharType::Other
+        };
+
+        if i != 0 {
+            match (prev_char_type, char_type) {
+                (CharType::Uppercase, CharType::Lowercase)
+                | (CharType::Lowercase, CharType::Uppercase)
+                | (CharType::Numeric, CharType::Lowercase)
+                | (CharType::Lowercase, CharType::Numeric)
+                | (CharType::Other, _)
+                | (_, CharType::Other) => {
+                    if token_start < i {
+                        let token: String = chars[token_start..i].iter().collect();
+                        tokens.push(token.to_lowercase());
+                    }
+                    token_start = i;
+                }
+                _ => {}
+            }
+        }
+        prev_char_type = char_type;
+    }
+
+    // Add last token
+    if token_start < chars.len() {
+        let token: String = chars[token_start..].iter().collect();
+        tokens.push(token.to_lowercase());
+    }
+
+    tokens
+}
+
+#[derive(Copy, Clone)]
+enum CharType {
+    Uppercase,
+    Lowercase,
+    Numeric,
+    Other,
 }
 
 // Function to build a token index

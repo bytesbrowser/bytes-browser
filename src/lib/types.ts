@@ -7,6 +7,7 @@ export interface Device {
   removable: boolean;
   file_system_type: string;
   disk_type: string;
+  recycle_bin_path: string;
 }
 
 export interface TagDoc {
@@ -20,6 +21,7 @@ export interface BookmarkDoc {
   uuid: string;
   file_path: string;
   identifier: string;
+  mount_point: string;
 }
 
 export interface ProfileStore {

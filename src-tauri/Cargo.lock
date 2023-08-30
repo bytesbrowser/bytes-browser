@@ -258,6 +258,9 @@ dependencies = [
  "lru",
  "minimp3",
  "notify",
+ "objc",
+ "objc-foundation",
+ "objc_id",
  "open 5.0.0",
  "rayon",
  "serde",
@@ -271,6 +274,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "walkdir",
+ "winapi",
  "window-shadows",
  "zstd",
 ]

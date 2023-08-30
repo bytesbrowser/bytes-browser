@@ -127,3 +127,9 @@ body {
   background: rgb(237, 97, 65);
   background: linear-gradient(90deg, rgba(237, 97, 65, 1) 0%, rgba(235, 66, 106, 1) 100%);
 }
+
+input {
+  user-select: initial;
+  -webkit-user-select: initial;
+  cursor: initial;
+}

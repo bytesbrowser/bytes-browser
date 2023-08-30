@@ -335,7 +335,12 @@ export const ContextMenu = () => {
           </p>
         </div>
         <Separator />
-
+        <Submenu label="Assign Tag">
+          <Item id="tag1">Tag 1</Item>
+          <Item id="tag2">Tag 2</Item>
+        </Submenu>
+        <Separator />
+        <Item id="open">Open</Item>
         <Item id="duplicate">Duplicate</Item>
         <Item id="cut">Cut</Item>
         <Item id="copy">Copy</Item>
@@ -380,7 +385,7 @@ export const ContextMenu = () => {
             Pull
           </Item>
           <Separator />
-          <Item id="commit" onClick={addAllChanges}>
+          <Item id="commit" onClick={addAllChanges} disabled={!gitMeta?.can_fetch}>
             Add All Changes
           </Item>
           <Item
