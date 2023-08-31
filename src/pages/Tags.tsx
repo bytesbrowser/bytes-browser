@@ -1,11 +1,12 @@
 import { invoke } from '@tauri-apps/api';
 import { useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useRecoilState } from 'recoil';
 
+import TagsEmitter from '../lib/emitters/tags.emitter';
 import { runtimeState } from '../lib/state/runtime.state';
 import { DirectoryContents, ProfileStore, TagDoc, TagPathResults } from '../lib/types';
-import { removeAllAfterLastSlash } from '../lib/utils/removeAllAfterLastSlash';
 
 export const Tags = () => {
   const [runtime, setRuntime] = useRecoilState(runtimeState);
@@ -51,19 +52,58 @@ export const Tags = () => {
     });
   }, [tagId]);
 
+  const onDeleteTag = async (tag: TagDoc) => {
+    if (!tag) return;
+
+    const continueDelete = await confirm(`Are you sure you want to delete the tag ${tag.identifier}?`);
+
+    if (!continueDelete) return;
+
+    runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then(async (db) => {
+      if (db) {
+        const tags = db.tags ? db.tags : [];
+        const tagIndex = tags.findIndex((tag) => tag.uuid === tagId);
+        if (tagIndex > -1) {
+          tags.splice(tagIndex, 1);
+
+          await runtime.store.set(`profile-store-${runtime.currentUser}`, {
+            ...db,
+            tags,
+          });
+
+          await runtime.store.save();
+
+          toast.success(`Tag ${tag.identifier} deleted!`);
+
+          TagsEmitter.emit('change', {});
+
+          navigate(`/drive/0`);
+        }
+      }
+    });
+  };
+
   return (
     <div className="folder-explorer h-[96.5vh] overflow-hidden animate__animated animate__fadeIn animate__faster p-8">
       <div className=" border-b border-white border-opacity-10 pb-4 mb-4">
-        <h1 className="text-lg">
-          Results tagged with{' '}
-          <span
-            style={{
-              color: tag?.color_hex,
-            }}
+        <div className="flex justify-between items-center">
+          <h1 className="text-lg">
+            Results tagged with{' '}
+            <span
+              style={{
+                color: tag?.color_hex,
+              }}
+            >
+              {tag?.identifier}
+            </span>
+          </h1>
+          <button
+            onClick={() => onDeleteTag(tag!)}
+            className="bg-white text-error p-2 rounded opacity-100 text-xs hover:opacity-50 transition-all"
           >
-            {tag?.identifier}
-          </span>
-        </h1>
+            Delete Tag
+          </button>
+        </div>
         <p className="mt-3 text-sm opacity-50">{tag?.file_paths.length} results</p>
       </div>
       <div className="flex flex-col flex-1 overflow-hidden">

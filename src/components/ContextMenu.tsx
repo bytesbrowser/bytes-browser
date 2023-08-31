@@ -386,7 +386,7 @@ export const ContextMenu = () => {
         className="text-sm"
       >
         <div
-          className=" pt-2 pb-2"
+          className=" pt-2 pb-2 max-w-[500px]"
           style={{
             marginLeft: '5px',
           }}
@@ -507,6 +507,7 @@ export const ContextMenu = () => {
               <p className="ml-2">Git</p>
             </div>
           }
+          disabled={!currentContext.currentItem?.Directory ? true : false}
         >
           <Item id="init" disabled={!gitMeta?.can_init} onClick={onInit}>
             Init
