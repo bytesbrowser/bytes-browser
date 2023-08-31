@@ -64,3 +64,10 @@ export interface GitMeta {
   branches: string[];
   current_branch: string;
 }
+
+export interface TagPathResults {
+  [key: string]: {
+    data: DirectoryContents[];
+    error: string | null;
+  };
+}

@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import { useRecoilState } from 'recoil';
 
 import { runtimeState } from '../lib/state/runtime.state';
-import { ProfileStore, TagDoc } from '../lib/types';
+import { ProfileStore, TagDoc, TagPathResults } from '../lib/types';
 
 export const Tags = () => {
   const [runtime, setRuntime] = useRecoilState(runtimeState);
@@ -25,9 +25,11 @@ export const Tags = () => {
           console.log(tag);
 
           if (tag.file_paths.length > 0) {
-            invoke('get_files_for_paths', { paths: tag.file_paths.map((tag) => tag.mount_point + tag.path) })
+            invoke<TagPathResults>('get_files_for_paths', {
+              paths: tag.file_paths.map((tag) => tag.mount_point + tag.path),
+            })
               .then((res) => {
-                console.log(res);
+                // foreach
               })
               .catch((err) => {
                 console.error(err);

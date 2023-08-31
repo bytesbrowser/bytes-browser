@@ -15,13 +15,9 @@ export const PageContextMenu = () => {
   const [isBookMarked, setIsBookMarked] = useState(false);
 
   useEffect(() => {
-    console.log('YEET');
-
     runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then((db) => {
       if (db) {
         const bookmarks = db.bookmarks;
-
-        console.log(bookmarks);
 
         bookmarks.find((bookmark) => bookmark.file_path === runtime.currentPath)
           ? setIsBookMarked(true)
@@ -107,8 +103,7 @@ export const PageContextMenu = () => {
 
   const handleEmptyTrash = () => {
     invoke('clear_recycle_bin')
-      .then((res) => {
-        console.log(res);
+      .then(() => {
         DirectoryEmitter.emit('refresh', {});
       })
       .catch((err) => {

@@ -5,8 +5,9 @@ export const useHotkey = (command: string, callback: (shortcut: string) => void)
   useEffect(() => {
     isRegistered(command).then((registered) => {
       if (registered) {
-        unregister(command);
-        register(command, callback);
+        unregister(command).then(() => {
+          register(command, callback);
+        });
       } else {
         register(command, callback);
       }

@@ -40,8 +40,6 @@ export const SidebarTags = ({ tags, loading }: { tags: TagDoc[]; loading: boolea
 
         await runtime.store.save();
 
-        console.log('emitting change');
-
         TagsEmitter.emit('change', {});
       } else {
         await runtime.store.set(`profile-store-${runtime.currentUser}`, {
