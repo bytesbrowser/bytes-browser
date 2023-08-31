@@ -44,18 +44,81 @@ pub struct GitMeta {
 }
 
 #[tauri::command]
-pub async fn copy_file(path: String) -> bool {
-    unimplemented!()
+pub async fn paste_file_at(from: String, destination: String) -> Result<bool, String> {
+    let from_path = Path::new(&from);
+    let dest_path = Path::new(&destination);
+
+    match fs::copy(&from_path, &dest_path) {
+        Ok(_) => Ok(true),
+        Err(e) => Err(format!("Could not copy file: {}", e)),
+    }
 }
 
 #[tauri::command]
-pub async fn paste_file_at(destination: String) -> bool {
-    unimplemented!()
+pub async fn paste_directory_at(from: String, destination: String) -> Result<bool, String> {
+    let from_path = Path::new(&from);
+    let dest_path = Path::new(&destination);
+
+    if !from_path.is_dir() {
+        return Err("Source is not a directory".to_string());
+    }
+
+    let copy_result = copy_dir(&from_path, &dest_path);
+    match copy_result {
+        Ok(_) => Ok(true),
+        Err(e) => Err(format!("Could not copy directory: {}", e)),
+    }
 }
 
 #[tauri::command]
-pub async fn move_file_from(source: String, destination: String) -> bool {
-    unimplemented!()
+pub async fn cut_file_from(from: String, destination: String) -> Result<bool, String> {
+    let from_path = Path::new(&from);
+    let dest_path = Path::new(&destination);
+
+    match fs::rename(&from_path, &dest_path) {
+        Ok(_) => Ok(true),
+        Err(e) => Err(format!("Could not move file: {}", e)),
+    }
+}
+
+#[tauri::command]
+pub async fn cut_directory_from(from: String, destination: String) -> Result<bool, String> {
+    let from_path = Path::new(&from);
+    let dest_path = Path::new(&destination);
+
+    if !from_path.is_dir() {
+        return Err("Source is not a directory".to_string());
+    }
+
+    match fs::rename(&from_path, &dest_path) {
+        Ok(_) => Ok(true),
+        Err(e) => Err(format!("Could not move directory: {}", e)),
+    }
+}
+
+// Helper function to recursively copy a directory
+fn copy_dir(from: &Path, to: &Path) -> io::Result<()> {
+    if !from.is_dir() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "Source is not a directory",
+        ));
+    }
+
+    fs::create_dir_all(to)?;
+
+    for entry_result in fs::read_dir(from)? {
+        let entry = entry_result?;
+        let from_path = entry.path();
+        let to_path = to.join(entry.file_name());
+
+        if from_path.is_dir() {
+            copy_dir(&from_path, &to_path)?;
+        } else {
+            fs::copy(&from_path, &to_path)?;
+        }
+    }
+    Ok(())
 }
 
 #[tauri::command]
