@@ -10,7 +10,7 @@ use crate::{AppState, CachedPath, StateSafe, VolumeCache};
 use lazy_static::lazy_static;
 use notify::event::{CreateKind, ModifyKind, RenameMode};
 use notify::Event;
-use rayon::prelude::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
+use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use std::io::Write;
 use std::time::{Duration, Instant};
 use tokio::time;
@@ -49,7 +49,7 @@ impl FsEventHandler {
     }
 
     pub fn handle_create(&self, kind: CreateKind, path: &Path) {
-        let state = &mut self.state_mux.lock().unwrap_or_else(|e| e.into_inner());
+        let state = &mut self.state_mux.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         let current_volume = self.get_from_cache(state);
 
         let filename = path.file_name().unwrap().to_string_lossy().to_string();
@@ -175,7 +175,7 @@ pub fn build_token_index_root(state_mux: &StateSafe) {
     let all_tokens: Vec<_> = state
         .system_cache
         .par_iter()
-        .map(|(_, cache)| build_token_index(&cache))
+        .map(|(_, cache)| build_token_index(cache))
         .collect();
 
     let mut token_index = HashMap::new();
@@ -237,7 +237,7 @@ pub fn load_system_cache(state_mux: &StateSafe) -> bool {
     if system_cache_result.is_err() {
         println!(
             "Failed to deserialize the volume cache from disk. {}",
-            system_cache_result.err().unwrap().to_string()
+            system_cache_result.err().unwrap()
         );
         return false;
     }

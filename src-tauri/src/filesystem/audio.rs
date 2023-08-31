@@ -17,17 +17,17 @@ pub fn generate_waveform(path: &Path) -> Result<ImageBuffer<Rgb<u8>, Vec<u8>>, S
         let mut reader = hound::WavReader::open(path).map_err(|e| e.to_string())?;
         samples = reader
             .samples::<i16>()
-            .map(|s| s.map(|s| s as f32).unwrap_or(0.0))
+            .map(|s| s.map(f32::from).unwrap_or(0.0))
             .collect();
     } else if extension == "mp3" {
         let mp3_samples = read_mp3_samples(path.to_str().ok_or("Invalid path")?)?;
-        samples = mp3_samples.iter().map(|&s| s as f32).collect();
+        samples = mp3_samples.iter().map(|&s| f32::from(s)).collect();
     } else {
         return Err("Unsupported audio format".to_string());
     }
 
     // Normalize samples
-    let max_sample = samples.iter().cloned().fold(f32::MIN, f32::max).abs();
+    let max_sample = samples.iter().copied().fold(f32::MIN, f32::max).abs();
     for sample in &mut samples {
         *sample /= max_sample;
     }
@@ -45,8 +45,8 @@ pub fn generate_waveform(path: &Path) -> Result<ImageBuffer<Rgb<u8>, Vec<u8>>, S
         let end = (x as usize + 1) * samples_per_pixel;
         let slice = &samples[start..end];
 
-        let min = slice.iter().cloned().fold(f32::INFINITY, f32::min);
-        let max = slice.iter().cloned().fold(f32::NEG_INFINITY, f32::max);
+        let min = slice.iter().copied().fold(f32::INFINITY, f32::min);
+        let max = slice.iter().copied().fold(f32::NEG_INFINITY, f32::max);
 
         let y_min = ((1.0 + min) * 0.5 * (height as f32)) as u32;
         let y_max = ((1.0 + max) * 0.5 * (height as f32)) as u32;

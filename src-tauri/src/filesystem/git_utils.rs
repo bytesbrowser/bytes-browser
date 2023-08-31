@@ -29,7 +29,7 @@ fn get_git_creds() -> HashMap<String, Vec<String>> {
 
     if let Some(home_dir) = get_home_dir() {
         // Check for SSH keys in the ~/.ssh directory
-        let ssh_path = format!("{}/.ssh", home_dir);
+        let ssh_path = format!("{home_dir}/.ssh");
         let ssh_dir = Path::new(&ssh_path);
 
         if ssh_dir.is_dir() {

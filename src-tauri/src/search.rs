@@ -1,4 +1,4 @@
-use crate::filesystem::explorer::is_git_directory;
+
 use crate::filesystem::get_file_description;
 use crate::CachedPath;
 use crate::{filesystem::volume::DirectoryChild, StateSafe};
@@ -42,12 +42,9 @@ fn tokenize(filename: &str) -> Vec<String> {
 
         if i != 0 {
             match (prev_char_type, char_type) {
-                (CharType::Uppercase, CharType::Lowercase)
-                | (CharType::Lowercase, CharType::Uppercase)
-                | (CharType::Numeric, CharType::Lowercase)
-                | (CharType::Lowercase, CharType::Numeric)
-                | (CharType::Other, _)
-                | (_, CharType::Other) => {
+                (CharType::Uppercase | CharType::Numeric, CharType::Lowercase) |
+(CharType::Lowercase, CharType::Uppercase | CharType::Numeric) |
+(CharType::Other, _) | (_, CharType::Other) => {
                     if token_start < i {
                         let token: String = chars[token_start..i].iter().collect();
                         tokens.push(token.to_lowercase());
@@ -146,7 +143,7 @@ fn check_file(
         return;
     }
 
-    let metadata = match fs::metadata(&file_path) {
+    let metadata = match fs::metadata(file_path) {
         Ok(meta) => meta,
         Err(_) => return,
     };
@@ -165,7 +162,7 @@ fn check_file(
     }
 
     let size = metadata.len();
-    let last_modified_sys_time = fs::metadata(&file_path).unwrap().modified();
+    let last_modified_sys_time = fs::metadata(file_path).unwrap().modified();
 
     let last_modified = last_modified_sys_time.unwrap().elapsed().unwrap().as_secs();
 
@@ -200,7 +197,7 @@ pub struct SearchResult {
 pub async fn search_directory(
     state_mux: State<'_, StateSafe>,
     query: String,
-    mount_pnt: String,
+    _mount_pnt: String,
     accept_files: bool,
     accept_directories: bool,
 ) -> Result<SearchResult, ()> {
@@ -214,7 +211,7 @@ pub async fn search_directory(
 
     for token in query_tokens {
         if let Some(filenames) = state.token_cache.get(&token) {
-            println!("Found token: {}", token);
+            println!("Found token: {token}");
             candidate_files.extend(filenames);
         }
     }
@@ -236,7 +233,7 @@ pub async fn search_directory(
 
     // let system_cache = state.system_cache.get(&mount_pnt).unwrap();
 
-    for (_, volume) in state.system_cache.iter() {
+    for (_, volume) in &state.system_cache {
         for (file_type, cached_paths) in volume.iter() {
             for cached_path in cached_paths.iter() {
                 combined_cache
@@ -247,7 +244,7 @@ pub async fn search_directory(
         }
     }
 
-    'outer: for filename in candidate_files.iter() {
+    'outer: for filename in &candidate_files {
         let paths = match combined_cache.get(*filename) {
             Some(p) => p,
             None => continue,
@@ -288,13 +285,13 @@ pub async fn search_directory(
                 continue;
             }
 
-            let metadata = match fs::metadata(&file_path) {
+            let metadata = match fs::metadata(file_path) {
                 Ok(meta) => meta,
                 Err(_) => continue,
             };
 
             let size = metadata.len();
-            let last_modified_sys_time = fs::metadata(&file_path).unwrap().modified();
+            let last_modified_sys_time = fs::metadata(file_path).unwrap().modified();
 
             let last_modified = last_modified_sys_time.unwrap().elapsed().unwrap().as_secs();
 
@@ -307,7 +304,7 @@ pub async fn search_directory(
             let file_type = get_file_description(&extension);
 
             results.push(DirectoryChild::Directory(
-                filename.to_string(),
+                (*filename).to_string(),
                 file_path.to_string(),
                 size,
                 last_modified,

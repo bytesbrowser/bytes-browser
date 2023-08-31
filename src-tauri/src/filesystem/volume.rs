@@ -139,7 +139,7 @@ impl Volume {
 
         let watcher_result = notify::recommended_watcher(move |res| match res {
             Ok(event) => fs_event_manager.handle_event(event),
-            Err(e) => eprintln!("Failed to handle event: {}", e),
+            Err(e) => eprintln!("Failed to handle event: {e}"),
         });
 
         let mut watcher = match watcher_result {
@@ -149,7 +149,7 @@ impl Volume {
 
         thread::spawn(move || {
             if let Err(e) = watcher.watch(&path, RecursiveMode::Recursive) {
-                eprintln!("Failed to watch path: {}", e);
+                eprintln!("Failed to watch path: {e}");
             }
 
             block_in_place(|| loop {
@@ -227,7 +227,7 @@ pub async fn safely_eject_removable(mount_path: String, platform: String) -> Res
     let volume = sys
         .disks()
         .iter()
-        .find(|disk| disk.mount_point().to_string_lossy().to_string() == mount_path);
+        .find(|disk| disk.mount_point().to_string_lossy() == mount_path);
 
     if let Some(volume) = volume {
         if volume.is_removable() {
@@ -252,7 +252,7 @@ pub async fn safely_eject_removable(mount_path: String, platform: String) -> Res
                     );
                     ("sh".to_string(), vec!["-c".to_string(), command_str])
                 }
-                _ => return Err(format!("Unsupported platform: {}", platform)),
+                _ => return Err(format!("Unsupported platform: {platform}")),
             };
 
             let output = std::process::Command::new(cmd)

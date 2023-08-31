@@ -101,7 +101,7 @@ async fn process_text(path: &str) -> Result<String, Error> {
 }
 
 async fn process_image(path: &str) -> Result<String, Error> {
-    let img = image::open(&path).map_err(|e| Error::Custom(e.to_string()))?;
+    let img = image::open(path).map_err(|e| Error::Custom(e.to_string()))?;
     let thumbnail = img.resize(150, 150, image::imageops::FilterType::Gaussian);
 
     // Convert image to bytes
@@ -111,7 +111,7 @@ async fn process_image(path: &str) -> Result<String, Error> {
         .map_err(|e| Error::Custom(e.to_string()))?;
 
     let base64_image = base64::encode(buffer.get_ref());
-    Ok(format!("data:image/png;base64,{}", base64_image))
+    Ok(format!("data:image/png;base64,{base64_image}"))
 }
 
 async fn process_audio(path: &str) -> Result<String, Error> {
@@ -122,7 +122,7 @@ async fn process_audio(path: &str) -> Result<String, Error> {
             img.write_to(&mut buffer, image::ImageOutputFormat::Png)
                 .map_err(|e| Error::Custom(e.to_string()))?;
             let base64_image = base64::encode(buffer.get_ref());
-            Ok(format!("data:image/png;base64,{}", base64_image))
+            Ok(format!("data:image/png;base64,{base64_image}"))
         }
         Err(e) => Err(Error::Custom(e)),
     }
@@ -141,10 +141,10 @@ pub async fn delete_file(
 
     if is_dir {
         let res = fs::remove_dir_all(&path);
-        return match res {
+        match res {
             Ok(_) => Ok(()),
             Err(err) => Err(Error::Custom(err.to_string())),
-        };
+        }
     } else {
         let res = fs::remove_file(path);
         match res {
@@ -175,7 +175,7 @@ async fn fetch_directory(path: String) -> io::Result<Vec<DirectoryChild>> {
             for res in results {
                 match res {
                     Ok(child_vec) => final_results.extend(child_vec),
-                    Err(e) => {
+                    Err(_e) => {
                         // Handle or log individual task errors as needed.
                     }
                 }
@@ -219,7 +219,7 @@ async fn handle_entry(entry: DirEntry) -> io::Result<Vec<DirectoryChild>> {
 
         Ok(vec![DirectoryChild::Directory(
             file_name,
-            path.clone(),
+            path,
             size,
             last_modified,
             "File".to_string(),
@@ -235,7 +235,7 @@ pub async fn open_file(path: String) -> Result<(), Error> {
     let output = match output_res {
         Ok(output) => output,
         Err(err) => {
-            let err_msg = format!("Failed to get open command output: {}", err);
+            let err_msg = format!("Failed to get open command output: {err}");
             return Err(Error::Custom(err_msg));
         }
     };
@@ -319,11 +319,11 @@ pub async fn get_git_meta_for_directory(path: &str) -> Result<GitMeta, Error> {
             }
 
             Ok(GitMeta {
-                can_commit: can_commit,
+                can_commit,
                 can_fetch: true,
                 can_pull: true,
                 can_init,
-                can_push: can_push,
+                can_push,
                 can_stash: true,
                 branches,
                 current_branch,
@@ -401,7 +401,7 @@ pub async fn stash_changes_for_directory(path: String) -> GitResult<()> {
 pub async fn commit_changes_for_directory(path: String, message: String) -> Result<String, Error> {
     let output = Command::new("git")
         .arg("commit")
-        .arg(format!("-m '{}'", message))
+        .arg(format!("-m '{message}'"))
         .current_dir(path)
         .output()?;
 
@@ -463,7 +463,7 @@ pub async fn pull_changes_for_directory(path: String) -> Result<String, Error> {
     let output = Command::new("git")
         .arg("pull")
         .arg("origin")
-        .arg(format!("{}", current_branch))
+        .arg(&current_branch)
         .current_dir(path)
         .output()?;
 
@@ -481,7 +481,7 @@ pub async fn pull_changes_for_directory(path: String) -> Result<String, Error> {
 pub async fn checkout_branch_for_directory(path: String, branch: String) -> Result<String, Error> {
     let output = Command::new("git")
         .arg("checkout")
-        .arg(format!("{}", branch))
+        .arg(&branch)
         .current_dir(path)
         .output()?;
 
@@ -514,7 +514,7 @@ pub async fn add_all_changes(path: String) -> Result<String, Error> {
 }
 
 #[tauri::command]
-pub async fn clear_recycle_bin(window: tauri::Window) -> Result<(), Error> {
+pub async fn clear_recycle_bin(_window: tauri::Window) -> Result<(), Error> {
     // Windows-specific code
     #[cfg(target_os = "windows")]
     {

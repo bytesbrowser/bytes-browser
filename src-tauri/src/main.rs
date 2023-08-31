@@ -80,14 +80,14 @@ async fn main() {
 
 #[tauri::command]
 fn get_environment_variable(name: &str) -> String {
-    std::env::var(name).unwrap_or_else(|_| "".to_string())
+    std::env::var(name).unwrap_or_else(|_| String::new())
 }
 
 #[tauri::command]
 fn get_volume_for_path(path: &str, state_mux: State<'_, StateSafe>) -> Option<String> {
     let state = state_mux.lock().unwrap();
 
-    for (volume, cache) in state.system_cache.iter() {
+    for (volume, cache) in &state.system_cache {
         for cached_path in cache.values().flatten() {
             if cached_path.file_path == path {
                 return Some(volume.to_string());
