@@ -112,6 +112,8 @@ export const FolderExplorer = () => {
 
     const device = runtime.devices[driveId as any];
 
+    if (!device) return;
+
     setRuntime({
       ...runtime,
       currentDrive: device,

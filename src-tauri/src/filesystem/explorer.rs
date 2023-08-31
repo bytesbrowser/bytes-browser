@@ -1,3 +1,6 @@
+use crate::error::{Error, GitError};
+use crate::StateSafe;
+use clipboard::{ClipboardContext, ClipboardProvider};
 use futures::future;
 use serde::Serialize;
 use std::borrow::Cow;
@@ -10,9 +13,6 @@ use std::process::Command;
 use tokio::fs::File;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::task;
-
-use crate::error::{Error, GitError};
-use crate::StateSafe;
 
 use super::audio::generate_waveform;
 use super::cache::FsEventHandler;
@@ -41,6 +41,32 @@ pub struct GitMeta {
     can_stash: bool,
     branches: Vec<String>,
     current_branch: String,
+}
+
+#[tauri::command]
+pub async fn copy_file(path: String) -> bool {
+    let file_data = match std::fs::read(path).map_err(|e| e.to_string()) {
+        Ok(data) => data,
+        Err(_) => return false,
+    };
+
+    let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
+
+    ctx.set_contents(String::from_utf8_lossy(&file_data).to_string())
+        .is_ok()
+}
+
+#[tauri::command]
+pub async fn paste_file_at(destination: String) -> bool {
+    unimplemented!()
+}
+
+#[tauri::command]
+pub async fn move_file_from(source: String, destination: String) -> bool {
+    match fs::rename(&source, &destination) {
+        Ok(_) => true,
+        Err(_) => false,
+    }
 }
 
 #[tauri::command]

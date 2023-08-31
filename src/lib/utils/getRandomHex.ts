@@ -1,4 +1,4 @@
-export const getRandomColorfulHexColor = () => {
+export const getRandomHexColor = () => {
   // Generate a random hue value between 0 and 360
   const hue = Math.floor(Math.random() * 360);
   // Use full saturation (100%) and a relatively bright lightness value (50%)

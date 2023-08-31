@@ -1,4 +1,3 @@
-import { isArray } from '@apollo/client/utilities';
 import { invoke } from '@tauri-apps/api';
 import { useEffect, useState } from 'react';
 import { Item, Menu, Separator, Submenu } from 'react-contexify';
@@ -11,7 +10,7 @@ import DirectoryEmitter from '../lib/emitters/directory.emitter';
 import TagsEmitter from '../lib/emitters/tags.emitter';
 import { currentContextState } from '../lib/state/currentContext.state';
 import { runtimeState } from '../lib/state/runtime.state';
-import { DirectoryContents, GitMeta, ProfileStore, TagDoc, TagDocPath } from '../lib/types';
+import { DirectoryContents, GitMeta, ProfileStore, TagDoc } from '../lib/types';
 
 export const ContextMenu = () => {
   const [runtime, setRuntime] = useRecoilState(runtimeState);
@@ -114,6 +113,27 @@ export const ContextMenu = () => {
         }
       });
     }
+  };
+
+  const onCopy = () => {
+    const item = currentContext.currentItem;
+
+    if (!item) return;
+
+    invoke('copy_file', { path: item['File'] ? item['File']![1] : item['Directory']![1], isDir: true })
+      .then((res) => {
+        console.log(res);
+
+        if (res === true) {
+          toast.success('Copied ' + item['File'] ? item['File']![0] : item['Directory']![0] + '.');
+        } else {
+          toast.error('Failed to copy file.');
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        toast.error('Failed to copy file.');
+      });
   };
 
   const onFetch = () => {
@@ -476,7 +496,9 @@ export const ContextMenu = () => {
         <Item id="open">Open</Item>
         <Item id="duplicate">Duplicate</Item>
         <Item id="cut">Cut</Item>
-        <Item id="copy">Copy</Item>
+        <Item id="copy" onClick={onCopy}>
+          Copy
+        </Item>
         <Item disabled id="paste">
           Paste
         </Item>

@@ -93,6 +93,11 @@ impl Volume {
 
     /// This traverses the provided volume and adds the file structure to the cache in memory.
     fn create_cache(&self, state_mux: &StateSafe) {
+        println!(
+            "Creating cache for volume: {}",
+            self.mount_point.to_string_lossy()
+        );
+
         let new_entries: Vec<(String, CachedPath)> = WalkDir::new(self.mount_point.clone())
             .into_iter()
             .par_bridge()
@@ -119,8 +124,19 @@ impl Volume {
             })
             .collect();
 
+        println!(
+            "Finished creating cache for volume: {}",
+            self.mount_point.to_string_lossy()
+        );
+
         // Now update the cache with the new information
         let mut state = state_mux.lock().unwrap();
+
+        println!(
+            "Updating cache for volume: {}",
+            self.mount_point.to_string_lossy()
+        );
+
         let volume = state
             .system_cache
             .entry(self.mount_point.to_string_lossy().to_string())
@@ -133,6 +149,7 @@ impl Volume {
                 .push(new_entry);
         }
     }
+
     fn watch_changes(&self, state_mux: &StateSafe) -> Result<(), Box<dyn std::error::Error>> {
         let mut fs_event_manager = FsEventHandler::new(state_mux.clone(), self.mount_point.clone());
         let path = self.mount_point.clone();
@@ -165,12 +182,16 @@ impl Volume {
 /// If there is a cache stored on volume it is loaded.
 /// If there is no cache stored on volume, one is created as well as stored in memory.
 #[tauri::command]
-pub async fn get_volumes(state_mux: State<'_, StateSafe>) -> Result<Vec<Volume>, Error> {
+pub async fn get_volumes(
+    state_mux: State<'_, StateSafe>,
+    window: tauri::Window,
+) -> Result<Vec<Volume>, Error> {
     let start_time = Instant::now();
     println!("Getting volumes...");
 
-    let mut sys = System::new_with_specifics(RefreshKind::new().with_disks());
-    sys.refresh_disks_list();
+    window.emit("get_volumes_event", "Getting volumes");
+
+    let sys = System::new_all();
 
     let cache_exists = if fs::metadata(&CACHE_FILE_PATH[..]).is_ok() {
         load_system_cache(&state_mux)
@@ -179,26 +200,40 @@ pub async fn get_volumes(state_mux: State<'_, StateSafe>) -> Result<Vec<Volume>,
         false
     };
 
+    match window.emit("get_volumes_event", "Getting disks") {
+        Ok(_) => {}
+        Err(e) => {
+            println!("Error emitting event: {}", e);
+        }
+    };
+
     let start_time_disks = Instant::now();
     println!("Getting disks...");
 
     let disks = sys.disks();
 
     let volumes_futures: Vec<_> = disks
-        .par_iter()
+        .iter()
         .map(|disk| async {
             let volume = Volume::from_disk(disk);
             if !cache_exists {
                 volume.create_cache(&state_mux);
             }
-            volume.watch_changes(&state_mux);
-            Ok(volume) as Result<Volume, Error>
+
+            match volume.watch_changes(&state_mux) {
+                Ok(_) => {}
+                Err(e) => {
+                    println!("Error watching changes: {}", e);
+                }
+            }
+
+            volume
         })
         .collect();
 
     let volumes_results: Vec<_> = futures::future::join_all(volumes_futures).await;
 
-    let volumes: Vec<_> = volumes_results.into_iter().filter_map(Result::ok).collect();
+    let volumes: Vec<_> = volumes_results.into_iter().collect();
 
     let end_time_disks = Instant::now();
     println!(
@@ -207,10 +242,24 @@ pub async fn get_volumes(state_mux: State<'_, StateSafe>) -> Result<Vec<Volume>,
     );
 
     if !cache_exists {
+        match window.emit("get_volumes_event", "Saving system cache") {
+            Ok(_) => {}
+            Err(e) => {
+                println!("Error emitting event: {}", e);
+            }
+        }
         save_system_cache(&state_mux);
     }
 
     run_cache_interval(&state_mux);
+
+    match window.emit("get_volumes_event", "Indexing files") {
+        Ok(_) => {}
+        Err(e) => {
+            println!("Error emitting event: {}", e);
+        }
+    }
+
     build_token_index_root(&state_mux);
 
     let end_time = Instant::now();

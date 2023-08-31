@@ -4,9 +4,12 @@ import { toast } from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useRecoilState } from 'recoil';
 
+import { SmartFileIcon } from '../components/SmartFileIcon';
 import TagsEmitter from '../lib/emitters/tags.emitter';
 import { runtimeState } from '../lib/state/runtime.state';
 import { DirectoryContents, ProfileStore, TagDoc, TagPathResults } from '../lib/types';
+import { formatLongText } from '../lib/utils/formatLongText';
+import { removeLastCharOf } from '../lib/utils/removeLastCharOf';
 
 export const Tags = () => {
   const [runtime, setRuntime] = useRecoilState(runtimeState);
@@ -104,7 +107,9 @@ export const Tags = () => {
             Delete Tag
           </button>
         </div>
-        <p className="mt-3 text-sm opacity-50">{tag?.file_paths.length} results</p>
+        <p className="mt-3 text-sm opacity-50">
+          {tag?.file_paths.length} result{tag && tag?.file_paths.length > 1 && 's'}
+        </p>
       </div>
       <div className="flex flex-col flex-1 overflow-hidden">
         <div className="flex-1 overflow-y-auto">
@@ -112,34 +117,47 @@ export const Tags = () => {
             {results?.map(
               (result, key) =>
                 result.File && (
-                  <p
-                    onClick={() => {
-                      const device = runtime.devices.find((device) => {
-                        return device.mount_point.includes(
-                          result['Directory'] ? result['Directory']![1].slice(0, 1) : result['File']![1].slice(0, 2),
-                        );
-                      });
+                  <div className="flex items-center cursor-pointer justify-between opacity-50 hover:ml-2 hover:opacity-100 transition-all">
+                    <div className="flex items-center">
+                      <SmartFileIcon file={result} />
+                      <p
+                        className="ml-2"
+                        onClick={() => {
+                          const device = runtime.devices.find((device) => {
+                            return device.mount_point.includes(
+                              result['Directory']
+                                ? result['Directory']![1].slice(0, 1)
+                                : result['File']![1].slice(0, 2),
+                            );
+                          });
 
-                      if (!device) return;
+                          if (!device) return;
 
-                      const deviceIndex = runtime.devices.findIndex((device) => {
-                        return device.mount_point.includes(
-                          result['Directory'] ? result['Directory']![1].slice(0, 1) : result['File']![1].slice(0, 2),
-                        );
-                      });
+                          const deviceIndex = runtime.devices.findIndex((device) => {
+                            return device.mount_point.includes(
+                              result['Directory']
+                                ? result['Directory']![1].slice(0, 1)
+                                : result['File']![1].slice(0, 2),
+                            );
+                          });
 
-                      navigate(
-                        `/drive/${deviceIndex}?path=${encodeURIComponent(
-                          result['File']![1] === '/'
-                            ? ''
-                            : result['File']![1].replace(result['File']![0], '').replace(device?.mount_point, ''),
-                        )}&mount=${encodeURIComponent(device.mount_point)}`,
-                      );
-                    }}
-                    key={key}
-                  >
-                    {result.File![1]}
-                  </p>
+                          navigate(
+                            `/drive/${deviceIndex}?path=${encodeURIComponent(
+                              result['File']![1] === '/'
+                                ? ''
+                                : result['File']![1].replace(result['File']![0], '').replace(device?.mount_point, ''),
+                            )}&mount=${encodeURIComponent(device.mount_point)}`,
+                          );
+                        }}
+                        key={key}
+                      >
+                        {result.File![0]}
+                      </p>
+                    </div>
+                    <p className="w-1/2 flex items-center justify-end mr-2">
+                      {removeLastCharOf(formatLongText(result['File']![1], 45))}
+                    </p>
+                  </div>
                 ),
             )}
           </div>

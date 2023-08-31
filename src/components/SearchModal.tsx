@@ -413,7 +413,6 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
                         ? removeLastCharOf(formatLongText(result['Directory']![1], 45))
                         : removeLastCharOf(formatLongText(result['File']![1], 45))}
                     </p>
-                    <p></p>
                   </div>
                 ))}
               </div>

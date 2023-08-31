@@ -1,4 +1,6 @@
 import { invoke, os } from '@tauri-apps/api';
+import { Event, listen } from '@tauri-apps/api/event';
+import { appWindow } from '@tauri-apps/api/window';
 import { useEffect, useState } from 'react';
 import { Triangle } from 'react-loader-spinner';
 import { useParams } from 'react-router-dom';
@@ -25,6 +27,8 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
   const [isMac, setIsMac] = useState(false);
 
   const { driveId, path, mount } = useParams();
+
+  const [tauriLoadEventMessage, setTauriLoadEventMessage] = useState<string | null>(null);
 
   useHotkey('CommandOrControl+Shift+Space', (_shortcut) => {
     setRuntime({
@@ -88,6 +92,10 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
 
     TagsEmitter.on('change', () => {
       getUserStore();
+    });
+
+    appWindow.listen('get_volumes_event', (msg: Event<string>) => {
+      setTauriLoadEventMessage(msg.payload);
     });
   }, []);
 
@@ -237,7 +245,7 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
       ) : (
         <div className="loader flex justify-center items-center h-screen flex-col w-screen bg-body">
           <Triangle height="80" width="80" color="white" ariaLabel="triangle-loading" visible={true} />
-          <p className="mt-8 opacity-50">Getting things ready</p>
+          <p className="mt-8 opacity-50">{tauriLoadEventMessage ?? 'Getting things ready...'}</p>
           <TimeText seconds={seconds} className="mt-8 opacity-50" prefix="Elapsed Caching Time:" />
         </div>
       )}
