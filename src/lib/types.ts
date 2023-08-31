@@ -67,7 +67,7 @@ export interface GitMeta {
 
 export interface TagPathResults {
   [key: string]: {
-    data: DirectoryContents[];
+    data: DirectoryContents;
     error: string | null;
   };
 }

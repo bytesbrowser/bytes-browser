@@ -292,6 +292,33 @@ export const ContextMenu = () => {
     }
   };
 
+  const removeTag = async (tag: TagDoc, item: DirectoryContents) => {
+    runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then(async (db) => {
+      if (db) {
+        const updated_tag = { ...tag };
+
+        updated_tag.file_paths = updated_tag.file_paths.filter((doc) => doc.mount_point + doc.path !== item.File!['1']);
+
+        const tags = db.tags ? db.tags : [];
+
+        const index = tags.findIndex((doc) => doc.uuid === tag.uuid);
+
+        tags[index] = updated_tag;
+
+        await runtime.store.set(`profile-store-${runtime.currentUser}`, {
+          ...db,
+          tags,
+        });
+
+        setTags(tags);
+
+        await runtime.store.save();
+
+        toast.success(`Removed ${item['File']![0]} from ${tag.identifier} tag group.`);
+      }
+    });
+  };
+
   const addTag = async (tag: TagDoc, item: DirectoryContents) => {
     runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then(async (db) => {
       if (db) {
@@ -312,6 +339,8 @@ export const ContextMenu = () => {
           ...db,
           tags,
         });
+
+        setTags(tags);
 
         await runtime.store.save();
 
@@ -404,7 +433,17 @@ export const ContextMenu = () => {
         >
           {tags.map((tag, key) => (
             <Item
-              onClick={() => addTag(tag, currentContext.currentItem!)}
+              onClick={() => {
+                let found = tag.file_paths.find(
+                  (doc) => doc.mount_point + doc.path === currentContext.currentItem?.File!['1'],
+                );
+
+                if (!found) {
+                  addTag(tag, currentContext.currentItem!);
+                } else {
+                  removeTag(tag, currentContext.currentItem!);
+                }
+              }}
               id="tag"
               key={key}
               disabled={() => {
@@ -412,11 +451,7 @@ export const ContextMenu = () => {
                   return true;
                 }
 
-                const found = tag.file_paths.find(
-                  (doc) => doc.mount_point + doc.path === currentContext.currentItem?.File!['1'],
-                );
-
-                return found ? true : false;
+                return false;
               }}
             >
               <div
@@ -425,7 +460,15 @@ export const ContextMenu = () => {
                   backgroundColor: tag.color_hex,
                 }}
               ></div>
-              <span>{tag.identifier}</span>
+              <span>
+                {`${
+                  currentContext.currentItem &&
+                  currentContext.currentItem.File &&
+                  tag.file_paths.find((doc) => doc.mount_point + doc.path === currentContext.currentItem?.File!['1'])
+                    ? 'Remove '
+                    : ''
+                }` + tag.identifier}
+              </span>
             </Item>
           ))}
         </Submenu>
