@@ -9,6 +9,7 @@ import { useRecoilState } from 'recoil';
 import DirectoryEmitter from '../lib/emitters/directory.emitter';
 import TagsEmitter from '../lib/emitters/tags.emitter';
 import { currentContextState } from '../lib/state/currentContext.state';
+import { pasteboardState } from '../lib/state/pasteboard.state';
 import { runtimeState } from '../lib/state/runtime.state';
 import { DirectoryContents, GitMeta, ProfileStore, TagDoc } from '../lib/types';
 
@@ -21,6 +22,7 @@ export const ContextMenu = () => {
   const [show, setShow] = useState(false);
   const [commitItem, setCommitItem] = useState<DirectoryContents | null>(null);
   const [tags, setTags] = useState<TagDoc[]>([]);
+  const [pasteboard, setPasteboard] = useRecoilState(pasteboardState);
 
   const onDelete = async () => {
     if (currentContext.currentItem) {
@@ -120,20 +122,13 @@ export const ContextMenu = () => {
 
     if (!item) return;
 
-    invoke('copy_file', { path: item['File'] ? item['File']![1] : item['Directory']![1], isDir: true })
-      .then((res) => {
-        console.log(res);
+    setPasteboard({
+      currentOperation: 'COPY',
+      file: item,
+      mountPoint: runtime.currentDrive?.mount_point!,
+    });
 
-        if (res === true) {
-          toast.success('Copied ' + item['File'] ? item['File']![0] : item['Directory']![0] + '.');
-        } else {
-          toast.error('Failed to copy file.');
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        toast.error('Failed to copy file.');
-      });
+    toast.success('Copied ' + (item.File ? item.File[0] : item.Directory![0]) + ' to clipboard.');
   };
 
   const onFetch = () => {
