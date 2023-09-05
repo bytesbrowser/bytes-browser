@@ -29,6 +29,7 @@ const App = () => {
           runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then(async (db) => {
             if (db) {
               if (db.themePreference) {
+                console.log('FOund theme pref');
                 setThemeState({
                   ...themeState,
                   themes: res,

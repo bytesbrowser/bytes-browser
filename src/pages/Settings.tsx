@@ -161,140 +161,141 @@ export const Settings = () => {
             {settingsContentItems[settingsIndex].title === 'Performance' && <SettingsPerformance />}
             {settingsContentItems[settingsIndex].title === "What's New" && <SettingsNew />}
             {settingsContentItems[settingsIndex].title === 'Appearance' && (
-              <div>
-                <p className="mb-8">Choose your app's theme</p>
-                <Select
-                  value={{ value: themeState.currentTheme?.id, label: themeState.currentTheme?.name }}
-                  styles={{
-                    option: (styles) => ({
-                      ...styles,
-                      color: '#FFFFFF',
-                      backgroundColor: '#1C1B20',
-                      '&:hover': {
-                        backgroundColor: '#27272D',
-                      },
-                      fontSize: '12px',
-                    }),
-                    container: (styles) => ({
-                      ...styles,
-                      width: '350px',
-                      backgroundColor: '#1C1B20',
-                      fontSize: '12px',
-                    }),
-                    control: (styles) => ({
-                      ...styles,
-                      backgroundColor: '#1C1B20',
-                      borderColor: '#27272D',
-                    }),
-                    singleValue: (styles) => ({
-                      ...styles,
-                      color: '#FFFFFF',
-                    }),
-                    menu: (styles) => ({
-                      ...styles,
-                      backgroundColor: '#1C1B20',
-                    }),
-                  }}
-                  options={[...themeState.themes].map((theme) => ({
-                    value: theme.id,
-                    label: theme.name,
-                  }))}
-                  onChange={(e) => {
-                    console.log(e);
+              <>
+                <div>
+                  <p className="mb-8">Choose your app's theme</p>
+                  <Select
+                    value={{ value: themeState.currentTheme?.id, label: themeState.currentTheme?.name }}
+                    styles={{
+                      option: (styles) => ({
+                        ...styles,
+                        color: '#FFFFFF',
+                        backgroundColor: '#1C1B20',
+                        '&:hover': {
+                          backgroundColor: '#27272D',
+                        },
+                        fontSize: '12px',
+                      }),
+                      container: (styles) => ({
+                        ...styles,
+                        width: '350px',
+                        backgroundColor: '#1C1B20',
+                        fontSize: '12px',
+                      }),
+                      control: (styles) => ({
+                        ...styles,
+                        backgroundColor: '#1C1B20',
+                        borderColor: '#27272D',
+                      }),
+                      singleValue: (styles) => ({
+                        ...styles,
+                        color: '#FFFFFF',
+                      }),
+                      menu: (styles) => ({
+                        ...styles,
+                        backgroundColor: '#1C1B20',
+                      }),
+                    }}
+                    options={[...themeState.themes].map((theme) => ({
+                      value: theme.id,
+                      label: theme.name,
+                    }))}
+                    onChange={(e) => {
+                      console.log(e);
 
-                    setThemeState({
-                      ...themeState,
-                      config: themeState.themes.find((theme) => theme.name === e?.label)!.content,
-                      currentTheme: themeState.themes.find((theme) => theme.name === e?.label)!,
-                      theme: themeState.themes.find((theme) => theme.name === e?.label)!.name,
-                    });
-
-                    if (runtime.store) {
-                      runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then(async (db) => {
-                        if (db) {
-                          db.themePreference = themeState.themes.find((theme) => theme.name === e?.label)!.name;
-
-                          runtime.store.save();
-                        }
+                      setThemeState({
+                        ...themeState,
+                        config: themeState.themes.find((theme) => theme.name === e?.label)!.content,
+                        currentTheme: themeState.themes.find((theme) => theme.name === e?.label)!,
+                        theme: themeState.themes.find((theme) => theme.name === e?.label)!.name,
                       });
-                    }
-                  }}
-                />
-                <p className="mt-8 opacity-80">Current Theme</p>
-                <div
-                  className="mt-8 rounded-lg p-4 w-1/2 shadow-lg"
-                  style={{
-                    backgroundColor: 'var(--sidebar-bg)',
-                  }}
-                >
-                  <img
-                    src={
-                      themeState.currentTheme?.icon ??
-                      'https://media.istockphoto.com/id/1147544807/vector/thumbnail-image-vector-graphic.jpg?s=612x612&w=0&k=20&c=rnCKVbdxqkjlcs3xH87-9gocETqpspHFXu5dIGB4wuM='
-                    }
-                    className="w-20 rounded-md"
-                  />
-                  <p className="mt-4 font-medium">{themeState.currentTheme?.name}</p>
-                  <p className="mt-4 opacity-80 text-xs">
-                    Created By {themeState.currentTheme?.created_by_alias}{' '}
-                    <Moment fromNow date={themeState.currentTheme?.created_at} />
-                  </p>
-                  <p className="mt-4 opacity-80 text-xs">V{themeState.currentTheme?.version}</p>
-                  <p className="mt-4">{themeState.currentTheme?.description ?? 'No Description.'}</p>
-                  <p
-                    style={{
-                      color: 'var(--sidebar-inset-text-color)',
-                      opacity: themeState.currentTheme?.id === '-1' ? '50%' : '100%',
-                    }}
-                    className="bg-error p-2 text-sm max-w-[250px] rounded mt-4 text-center transition-all hover:opacity-50 cursor-pointer"
-                  >
-                    Uninstall
-                  </p>
-                  {themeState.currentTheme?.id === '-1' && (
-                    <p className="text-sm mt-4">Cannot remove from device. This is a default theme.</p>
-                  )}
-                </div>
-              </div>
-            )}
 
-            <p className="mt-8 opacity-80">Manage Themes</p>
-            <div className="flex flex-wrap pb-20">
-              {themeState.themes.map((theme, key) => (
-                <div
-                  key={key}
-                  className="mt-8 rounded-lg p-4 w-[40%] mr-4 shadow-lg flex flex-col justify-between"
-                  style={{
-                    backgroundColor: 'var(--sidebar-bg)',
-                  }}
-                >
-                  <img
-                    src={
-                      theme.icon ??
-                      'https://media.istockphoto.com/id/1147544807/vector/thumbnail-image-vector-graphic.jpg?s=612x612&w=0&k=20&c=rnCKVbdxqkjlcs3xH87-9gocETqpspHFXu5dIGB4wuM='
-                    }
-                    className="w-20 rounded-md"
-                  />
-                  <p className="mt-4 font-medium">{theme.name}</p>
-                  <p className="mt-4 opacity-80 text-xs">
-                    Created By {theme.created_by_alias} <Moment fromNow date={theme.created_at} />
-                  </p>
-                  <p className="mt-4 opacity-80 text-xs">V{theme.version}</p>
-                  <p className="mt-4">{theme.description ?? 'No Description.'}</p>
-                  <p
-                    style={{
-                      color: 'var(--sidebar-inset-text-color)',
-                      opacity: theme.id === '-1' ? '50%' : '100%',
+                      if (runtime.store) {
+                        runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then(async (db) => {
+                          if (db) {
+                            db.themePreference = themeState.themes.find((theme) => theme.name === e?.label)!.name;
+
+                            runtime.store.save();
+                          }
+                        });
+                      }
                     }}
-                    className="bg-error p-2 text-sm max-w-[250px] rounded mt-4 text-center transition-all hover:opacity-50 cursor-pointer"
+                  />
+                  <p className="mt-8 opacity-80">Current Theme</p>
+                  <div
+                    className="mt-8 rounded-lg p-4 w-1/2 shadow-lg"
+                    style={{
+                      backgroundColor: 'var(--sidebar-bg)',
+                    }}
                   >
-                    Uninstall
-                  </p>
-                  {theme.id === '-1' && (
-                    <p className="text-sm mt-4">Cannot remove from device. This is a default theme.</p>
-                  )}
+                    <img
+                      src={
+                        themeState.currentTheme?.icon ??
+                        'https://media.istockphoto.com/id/1147544807/vector/thumbnail-image-vector-graphic.jpg?s=612x612&w=0&k=20&c=rnCKVbdxqkjlcs3xH87-9gocETqpspHFXu5dIGB4wuM='
+                      }
+                      className="w-20 rounded-md"
+                    />
+                    <p className="mt-4 font-medium">{themeState.currentTheme?.name}</p>
+                    <p className="mt-4 opacity-80 text-xs">
+                      Created By {themeState.currentTheme?.created_by_alias}{' '}
+                      <Moment fromNow date={themeState.currentTheme?.created_at} />
+                    </p>
+                    <p className="mt-4 opacity-80 text-xs">V{themeState.currentTheme?.version}</p>
+                    <p className="mt-4">{themeState.currentTheme?.description ?? 'No Description.'}</p>
+                    <p
+                      style={{
+                        color: 'var(--sidebar-inset-text-color)',
+                        opacity: themeState.currentTheme?.id === '-1' ? '50%' : '100%',
+                      }}
+                      className="bg-error p-2 text-sm max-w-[250px] rounded mt-4 text-center transition-all hover:opacity-50 cursor-pointer"
+                    >
+                      Uninstall
+                    </p>
+                    {themeState.currentTheme?.id === '-1' && (
+                      <p className="text-sm mt-4">Cannot remove from device. This is a default theme.</p>
+                    )}
+                  </div>
                 </div>
-              ))}
-            </div>
+                <p className="mt-8 opacity-80">Manage Themes</p>
+                <div className="flex flex-wrap pb-20">
+                  {themeState.themes.map((theme, key) => (
+                    <div
+                      key={key}
+                      className="mt-8 rounded-lg p-4 w-[40%] mr-4 shadow-lg flex flex-col justify-between"
+                      style={{
+                        backgroundColor: 'var(--sidebar-bg)',
+                      }}
+                    >
+                      <img
+                        src={
+                          theme.icon ??
+                          'https://media.istockphoto.com/id/1147544807/vector/thumbnail-image-vector-graphic.jpg?s=612x612&w=0&k=20&c=rnCKVbdxqkjlcs3xH87-9gocETqpspHFXu5dIGB4wuM='
+                        }
+                        className="w-20 rounded-md"
+                      />
+                      <p className="mt-4 font-medium">{theme.name}</p>
+                      <p className="mt-4 opacity-80 text-xs">
+                        Created By {theme.created_by_alias} <Moment fromNow date={theme.created_at} />
+                      </p>
+                      <p className="mt-4 opacity-80 text-xs">V{theme.version}</p>
+                      <p className="mt-4">{theme.description ?? 'No Description.'}</p>
+                      <p
+                        style={{
+                          color: 'var(--sidebar-inset-text-color)',
+                          opacity: theme.id === '-1' ? '50%' : '100%',
+                        }}
+                        className="bg-error p-2 text-sm max-w-[250px] rounded mt-4 text-center transition-all hover:opacity-50 cursor-pointer"
+                      >
+                        Uninstall
+                      </p>
+                      {theme.id === '-1' && (
+                        <p className="text-sm mt-4">Cannot remove from device. This is a default theme.</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

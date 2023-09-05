@@ -17,7 +17,7 @@ export const settingsContentItems = [
   },
   {
     title: 'About',
-    desc: 'Thank you for using Bytes Browse. Below are some details about your installation.',
+    desc: 'Thank you for using Bytes Browser. Below are some details about your installation.',
   },
   {
     title: 'Performance',
@@ -32,14 +32,14 @@ export const settingsContentItems = [
 export const BytesBrowserDarkTheme: Theme = {
   content: {
     sidebarBG: '#1C1B20',
-    primaryBG: '#0D0D0D',
+    primaryBG: '#27272D',
     primaryTextColor: 'white',
     iconColor: '#B0B0B0',
     iconLightOpacity: 0.7,
     lightTextOpacity: 0.7,
     sidebarInsetBg: '#E2E5E8',
     sidebarBorderColor: '#E2E5E8',
-    sidebarInsetTextColor: 'black',
+    sidebarInsetTextColor: 'white',
     primaryBorderColor: '#555555',
     scrollbarThumbColor: '#E0E0E0',
     scrollbarThumbHoverColor: '#B0B0B0',

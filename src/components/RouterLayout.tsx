@@ -217,7 +217,6 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
                   <span
                     className="text-xs bg-gray-600 py-1 px-2 rounded ml-2"
                     style={{
-                      backgroundColor: 'var(--sidebar-inset-bg)',
                       color: 'var(--sidebar-inset-text-color)',
                     }}
                   >
