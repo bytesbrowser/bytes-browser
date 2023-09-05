@@ -37,7 +37,7 @@ export const BytesBrowserDarkTheme: Theme = {
     iconColor: '#B0B0B0',
     iconLightOpacity: 0.7,
     lightTextOpacity: 0.7,
-    sidebarInsetBg: '#E2E5E8',
+    sidebarInsetBg: '#1C1B20',
     sidebarBorderColor: '#E2E5E8',
     sidebarInsetTextColor: 'white',
     primaryBorderColor: '#555555',

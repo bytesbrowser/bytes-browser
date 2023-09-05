@@ -140,7 +140,7 @@ export type GetThemeQuery = { getTheme: { id: string, created_by_alias: string, 
 export type GetThemesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetThemesQuery = { getThemes: Array<{ id: string, created_by_alias: string, name: string, content: any, description?: string | undefined, icon?: string | undefined, created_at: string, updated_at: string }> };
+export type GetThemesQuery = { getThemes: Array<{ id: string, created_by_alias: string, name: string, content: any, description?: string | undefined, icon?: string | undefined, created_at: string, updated_at: string, version: string }> };
 
 export type GetUserQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -277,6 +277,7 @@ export const GetThemesDocument = gql`
     icon
     created_at
     updated_at
+    version
   }
 }
     `;

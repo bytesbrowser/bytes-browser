@@ -1,13 +1,26 @@
-use serde_json::Value;
+use serde_json::{to_string, Value};
 use std::{
     fs,
     time::{SystemTime, UNIX_EPOCH},
 };
 
 use super::THEMES_FILE_PATH;
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize)]
+pub struct Theme {
+    content: String,
+    created_at: String,
+    created_by_alias: String,
+    description: Option<String>,
+    icon: Option<String>,
+    name: String,
+    updated_at: String,
+    version: String,
+}
 
 #[tauri::command]
-pub async fn get_installed_themes() -> Result<Vec<String>, String> {
+pub async fn get_installed_themes() -> Result<Vec<Value>, String> {
     let themes_dir = &*THEMES_FILE_PATH;
 
     // Check if the directory exists
@@ -17,7 +30,7 @@ pub async fn get_installed_themes() -> Result<Vec<String>, String> {
 
     let entries = fs::read_dir(themes_dir).map_err(|e| e.to_string())?;
 
-    let mut theme_names = Vec::new();
+    let mut themes: Vec<Value> = Vec::new();
 
     for entry in entries {
         if let Ok(entry) = entry {
@@ -30,20 +43,20 @@ pub async fn get_installed_themes() -> Result<Vec<String>, String> {
                     let json: Value =
                         serde_json::from_str(&file_content).map_err(|e| e.to_string())?;
 
-                    // Extract the theme-name field
-                    if let Some(theme_name) = json["theme-name"].as_str() {
-                        theme_names.push(theme_name.to_string());
+                    // Extract the name field
+                    if let Some(theme_name) = json["name"].as_str() {
+                        themes.push(json);
                     }
                 }
             }
         }
     }
 
-    Ok(theme_names)
+    Ok(themes)
 }
 
 #[tauri::command]
-pub async fn install_theme(json: String) -> Result<Vec<String>, String> {
+pub async fn install_theme(theme: Theme) -> Result<Vec<Value>, String> {
     let themes_dir = &*THEMES_FILE_PATH;
 
     // Create the directory if it doesn't exist
@@ -61,8 +74,10 @@ pub async fn install_theme(json: String) -> Result<Vec<String>, String> {
     // Create the full path for the new theme file
     let file_path = format!("{}/{}", themes_dir, file_name);
 
+    let theme_json = to_string(&theme).map_err(|e| e.to_string())?;
+
     // Write the JSON string to the file
-    fs::write(file_path, json).map_err(|e| e.to_string())?;
+    fs::write(file_path, theme_json).map_err(|e| e.to_string())?;
 
     let themes = match get_installed_themes().await {
         Ok(themes) => themes,
@@ -95,8 +110,8 @@ pub async fn remove_theme(theme_name_to_remove: String) -> Result<(), String> {
                     let json: Value =
                         serde_json::from_str(&file_content).map_err(|e| e.to_string())?;
 
-                    // Check the theme-name field
-                    if let Some(theme_name) = json["theme-name"].as_str() {
+                    // Check the name field
+                    if let Some(theme_name) = json["name"].as_str() {
                         if theme_name == theme_name_to_remove {
                             // Delete the file
                             fs::remove_file(entry.path()).map_err(|e| e.to_string())?;
@@ -137,8 +152,8 @@ pub async fn get_theme_by_name(theme_name_to_find: String) -> Result<String, Str
                     let json: Value =
                         serde_json::from_str(&file_content).map_err(|e| e.to_string())?;
 
-                    // Check the theme-name field
-                    if let Some(theme_name) = json["theme-name"].as_str() {
+                    // Check the name field
+                    if let Some(theme_name) = json["name"].as_str() {
                         if theme_name == theme_name_to_find {
                             return Ok(file_content);
                         }

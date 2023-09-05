@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { invoke } from '@tauri-apps/api';
+import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import Moment from 'react-moment';
 import { useNavigate } from 'react-router-dom';
@@ -10,13 +11,8 @@ import { SettingsAccount } from '../components/settings/SettingsAccount';
 import { SettingsNew } from '../components/settings/SettingsNew';
 import { SettingsPerformance } from '../components/settings/SettingsPerformance';
 import { SettingsProfiles } from '../components/settings/SettingsProfiles';
-import { useGetSubscriptionStatusLazyQuery } from '../graphql';
-import {
-  BytesBrowserDarkTheme,
-  BytesBrowserLightTheme,
-  settingsContentItems,
-  settingsSidebarConfig,
-} from '../lib/constants';
+import { Theme, useGetSubscriptionStatusLazyQuery, useGetThemesQuery } from '../graphql';
+import { settingsContentItems, settingsSidebarConfig } from '../lib/constants';
 import { runtimeState } from '../lib/state/runtime.state';
 import { themeState as themeProvider } from '../lib/state/theme.state';
 import { Profile, ProfileStore } from '../lib/types';
@@ -27,6 +23,9 @@ export const Settings = () => {
   const navigate = useNavigate();
   const [getSubStatus] = useGetSubscriptionStatusLazyQuery();
   const [themeState, setThemeState] = useRecoilState(themeProvider);
+  const { data, loading, error } = useGetThemesQuery();
+
+  console.log(data);
 
   const logout = async () => {
     let profiles = await runtime.profileStore.get<Profile[]>('profiles');
@@ -93,6 +92,61 @@ export const Settings = () => {
         navigate('/');
       }
     }
+  };
+
+  const onInstall = (theme: Theme) => {
+    invoke('install_theme', {
+      theme: {
+        name: theme.name,
+        content: JSON.stringify(theme.content),
+        icon: theme.icon,
+        version: theme.version,
+        created_at: theme.created_at,
+        created_by_alias: theme.created_by_alias,
+        description: theme.description,
+        updated_at: theme.updated_at,
+      },
+    })
+      .then((res) => {
+        console.log(res);
+        setThemeState({
+          ...themeState,
+          themes: [...themeState.themes, theme],
+        });
+        toast.success('Theme installed successfully.');
+      })
+      .catch((err) => {
+        toast.error('Could not install theme. Try again later.');
+        console.error(err);
+      });
+  };
+
+  const onUninstall = (theme: Theme) => {
+    invoke('remove_theme', {
+      themeNameToRemove: theme.name,
+    })
+      .then((res) => {
+        if (theme.name === themeState.currentTheme?.name) {
+          setThemeState({
+            ...themeState,
+            themes: themeState.themes.filter((localTheme) => localTheme.name !== theme.name),
+            currentTheme: themeState.themes[0],
+            config: themeState.themes[0].content,
+            theme: themeState.themes[0].name,
+          });
+        } else {
+          setThemeState({
+            ...themeState,
+            themes: themeState.themes.filter((localTheme) => localTheme.name !== theme.name),
+          });
+        }
+
+        toast.success('Theme uninstalled successfully.');
+      })
+      .catch((err) => {
+        toast.error('Could not uninstall theme. Try again later.');
+        console.error(err);
+      });
   };
 
   return (
@@ -201,8 +255,6 @@ export const Settings = () => {
                       label: theme.name,
                     }))}
                     onChange={(e) => {
-                      console.log(e);
-
                       setThemeState({
                         ...themeState,
                         config: themeState.themes.find((theme) => theme.name === e?.label)!.content,
@@ -214,8 +266,13 @@ export const Settings = () => {
                         runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then(async (db) => {
                           if (db) {
                             db.themePreference = themeState.themes.find((theme) => theme.name === e?.label)!.name;
-
-                            runtime.store.save();
+                            runtime.store
+                              .set(`profile-store-${runtime.currentUser}`, {
+                                ...db,
+                              })
+                              .then(() => {
+                                runtime.store.save();
+                              });
                           }
                         });
                       }
@@ -243,11 +300,16 @@ export const Settings = () => {
                     <p className="mt-4 opacity-80 text-xs">V{themeState.currentTheme?.version}</p>
                     <p className="mt-4">{themeState.currentTheme?.description ?? 'No Description.'}</p>
                     <p
+                      onClick={() => {
+                        if (themeState.currentTheme!.id === '-1') return;
+
+                        onUninstall(themeState.currentTheme!);
+                      }}
                       style={{
                         color: 'var(--sidebar-inset-text-color)',
                         opacity: themeState.currentTheme?.id === '-1' ? '50%' : '100%',
                       }}
-                      className="bg-error p-2 text-sm max-w-[250px] rounded mt-4 text-center transition-all hover:opacity-50 cursor-pointer"
+                      className="bg-error p-2 text-sm w-full rounded mt-4 text-center transition-all hover:opacity-50 cursor-pointer"
                     >
                       Uninstall
                     </p>
@@ -257,7 +319,7 @@ export const Settings = () => {
                   </div>
                 </div>
                 <p className="mt-8 opacity-80">Manage Themes</p>
-                <div className="flex flex-wrap pb-20">
+                <div className="flex flex-wrap">
                   {themeState.themes.map((theme, key) => (
                     <div
                       key={key}
@@ -280,11 +342,16 @@ export const Settings = () => {
                       <p className="mt-4 opacity-80 text-xs">V{theme.version}</p>
                       <p className="mt-4">{theme.description ?? 'No Description.'}</p>
                       <p
+                        onClick={() => {
+                          if (theme.id === '-1') return;
+
+                          onUninstall(theme);
+                        }}
                         style={{
                           color: 'var(--sidebar-inset-text-color)',
                           opacity: theme.id === '-1' ? '50%' : '100%',
                         }}
-                        className="bg-error p-2 text-sm max-w-[250px] rounded mt-4 text-center transition-all hover:opacity-50 cursor-pointer"
+                        className="bg-error p-2 text-sm w-full rounded mt-4 text-center transition-all hover:opacity-50 cursor-pointer"
                       >
                         Uninstall
                       </p>
@@ -293,6 +360,58 @@ export const Settings = () => {
                       )}
                     </div>
                   ))}
+                </div>
+                <div className="mt-8 pb-20">
+                  <p className="mb-4">Marketplace</p>
+                  <a href="https://bytesbrowser.com" className="underline opacity-80 text-sm">
+                    Create your own theme
+                  </a>
+                  <div className="flex flex-wrap">
+                    {data?.getThemes
+                      .filter((newTheme) => {
+                        if (themeState.themes.find((theme) => theme.name === newTheme.name)) {
+                          return false;
+                        } else {
+                          return true;
+                        }
+                      })
+                      .map((theme, key) => (
+                        <div
+                          key={key}
+                          className="mt-8 rounded-lg p-4 w-[40%] mr-4 shadow-lg flex flex-col justify-between"
+                          style={{
+                            backgroundColor: 'var(--sidebar-bg)',
+                          }}
+                        >
+                          <img
+                            src={
+                              theme.icon ??
+                              'https://media.istockphoto.com/id/1147544807/vector/thumbnail-image-vector-graphic.jpg?s=612x612&w=0&k=20&c=rnCKVbdxqkjlcs3xH87-9gocETqpspHFXu5dIGB4wuM='
+                            }
+                            className="w-20 rounded-md"
+                          />
+                          <p className="mt-4 font-medium">{theme.name}</p>
+                          <p className="mt-4 opacity-80 text-xs">
+                            Created By {theme.created_by_alias} <Moment fromNow date={theme.created_at} />
+                          </p>
+                          <p className="mt-4 opacity-80 text-xs">V{theme.version}</p>
+                          <p className="mt-4">{theme.description ?? 'No Description.'}</p>
+                          <p
+                            onClick={() => onInstall(theme)}
+                            style={{
+                              color: 'var(--sidebar-inset-text-color)',
+                              opacity: theme.id === '-1' ? '50%' : '100%',
+                            }}
+                            className="bg-success p-2 text-sm w-full rounded mt-4 text-center transition-all hover:opacity-50 cursor-pointer"
+                          >
+                            Install
+                          </p>
+                          {theme.id === '-1' && (
+                            <p className="text-sm mt-4">Cannot remove from device. This is a default theme.</p>
+                          )}
+                        </div>
+                      ))}
+                  </div>
                 </div>
               </>
             )}

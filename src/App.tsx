@@ -25,22 +25,31 @@ const App = () => {
       .then(async (res: any) => {
         if (res.includes('does not exist')) return;
 
+        res = res.map((item: Theme) => ({
+          ...item,
+          content: JSON.parse(item.content),
+        }));
+
         if (runtime.store) {
           runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then(async (db) => {
             if (db) {
               if (db.themePreference) {
                 console.log('FOund theme pref');
+
                 setThemeState({
                   ...themeState,
-                  themes: res,
+                  themes: [BytesBrowserDarkTheme, BytesBrowserLightTheme, ...res],
                   currentTheme: [BytesBrowserDarkTheme, BytesBrowserLightTheme, ...res].find(
                     (theme: Theme) => theme.name === db.themePreference,
-                  )[0],
+                  ),
+                  config: [BytesBrowserDarkTheme, BytesBrowserLightTheme, ...res].find(
+                    (theme: Theme) => theme.name === db.themePreference,
+                  ).content,
                 });
               } else {
                 setThemeState({
                   ...themeState,
-                  themes: res,
+                  themes: [BytesBrowserDarkTheme, BytesBrowserLightTheme, ...res],
                 });
               }
             }

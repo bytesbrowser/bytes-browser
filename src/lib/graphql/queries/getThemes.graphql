@@ -8,5 +8,6 @@ query GetThemes {
     icon
     created_at
     updated_at
+    version
   }
 }
