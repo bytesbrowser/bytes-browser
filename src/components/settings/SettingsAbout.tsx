@@ -30,13 +30,13 @@ export const SettingsAbout = () => {
 
   return (
     <div className="bg-black p-4 rounded-md">
-      <p className="font-mono my-8">App Version: {version}</p>
-      <p className="font-mono my-8">Embedded Version: {meta.tauriVersion}</p>
-      <p className="font-mono my-8">OS Version: {meta.osVersion}</p>
-      <p className="font-mono my-8">OS Locale: {meta.locale}</p>
-      <p className="font-mono my-8">OS Platform: {meta.platform}</p>
-      <p className="font-mono my-8">OS Arch: {meta.arch}</p>
-      <p className="font-mono my-8">License: Activated</p>
+      <p className="font-mono my-8 text-white">App Version: {version}</p>
+      <p className="font-mono my-8 text-white">Embedded Version: {meta.tauriVersion}</p>
+      <p className="font-mono my-8 text-white">OS Version: {meta.osVersion}</p>
+      <p className="font-mono my-8 text-white">OS Locale: {meta.locale}</p>
+      <p className="font-mono my-8 text-white">OS Platform: {meta.platform}</p>
+      <p className="font-mono my-8 text-white">OS Arch: {meta.arch}</p>
+      <p className="font-mono my-8 text-white">License: Activated</p>
     </div>
   );
 };

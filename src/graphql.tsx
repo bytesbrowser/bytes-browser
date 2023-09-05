@@ -15,10 +15,24 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
+  JSON: { input: any; output: any; }
 };
 
 export type Mutation = {
+  deleteTheme: Scalars['Boolean']['output'];
+  publishTheme: Theme;
   register: Scalars['String']['output'];
+  updateTheme: Theme;
+};
+
+
+export type MutationDeleteThemeArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationPublishThemeArgs = {
+  theme: ThemeInput;
 };
 
 
@@ -26,10 +40,23 @@ export type MutationRegisterArgs = {
   params: RegisterUserParams;
 };
 
+
+export type MutationUpdateThemeArgs = {
+  id: Scalars['ID']['input'];
+  updates: UpdateThemInput;
+};
+
 export type Query = {
   getSubscriptionStatus: SubscriptionStatus;
+  getTheme: Theme;
+  getThemes: Array<Theme>;
   getUser: User;
   login: Scalars['String']['output'];
+};
+
+
+export type QueryGetThemeArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -52,6 +79,36 @@ export type SubscriptionStatus = {
   user_id: Scalars['ID']['output'];
 };
 
+export type Theme = {
+  content: Scalars['JSON']['output'];
+  created_at: Scalars['String']['output'];
+  created_by_alias: Scalars['String']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  icon?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  updated_at: Scalars['String']['output'];
+  version: Scalars['String']['output'];
+};
+
+export type ThemeInput = {
+  content: Scalars['JSON']['input'];
+  created_by_alias: Scalars['String']['input'];
+  description?: InputMaybe<Scalars['String']['input']>;
+  icon?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  version: Scalars['String']['input'];
+};
+
+export type UpdateThemInput = {
+  content?: InputMaybe<Scalars['JSON']['input']>;
+  created_by_alias?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  icon?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  version?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type User = {
   avatar?: Maybe<Scalars['String']['output']>;
   created_at: Scalars['String']['output'];
@@ -72,6 +129,18 @@ export type GetSubscriptionStatusQueryVariables = Exact<{ [key: string]: never; 
 
 
 export type GetSubscriptionStatusQuery = { getSubscriptionStatus: { id: string, created_at: string, user_id: string, active: boolean } };
+
+export type GetThemeQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetThemeQuery = { getTheme: { id: string, created_by_alias: string, name: string, content: any, description?: string | undefined, icon?: string | undefined, created_at: string, updated_at: string } };
+
+export type GetThemesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetThemesQuery = { getThemes: Array<{ id: string, created_by_alias: string, name: string, content: any, description?: string | undefined, icon?: string | undefined, created_at: string, updated_at: string }> };
 
 export type GetUserQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -155,6 +224,89 @@ export function useGetSubscriptionStatusLazyQuery(baseOptions?: Apollo.LazyQuery
 export type GetSubscriptionStatusQueryHookResult = ReturnType<typeof useGetSubscriptionStatusQuery>;
 export type GetSubscriptionStatusLazyQueryHookResult = ReturnType<typeof useGetSubscriptionStatusLazyQuery>;
 export type GetSubscriptionStatusQueryResult = Apollo.QueryResult<GetSubscriptionStatusQuery, GetSubscriptionStatusQueryVariables>;
+export const GetThemeDocument = gql`
+    query GetTheme($id: ID!) {
+  getTheme(id: $id) {
+    id
+    created_by_alias
+    name
+    content
+    description
+    icon
+    created_at
+    updated_at
+  }
+}
+    `;
+
+/**
+ * __useGetThemeQuery__
+ *
+ * To run a query within a React component, call `useGetThemeQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetThemeQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetThemeQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetThemeQuery(baseOptions: Apollo.QueryHookOptions<GetThemeQuery, GetThemeQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetThemeQuery, GetThemeQueryVariables>(GetThemeDocument, options);
+      }
+export function useGetThemeLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetThemeQuery, GetThemeQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetThemeQuery, GetThemeQueryVariables>(GetThemeDocument, options);
+        }
+export type GetThemeQueryHookResult = ReturnType<typeof useGetThemeQuery>;
+export type GetThemeLazyQueryHookResult = ReturnType<typeof useGetThemeLazyQuery>;
+export type GetThemeQueryResult = Apollo.QueryResult<GetThemeQuery, GetThemeQueryVariables>;
+export const GetThemesDocument = gql`
+    query GetThemes {
+  getThemes {
+    id
+    created_by_alias
+    name
+    content
+    description
+    icon
+    created_at
+    updated_at
+  }
+}
+    `;
+
+/**
+ * __useGetThemesQuery__
+ *
+ * To run a query within a React component, call `useGetThemesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetThemesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetThemesQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetThemesQuery(baseOptions?: Apollo.QueryHookOptions<GetThemesQuery, GetThemesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetThemesQuery, GetThemesQueryVariables>(GetThemesDocument, options);
+      }
+export function useGetThemesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetThemesQuery, GetThemesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetThemesQuery, GetThemesQueryVariables>(GetThemesDocument, options);
+        }
+export type GetThemesQueryHookResult = ReturnType<typeof useGetThemesQuery>;
+export type GetThemesLazyQueryHookResult = ReturnType<typeof useGetThemesLazyQuery>;
+export type GetThemesQueryResult = Apollo.QueryResult<GetThemesQuery, GetThemesQueryVariables>;
 export const GetUserDocument = gql`
     query GetUser {
   getUser {

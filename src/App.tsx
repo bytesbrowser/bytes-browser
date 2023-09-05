@@ -6,14 +6,46 @@ import Feedback from 'feeder-react-feedback';
 import { useEffect, useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { BrowserRouter } from 'react-router-dom';
-import { useRecoilValue } from 'recoil';
+import { useRecoilState, useRecoilValue } from 'recoil';
 
 import Router from './components/Router';
 import { runtimeState } from './lib/state/runtime.state';
+import { themeState as themeStateRoot } from './lib/state/theme.state';
+import { Profile } from './lib/types';
 
 const App = () => {
   const runtime = useRecoilValue(runtimeState);
   const [useTitlebar, setUseTitlebar] = useState<boolean>(false);
+  const [themeState, setThemeState] = useRecoilState(themeStateRoot);
+
+  useEffect(() => {
+    invoke('get_installed_themes')
+      .then(async (res: any) => {
+        if (res.includes('does not exist')) return;
+
+        if (runtime.profileStore) {
+          const profiles = await runtime.profileStore.get<Profile[]>(`profiles`);
+
+          if (profiles) {
+            const profile = profiles[runtime.currentUser];
+
+            console.log(profile);
+          }
+        }
+
+        setThemeState({
+          ...themeState,
+          themes: res,
+        });
+      })
+      .catch((err) => {
+        console.error(err);
+
+        setThemeState({
+          ...themeState,
+        });
+      });
+  }, []);
 
   useEffect(() => {
     if (document != null) {
@@ -48,7 +80,7 @@ const App = () => {
     if (runtime.readVolumes && useTitlebar) {
       const titlebarLeft = document.getElementById('titlebar-left')!;
       if (titlebarLeft) {
-        titlebarLeft.setAttribute('style', 'background-color: #1c1b20; padding-left: 270px;');
+        titlebarLeft.setAttribute('style', 'background-color: var(--sidebar-bg); padding-left: 270px;');
       }
       const app = document.getElementsByClassName('app')[0];
       if (app) {

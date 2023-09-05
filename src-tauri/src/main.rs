@@ -4,6 +4,7 @@
 mod error;
 mod filesystem;
 mod search;
+mod themes;
 
 use filesystem::explorer::{
     add_all_changes, checkout_branch_for_directory, clear_recycle_bin,
@@ -21,6 +22,7 @@ use std::{
 };
 use tauri::Manager;
 use tauri::State;
+use themes::provider::{get_installed_themes, get_theme_by_name, install_theme, remove_theme};
 use window_shadows::set_shadow;
 
 #[derive(Serialize, Deserialize)]
@@ -76,6 +78,10 @@ async fn main() {
             paste_directory_at,
             cut_directory_from,
             cut_file_from,
+            install_theme,
+            get_installed_themes,
+            remove_theme,
+            get_theme_by_name
         ])
         .manage(Arc::new(Mutex::new(AppState::default())))
         .plugin(tauri_plugin_store::Builder::default().build())

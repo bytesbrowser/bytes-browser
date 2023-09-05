@@ -52,7 +52,12 @@ export const SettingsAccount = () => {
   return (
     <form onSubmit={onSubmit} className="flex flex-col">
       {profile?.created_at && (
-        <p className="text-xs opacity-50 mb-8">
+        <p
+          className="text-xs mb-8"
+          style={{
+            opacity: 'var(--light-text-opacity)',
+          }}
+        >
           Account Created <Moment date={new Date(profile?.created_at!)} fromNow />
         </p>
       )}
@@ -74,18 +79,42 @@ export const SettingsAccount = () => {
       </div>
       <input ref={avatarInputRef} type="file" style={{ display: 'none' }} onChange={handleAvatarChange} />
 
-      <p className="mb-4 opacity-50 text-md">Full Name</p>
+      <p
+        className="mb-4 text-md"
+        style={{
+          opacity: 'var(--light-text-opacity)',
+        }}
+      >
+        Full Name
+      </p>
       <input
         type="text"
         value={changes.fullName}
         required
         onChange={(e) => setChanges({ ...changes, fullName: e.target.value })}
         placeholder="John Doe"
+        style={{
+          borderColor: 'var(--sidebar-border-color)',
+          backgroundColor: 'var(--sidebar-inset-bg)',
+          color: 'var(--sidebar-inset-text-color)',
+        }}
         className="text-sm w-full p-3 rounded-md bg-sidebar border border-light-border transition-all outline-none focus:border-gray-400 max-w-[500px]"
       />
 
-      <p className="mb-4 opacity-50 text-md mt-8">Email Address</p>
+      <p
+        className="mb-4 opacity-50 text-md mt-8"
+        style={{
+          opacity: 'var(--light-text-opacity)',
+        }}
+      >
+        Email Address
+      </p>
       <input
+        style={{
+          borderColor: 'var(--sidebar-border-color)',
+          backgroundColor: 'var(--sidebar-inset-bg)',
+          color: 'var(--sidebar-inset-text-color)',
+        }}
         type="email"
         required
         readOnly
@@ -95,8 +124,20 @@ export const SettingsAccount = () => {
         className="text-sm w-full p-3 rounded-md bg-sidebar border border-light-border transition-all outline-none focus:border-gray-400 max-w-[500px]"
       />
 
-      <p className="mb-4 opacity-50 text-md mt-8">Change Password </p>
+      <p
+        className="mb-4 opacity-50 text-md mt-8"
+        style={{
+          opacity: 'var(--light-text-opacity)',
+        }}
+      >
+        Change Password
+      </p>
       <input
+        style={{
+          borderColor: 'var(--sidebar-border-color)',
+          backgroundColor: 'var(--sidebar-inset-bg)',
+          color: 'var(--sidebar-inset-text-color)',
+        }}
         required
         type="password"
         value={changes.password}
@@ -107,11 +148,19 @@ export const SettingsAccount = () => {
 
       <button
         type="submit"
+        style={{
+          color: 'var(--sidebar-inset-text-color)',
+        }}
         className={`mb-4 text-sm mt-10 bg-success w-[150px] p-2 rounded-md text-center cursor-pointer hover:opacity-80 transition-all`}
       >
         Save Changes
       </button>
-      <p className="mb-4 text-sm mt-10 bg-error w-[150px] p-2 rounded-md text-center cursor-pointer hover:opacity-80 transition-all">
+      <p
+        style={{
+          color: 'var(--sidebar-inset-text-color)',
+        }}
+        className="mb-4 text-sm mt-10 bg-error w-[150px] p-2 rounded-md text-center cursor-pointer hover:opacity-80 transition-all"
+      >
         Close Account
       </p>
     </form>

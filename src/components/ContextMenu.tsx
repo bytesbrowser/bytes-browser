@@ -408,14 +408,28 @@ export const ContextMenu = () => {
         >
           {preview.value.includes('data:') && !preview.loading && (
             <>
-              <p className="mb-4 opacity-50">File Preview</p>
+              <p
+                className="mb-4"
+                style={{
+                  opacity: 'var(--light-text-opacity)',
+                }}
+              >
+                File Preview
+              </p>
 
               <img src={preview.value} className="w-full rounded-lg shadow-lg mb-4 m-auto" />
             </>
           )}
           {!preview.value.includes('data:') && !preview.loading && preview.value.length > 0 && (
             <>
-              <p className="mb-4 opacity-50">File Preview</p>
+              <p
+                className="mb-4"
+                style={{
+                  opacity: 'var(--light-text-opacity)',
+                }}
+              >
+                File Preview
+              </p>
               <p className="text-sm mb-4">{preview.value}...</p>
             </>
           )}
@@ -424,7 +438,13 @@ export const ContextMenu = () => {
               <ThreeCircles color="white" />
             </div>
           )}
-          <p className="text-md font-light opacity-50">
+          <p
+            className="text-md font-light"
+            style={{
+              opacity: 'var(--light-text-opacity)',
+              color: 'var(--sidebar-inset-text-color)',
+            }}
+          >
             {currentContext.currentItem &&
               (currentContext.currentItem['File']
                 ? 'File: ' + currentContext.currentItem['File'][0]
@@ -521,7 +541,15 @@ export const ContextMenu = () => {
                   </defs>
                 </g>
               </svg>
-              <p className="ml-2">Git</p>
+              <p
+                className="ml-2"
+                style={{
+                  opacity: 'var(--light-text-opacity)',
+                  color: 'var(--sidebar-inset-text-color)',
+                }}
+              >
+                Git
+              </p>
             </div>
           }
           disabled={!currentContext.currentItem?.Directory ? true : false}

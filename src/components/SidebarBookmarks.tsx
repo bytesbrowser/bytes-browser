@@ -23,11 +23,25 @@ export const SidebarBookmarks = ({ bookmarks, loading }: { bookmarks: BookmarkDo
 
   return (
     <div className="mt-14">
-      <div className="section-title text-sm opacity-50 mb-4">Bookmarks</div>
+      <div
+        className="section-title text-sm mb-4"
+        style={{
+          opacity: 'var(--light-text-opacity)',
+        }}
+      >
+        Bookmarks
+      </div>
       {loading && <FallingLines color="white" />}
       {bookmarks.length === 0 && !loading && (
         <>
-          <p className="text-xs opacity-50">No bookmarks have been created</p>
+          <p
+            className="text-xs"
+            style={{
+              opacity: 'var(--light-text-opacity)',
+            }}
+          >
+            No bookmarks have been created
+          </p>
         </>
       )}
       {bookmarks.map((bookmark, key) => (
@@ -38,7 +52,10 @@ export const SidebarBookmarks = ({ bookmarks, loading }: { bookmarks: BookmarkDo
           to={`/drive/${getDriveId(bookmark)}/?path=${encodeURIComponent(
             bookmark.file_path,
           )}&mount=${encodeURIComponent(bookmark.mount_point)}`}
-          className="flex items-center cursor-pointer transition-all hover:opacity-100 opacity-50 mb-3"
+          className="flex items-center cursor-pointer transition-all hover:opacity-100 mb-3"
+          style={{
+            opacity: 'var(--light-text-opacity)',
+          }}
         >
           <div className="circle rounded-full bg-red-600 w-[12px] h-[12px] mr-4"></div>
           <span className="truncate max-w-[200px]">{bookmark.identifier}</span>

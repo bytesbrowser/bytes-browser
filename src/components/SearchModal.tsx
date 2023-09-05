@@ -235,12 +235,32 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
             display: showFilterForm ? 'block' : 'none',
           }}
         >
-          <p className="text-xs">Search Options</p>
+          <p
+            className="text-xs"
+            style={{
+              color: 'var(--sidebar-inset-text-color)',
+              opacity: 'var(--light-text-opacity)',
+            }}
+          >
+            Search Options
+          </p>
           <div className="options mt-4">
             <div className="option flex items-center flex-col">
               <div className="flex justify-between w-full">
-                <p className="text-sm opacity-80 font-light">Include Files In Results</p>
+                <p
+                  className="text-sm opacity-80 font-light"
+                  style={{
+                    color: 'var(--sidebar-inset-text-color)',
+                    opacity: 'var(--light-text-opacity)',
+                  }}
+                >
+                  Include Files In Results
+                </p>
                 <input
+                  style={{
+                    color: 'var(--sidebar-inset-text-color)',
+                    opacity: 'var(--light-text-opacity)',
+                  }}
                   checked={searchOptions.files}
                   onChange={(e) => {
                     setSearchOptions({
@@ -257,7 +277,15 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
                 />
               </div>
               <div className="flex justify-between w-full mt-4">
-                <p className="text-sm opacity-80 font-light">Include Directories In Results</p>
+                <p
+                  className="text-sm opacity-80 font-light"
+                  style={{
+                    color: 'var(--sidebar-inset-text-color)',
+                    opacity: 'var(--light-text-opacity)',
+                  }}
+                >
+                  Include Directories In Results
+                </p>
                 <input
                   checked={searchOptions.directories}
                   onChange={(e) => {
@@ -274,7 +302,15 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
                 />
               </div>
               <div className="flex justify-between w-full mt-4">
-                <p className="text-sm opacity-80 font-light">Sort By</p>
+                <p
+                  className="text-sm opacity-80 font-light"
+                  style={{
+                    color: 'var(--sidebar-inset-text-color)',
+                    opacity: 'var(--light-text-opacity)',
+                  }}
+                >
+                  Sort By
+                </p>
 
                 <Select
                   value={
@@ -335,12 +371,32 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
         </div>
         <div className="results p-4">
           <div className="recent">
-            <p className="text-xs">
-              <span className="opacity-50">Recent Searches - </span> {recentSearches.length}
+            <p
+              className="text-xs"
+              style={{
+                color: 'var(--sidebar-inset-text-color)',
+              }}
+            >
+              <span
+                className="opacity-50"
+                style={{
+                  color: 'var(--sidebar-inset-text-color)',
+                }}
+              >
+                Recent Searches -{' '}
+              </span>{' '}
+              {recentSearches.length}
             </p>
             <div className="searches w-full overflow-x-auto flex items-center mt-3 pb-4">
               {recentSearches.map((search, key) => (
-                <div key={key} className="bg-body p-2 mr-2 flex items-center rounded-md cursor-pointer  transition-all">
+                <div
+                  key={key}
+                  className="bg-body p-2 mr-2 flex items-center rounded-md cursor-pointer  transition-all"
+                  style={{
+                    backgroundColor: 'var(--sidebar-bg)',
+                    color: 'var(--primary-text-color)',
+                  }}
+                >
                   <p
                     onClick={() => {
                       setSearchValue(search);
@@ -357,13 +413,13 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
                       deleteRecentSearch(key);
                     }}
                     xmlns="http://www.w3.org/2000/svg"
-                    className="opacity-50 hover:opacity-100 transition-all cursor-pointer"
+                    className="opacity-80 hover:opacity-100 transition-all cursor-pointer"
                     width="20"
                     height="20"
                     viewBox="0 0 24 24"
                   >
                     <path
-                      fill="white"
+                      fill="var(--icon-color)"
                       d="M7 21q-.825 0-1.413-.588T5 19V6H4V4h5V3h6v1h5v2h-1v13q0 .825-.588 1.413T17 21H7Zm2-4h2V8H9v9Zm4 0h2V8h-2v9Z"
                     />
                   </svg>
@@ -378,12 +434,39 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
           )}
           {sortedResults && sortedResults.results.length > 0 && (
             <>
-              <p className="text-xs mt-2">
-                <span className="opacity-50">Results</span> {sortedResults.results.length}
+              <p
+                className="text-xs mt-2"
+                style={{
+                  color: 'var(--sidebar-inset-text-color)',
+                  opacity: 'var(--light-text-opacity)',
+                }}
+              >
+                <span
+                  className="opacity-50"
+                  style={{
+                    color: 'var(--sidebar-inset-text-color)',
+                    opacity: 'var(--light-text-opacity)',
+                  }}
+                >
+                  Results
+                </span>{' '}
+                {sortedResults.results.length}
               </p>
               {results && results.more && (
-                <p className="text-xs mt-2 mb-4">
-                  <span className="opacity-50">
+                <p
+                  className="text-xs mt-2 mb-4"
+                  style={{
+                    color: 'var(--sidebar-inset-text-color)',
+                    opacity: 'var(--light-text-opacity)',
+                  }}
+                >
+                  <span
+                    style={{
+                      color: 'var(--sidebar-inset-text-color)',
+                      opacity: 'var(--light-text-opacity)',
+                    }}
+                    className="opacity-50"
+                  >
                     There are more results matching your search. Please refine your search to get more specific results.
                   </span>
                 </p>
@@ -406,9 +489,23 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
                       ) : (
                         <SmartFileIcon file={result} />
                       )}
-                      <p className="w-1/2">{result['Directory'] ? result['Directory']![0] : result['File']![0]}</p>
+                      <p
+                        className="w-1/2 ml-2"
+                        style={{
+                          color: 'var(--sidebar-inset-text-color)',
+                          opacity: 'var(--light-text-opacity)',
+                        }}
+                      >
+                        {result['Directory'] ? result['Directory']![0] : result['File']![0]}
+                      </p>
                     </>
-                    <p className="w-1/2 flex items-center justify-end mr-2">
+                    <p
+                      className="w-1/2 flex items-center justify-end mr-2"
+                      style={{
+                        color: 'var(--sidebar-inset-text-color)',
+                        opacity: 'var(--light-text-opacity)',
+                      }}
+                    >
                       {result['Directory']
                         ? removeLastCharOf(formatLongText(result['Directory']![1], 45))
                         : removeLastCharOf(formatLongText(result['File']![1], 45))}

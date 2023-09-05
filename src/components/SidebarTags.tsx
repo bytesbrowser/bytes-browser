@@ -62,15 +62,34 @@ export const SidebarTags = ({ tags, loading }: { tags: TagDoc[]; loading: boolea
 
   return (
     <div className="mt-14">
-      <div className="section-title text-sm opacity-50 mb-4">Tags</div>
+      <div
+        className="section-title text-sm mb-4"
+        style={{
+          opacity: 'var(--light-text-opacity)',
+        }}
+      >
+        Tags
+      </div>
       {loading && <FallingLines color="white" />}
       {tags.length === 0 && !loading && (
         <>
-          <p className="text-xs opacity-50">No tags have been created</p>
+          <p
+            style={{
+              opacity: 'var(--light-text-opacity)',
+            }}
+            className="text-xs"
+          >
+            No tags have been created
+          </p>
         </>
       )}
       {creating && (
-        <div className="flex items-center cursor-pointer transition-all hover:opacity-100 opacity-50 mt-4 mb-3">
+        <div
+          className="flex items-center cursor-pointer transition-all hover:opacity-100 mt-4 mb-3"
+          style={{
+            opacity: 'var(--light-text-opacity)',
+          }}
+        >
           <div
             className="circle rounded-full w-[12px] h-[12px] mr-4"
             style={{
@@ -91,6 +110,9 @@ export const SidebarTags = ({ tags, loading }: { tags: TagDoc[]; loading: boolea
               }
             }}
             className="border flex-1 rounded text-sm focus:outline-none"
+            style={{
+              borderColor: 'var(--sidebar-border-color)',
+            }}
           >
             New Tag
           </span>
@@ -100,7 +122,10 @@ export const SidebarTags = ({ tags, loading }: { tags: TagDoc[]; loading: boolea
         <Link
           key={key}
           to={`/tags/${tag.uuid}`}
-          className="flex items-center cursor-pointer transition-all hover:opacity-100 opacity-50 mb-3"
+          className="flex items-center cursor-pointer transition-all hover:opacity-100 mb-3"
+          style={{
+            opacity: 'var(--light-text-opacity)',
+          }}
         >
           <div
             className="circle rounded-full w-[12px] h-[12px] mr-4"
@@ -111,7 +136,13 @@ export const SidebarTags = ({ tags, loading }: { tags: TagDoc[]; loading: boolea
           <span className="text-sm">{tag.identifier}</span>
         </Link>
       ))}
-      <div className="w-full border border-gray-500 opacity-50 hover:opacity-100 transition-all cursor-pointer p-2 rounded-md mt-4">
+      <div
+        style={{
+          opacity: 'var(--light-text-opacity)',
+          borderColor: 'var(--sidebar-border-color)',
+        }}
+        className="w-full border hover:opacity-100 transition-all cursor-pointer p-2 rounded-md mt-4"
+      >
         <p className="text-sm text-center" onClick={onCreateStart}>
           Create A Tag
         </p>

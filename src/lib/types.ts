@@ -33,6 +33,7 @@ export interface ProfileStore {
   tags: TagDoc[];
   bookmarks: BookmarkDoc[];
   recentSearches: string[];
+  themePreference: string;
 }
 
 export interface Profile {
@@ -70,4 +71,21 @@ export interface TagPathResults {
     data: DirectoryContents;
     error: string | null;
   };
+}
+
+export interface ThemeJSONSchema {
+  sidebarBG?: string;
+  primaryBG?: string;
+  primaryTextColor?: string;
+  iconColor?: string;
+  lightTextOpacity?: number;
+  sidebarInsetBg?: string;
+  sidebarInsetTextColor?: string;
+  iconLightOpacity?: number;
+  sidebarBorderColor?: string;
+  primaryBorderColor?: string;
+  scrollbarThumbColor?: string;
+  scrollbarThumbHoverColor?: string;
+  scrollbarThumbActiveColor?: string;
+  scrollbarTrackColor?: string;
 }

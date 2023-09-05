@@ -87,7 +87,7 @@ export const Login = ({
         <input
           type="email"
           required
-          className={`text-sm w-full p-3 rounded-md bg-sidebar border border-light-border transition-all outline-none focus:border-gray-400 max-w-[500px] ${
+          className={`text-sm w-full p-3 rounded-md border border-light-border transition-all outline-none focus:border-gray-400 max-w-[500px] ${
             !form.email.valid && 'border-error focus:border-error'
           }`}
           placeholder="you@example.com"

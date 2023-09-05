@@ -1,0 +1,12 @@
+query GetThemes {
+  getThemes {
+    id
+    created_by_alias
+    name
+    content
+    description
+    icon
+    created_at
+    updated_at
+  }
+}

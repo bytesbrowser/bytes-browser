@@ -8,17 +8,17 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  color: white;
+  color: var(--primary-text-color);
   font-family: 'Open Sans', sans-serif;
 }
 
 body {
-  background-color: #27272d;
+  background-color: var(--primary-bg);
 }
 
 .titlebar {
   height: 30px;
-  background: #1c1b20;
+  background: var(--sidebar-bg);
   user-select: none;
   display: flex;
   justify-content: space-between;
@@ -36,7 +36,7 @@ body {
 
   .left {
     height: 100%;
-    background-color: #1c1b20;
+    background-color: var(--sidebar-bg);
     padding-left: 270px;
   }
 }
@@ -54,7 +54,7 @@ body {
   height: 100%;
 
   svg {
-    fill: white;
+    fill: var(--icon-color);
     width: 15px;
     height: 15px;
   }
@@ -94,25 +94,25 @@ body {
 
 /* Handle */
 ::-webkit-scrollbar-thumb {
-  background: #54545a; /* Slightly lighter than the background */
+  background: var(--scrollbar-thumb-color); /* Slightly lighter than the background */
   border-radius: 4px;
   transition: background 0.2s ease-in-out;
 }
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-  background: #6c6c71; /* A bit more lighter for hover effect */
+  background: var(--scrollbar-thumb-hover-color); /* A bit more lighter for hover effect */
 }
 
 /* Track */
 ::-webkit-scrollbar-track {
-  background: #1c1c20; /* Darker than the main background for contrast */
+  background: var(--scrollbar-track-color); /* Darker than the main background for contrast */
   border-radius: 4px;
 }
 
 /* Handle active state (when clicking and dragging) */
 ::-webkit-scrollbar-thumb:active {
-  background: #5a5a5f; /* Active state color */
+  background: var(--scrollbar-thumb-active-color); /* Active state color */
 }
 
 .frf-water {

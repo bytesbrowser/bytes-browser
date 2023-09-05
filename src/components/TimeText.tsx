@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
-import { secondsToTime } from "../lib/utils/secondsToTime";
+import { useEffect, useState } from 'react';
+
+import { secondsToTime } from '../lib/utils/secondsToTime';
 
 export const TimeText = ({
-  className = "",
+  className = '',
   seconds,
-  prefix = "",
+  prefix = '',
 }: {
   className?: string;
   seconds: number;
@@ -20,23 +21,28 @@ export const TimeText = ({
     setTimeData(secondsToTime(seconds));
   }, [seconds]);
 
-  if(seconds === 0) return (<></>)
+  if (seconds === 0) return <></>;
 
   return (
     <>
-      <p className={className}>
-        {prefix}{" "}
+      <p
+        style={{
+          opacity: 'var(--light-text-opacity)',
+        }}
+        className={className}
+      >
+        {prefix}{' '}
         {timeData.hours > 0 && (
           <>
-            {timeData.hours} hr{timeData.hours > 1 && "s"}{" "}
+            {timeData.hours} hr{timeData.hours > 1 && 's'}{' '}
           </>
         )}
         {timeData.minutes > 0 && (
           <>
-            {timeData.minutes} minute{timeData.minutes > 1 && "s"}{" "}
+            {timeData.minutes} minute{timeData.minutes > 1 && 's'}{' '}
           </>
         )}
-        {timeData.seconds} second{timeData.seconds > 1 && "s"}
+        {timeData.seconds} second{timeData.seconds > 1 && 's'}
       </p>
     </>
   );

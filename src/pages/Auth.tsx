@@ -210,14 +210,19 @@ export const Auth = () => {
           alignItems: 'center',
         }}
       >
-        <Triangle color="white" />
+        <Triangle color="var(--icon-color)" />
       </div>
     );
   }
 
   if (!hasNetwork) {
     return (
-      <div className="w-screen h-full bg-body max-w-[600px] m-auto pt-14 flex flex-col justify-center items-center">
+      <div
+        className="w-screen h-full max-w-[600px] m-auto pt-14 flex flex-col justify-center items-center"
+        style={{
+          backgroundColor: '--var(--sidebar-bg)',
+        }}
+      >
         <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 20 20">
           <circle cx="10" cy="16" r="2" fill="white" />
           <path

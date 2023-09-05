@@ -115,7 +115,14 @@ export const PageContextMenu = () => {
     <Menu id="PAGE_MENU" theme="dark" animation="slide" className="text-sm">
       <Item id="bookmark" onClick={onBookmark} disabled={runtime.currentPath === ''}>
         <div className="flex justify-between items-center w-full">
-          <p>{isBookMarked && 'Remove '}Bookmark</p>
+          <p
+            style={{
+              color: 'var(--sidebar-inset-text-color)',
+              opacity: 'var(--light-text-opacity)',
+            }}
+          >
+            {isBookMarked && 'Remove '}Bookmark
+          </p>
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
             <path fill="white" d="M5 21V5q0-.825.588-1.413T7 3h10q.825 0 1.413.588T19 5v16l-7-3l-7 3Z" />
           </svg>
@@ -125,7 +132,15 @@ export const PageContextMenu = () => {
       {runtime.isInRecycleBin && (
         <Item id="empty-trash" disabled={!runtime.isInRecycleBin} onClick={handleEmptyTrash}>
           <div className="flex justify-between items-center w-full">
-            <p> Empty Trash</p>
+            <p
+              style={{
+                color: 'var(--sidebar-inset-text-color)',
+                opacity: 'var(--light-text-opacity)',
+              }}
+            >
+              {' '}
+              Empty Trash
+            </p>
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
               <path
                 fill="white"
@@ -142,7 +157,14 @@ export const PageContextMenu = () => {
         }}
       >
         <div className="flex justify-between items-center w-full">
-          <p>Refresh Directory</p>
+          <p
+            style={{
+              color: 'var(--sidebar-inset-text-color)',
+              opacity: 'var(--light-text-opacity)',
+            }}
+          >
+            Refresh Directory
+          </p>
           <svg
             data-tooltip-id="refresh-tooltip"
             xmlns="http://www.w3.org/2000/svg"

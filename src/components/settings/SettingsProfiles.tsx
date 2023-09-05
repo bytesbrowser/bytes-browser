@@ -122,7 +122,6 @@ export const SettingsProfiles = () => {
           token: token,
         });
 
-        // TODO!
         setProfiles(profiles);
 
         await runtime.profileStore.set('profiles', profiles);
@@ -215,14 +214,31 @@ export const SettingsProfiles = () => {
       <form onSubmit={onLogin} className="flex flex-col w-[500px]">
         <h2>Add a profile</h2>
         <p className="text-sm mt-4 mb-4 opacity-70">Sign in to your account</p>
-        <p className="mb-8 text-sm opacity-50">
+        <p
+          className="mb-8 text-sm"
+          style={{
+            opacity: 'var(--light-text-opacity)',
+          }}
+        >
           Signing into profiles on this device will add them to your team. Removing them will disable team access. Only
           one user needs to have an activated license.
         </p>
 
-        <p className="mb-4 opacity-50 text-md">Email</p>
+        <p
+          className="mb-4 opacity-50 text-md"
+          style={{
+            opacity: 'var(--light-text-opacity)',
+          }}
+        >
+          Email
+        </p>
         <input
           type="email"
+          style={{
+            borderColor: 'var(--sidebar-border-color)',
+            backgroundColor: 'var(--sidebar-inset-bg)',
+            color: 'var(--sidebar-inset-text-color)',
+          }}
           required
           className={`text-sm w-full p-3 rounded-md bg-sidebar border border-light-border transition-all outline-none focus:border-gray-400 max-w-[500px] ${
             !form.email.valid && 'border-error focus:border-error'
@@ -242,9 +258,21 @@ export const SettingsProfiles = () => {
         {!form.email.valid && <p className="text-xs text-error mt-4">Please provide a valid email.</p>}
 
         <div className="flex justify-between items-center mb-4 mt-8">
-          <p className="opacity-50 text-md">Password</p>
+          <p
+            className="opacity-50 text-md"
+            style={{
+              opacity: 'var(--light-text-opacity)',
+            }}
+          >
+            Password
+          </p>
         </div>
         <input
+          style={{
+            borderColor: 'var(--sidebar-border-color)',
+            backgroundColor: 'var(--sidebar-inset-bg)',
+            color: 'var(--sidebar-inset-text-color)',
+          }}
           required
           type="password"
           className={`text-sm w-full p-3 rounded-md bg-sidebar border border-light-border transition-all outline-none focus:border-gray-400 max-w-[500px] ${
@@ -265,9 +293,15 @@ export const SettingsProfiles = () => {
         <div className="mb-12 w-[250px]">
           {!form.password.valid && <p className="text-xs text-error mt-4">Password must be at least 5 characters.</p>}
           {loginQueryResult.loading ? (
-            <LineWave color="white" wrapperStyle={{ margin: '0 auto' }} />
+            <LineWave color="var(--icon-color)" wrapperStyle={{ margin: '0 auto' }} />
           ) : (
-            <button type="submit" className="w-full mt-8 bg-success p-2 rounded-md transition-all hover:opacity-50">
+            <button
+              style={{
+                color: 'var(--sidebar-inset-text-color)',
+              }}
+              type="submit"
+              className="w-full mt-8 bg-success p-2 rounded-md transition-all hover:opacity-50"
+            >
               Sign In
             </button>
           )}
@@ -279,11 +313,21 @@ export const SettingsProfiles = () => {
         {profiles.map((profile, key) => (
           <div key={key} className="mt-8 border-t border-white border-opacity-10">
             <img src={profile.avatar} alt="" className="w-20 h-20 rounded-full my-6" />
-            <p className="font-light mb-4">{profile.name}</p>
-            <p className="opacity-50 mb-4">
+            <p className="font-medium mb-4">{profile.name}</p>
+            <p
+              className="mb-4"
+              style={{
+                opacity: 'var(--light-text-opacity)',
+              }}
+            >
               Added <Moment date={profile.addedOn} fromNow />
             </p>
-            <p className="opacity-50 mb-8">
+            <p
+              className="opacity-50 mb-8"
+              style={{
+                opacity: 'var(--light-text-opacity)',
+              }}
+            >
               Last Signed In <Moment date={profile.lastUsed} fromNow />
             </p>
 
@@ -291,6 +335,9 @@ export const SettingsProfiles = () => {
               <>
                 <p
                   onClick={() => on_remove(key)}
+                  style={{
+                    color: 'var(--sidebar-inset-text-color)',
+                  }}
                   className="bg-error mb-8 p-2 text-sm max-w-[250px] rounded mt-4 text-center transition-all hover:opacity-50 cursor-pointer"
                 >
                   Remove From This Device
@@ -298,6 +345,9 @@ export const SettingsProfiles = () => {
                 {key != runtime.currentUser && (
                   <p
                     onClick={() => useUser(key)}
+                    style={{
+                      color: 'var(--sidebar-inset-text-color)',
+                    }}
                     className="bg-success mb-8 p-2 text-sm max-w-[250px] rounded mt-4 text-center transition-all hover:opacity-50 cursor-pointer"
                   >
                     Use This Profile

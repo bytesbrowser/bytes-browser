@@ -1,0 +1,12 @@
+query GetTheme($id: ID!) {
+  getTheme(id: $id) {
+    id
+    created_by_alias
+    name
+    content
+    description
+    icon
+    created_at
+    updated_at
+  }
+}
