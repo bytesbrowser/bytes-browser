@@ -9,9 +9,11 @@ import { BrowserRouter } from 'react-router-dom';
 import { useRecoilState, useRecoilValue } from 'recoil';
 
 import Router from './components/Router';
+import { Theme } from './graphql';
+import { BytesBrowserDarkTheme, BytesBrowserLightTheme } from './lib/constants';
 import { runtimeState } from './lib/state/runtime.state';
 import { themeState as themeStateRoot } from './lib/state/theme.state';
-import { Profile } from './lib/types';
+import { Profile, ProfileStore } from './lib/types';
 
 const App = () => {
   const runtime = useRecoilValue(runtimeState);
@@ -23,20 +25,26 @@ const App = () => {
       .then(async (res: any) => {
         if (res.includes('does not exist')) return;
 
-        if (runtime.profileStore) {
-          const profiles = await runtime.profileStore.get<Profile[]>(`profiles`);
-
-          if (profiles) {
-            const profile = profiles[runtime.currentUser];
-
-            console.log(profile);
-          }
+        if (runtime.store) {
+          runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then(async (db) => {
+            if (db) {
+              if (db.themePreference) {
+                setThemeState({
+                  ...themeState,
+                  themes: res,
+                  currentTheme: [BytesBrowserDarkTheme, BytesBrowserLightTheme, ...res].find(
+                    (theme: Theme) => theme.name === db.themePreference,
+                  )[0],
+                });
+              } else {
+                setThemeState({
+                  ...themeState,
+                  themes: res,
+                });
+              }
+            }
+          });
         }
-
-        setThemeState({
-          ...themeState,
-          themes: res,
-        });
       })
       .catch((err) => {
         console.error(err);
