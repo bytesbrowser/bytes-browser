@@ -34,6 +34,7 @@ export const ContextMenu = () => {
 
       if (!confirmed) {
         toast.error('Deletion cancelled.');
+        return;
       }
 
       toast.promise(
@@ -144,33 +145,67 @@ export const ContextMenu = () => {
 
     if (!item) return;
 
-    if (item['File']) {
+    if (pasteboard.file && pasteboard.file['File']) {
       invoke('paste_file_at', {
         from: pasteboard.file?.File![1],
         destination: runtime.currentDrive?.mount_point + runtime.currentPath + pasteboard.file?.File![0],
       })
-        .then((res) => {
-          console.log(res);
-          toast.success('Pasted ' + pasteboard.file?.File![0] + ' to ' + item['File']![0] + '.');
+        .then(() => {
+          DirectoryEmitter.emit('delete', {});
+
+          toast.success('Pasted ' + pasteboard.file?.File![0]);
         })
         .catch((err) => {
           console.error(err);
-          toast.error('Failed to paste ' + pasteboard.file?.File![0] + ' to ' + item['File']![0] + '.');
+          toast.error('Failed to paste ' + pasteboard.file?.File![0]);
         });
-
-      DirectoryEmitter.emit('delete', {});
-    } else if (item.Directory) {
+    } else if (pasteboard.file && pasteboard.file['Directory']) {
       invoke('paste_directory_at', {
         from: pasteboard.file?.Directory![1],
         destination: runtime.currentDrive?.mount_point + runtime.currentPath + pasteboard.file?.Directory![0],
       })
-        .then((res) => {
-          console.log(res);
-          toast.success('Pasted ' + pasteboard.file?.Directory![0] + ' to ' + item['Directory']![0] + '.');
+        .then(() => {
+          toast.success('Pasted ' + pasteboard.file?.Directory![0]);
+          DirectoryEmitter.emit('delete', {});
         })
         .catch((err) => {
           console.error(err);
-          toast.error('Failed to paste ' + pasteboard.file?.Directory![0] + ' to ' + item['Directory']![0] + '.');
+          toast.error('Failed to paste ' + pasteboard.file?.Directory![0]);
+        });
+    }
+  };
+
+  const onDuplicate = () => {
+    const item = currentContext.currentItem;
+
+    if (!item) return;
+
+    if (item && item['File']) {
+      invoke('paste_file_at', {
+        from: item.File![1],
+        destination: runtime.currentDrive?.mount_point + runtime.currentPath + item.File![0],
+      })
+        .then(() => {
+          toast.success('Duplicated ' + item.File![0]);
+
+          DirectoryEmitter.emit('delete', {});
+        })
+        .catch((err) => {
+          console.error(err);
+          toast.error('Failed to duplicate ' + item.File![0]);
+        });
+    } else if (item && item['Directory']) {
+      invoke('paste_directory_at', {
+        from: item?.Directory![1],
+        destination: runtime.currentDrive?.mount_point + runtime.currentPath + item?.Directory![0],
+      })
+        .then(() => {
+          toast.success('Duplicated ' + item?.Directory![0]);
+          DirectoryEmitter.emit('delete', {});
+        })
+        .catch((err) => {
+          console.error(err);
+          toast.error('Failed to duplicate ' + item?.Directory![0]);
         });
     }
   };
@@ -553,7 +588,9 @@ export const ContextMenu = () => {
         </Submenu>
         <Separator />
         <Item id="open">Open</Item>
-        <Item id="duplicate">Duplicate</Item>
+        <Item id="duplicate" onClick={onDuplicate}>
+          Duplicate
+        </Item>
         <Item id="cut">Cut</Item>
         <Item id="copy" onClick={onCopy}>
           Copy

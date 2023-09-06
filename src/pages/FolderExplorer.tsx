@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useContextMenu } from 'react-contexify';
 import 'react-contexify/ReactContexify.css';
 import { toast } from 'react-hot-toast';
+import { Triangle } from 'react-loader-spinner';
 import Moment from 'react-moment';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { Tooltip } from 'react-tooltip';
@@ -28,6 +29,7 @@ export const FolderExplorer = () => {
   });
   const currentIndex = location.pathname.split('/')[2];
   const [currentContext, setCurrentContext] = useRecoilState(currentContextState);
+  const [loadingDirectories, setLoadingDirectories] = useState(false);
 
   const { driveId } = useParams();
 
@@ -44,16 +46,23 @@ export const FolderExplorer = () => {
   useEffect(() => {
     DirectoryEmitter.on('delete', () => {
       if (runtime.currentDrive) {
+        setLoadingDirectories(true);
+
         invoke('open_directory', { path: runtime.currentDrive.mount_point + runtime.currentPath }).then((res: any) => {
+          console.log(res.data);
           setDirectories(res.data as DirectoryContents[]);
+          setLoadingDirectories(false);
         });
       }
     });
 
     DirectoryEmitter.on('refresh', () => {
       if (runtime.currentDrive) {
+        setLoadingDirectories(true);
+
         invoke('open_directory', { path: runtime.currentDrive.mount_point + runtime.currentPath }).then((res: any) => {
           setDirectories(res.data as DirectoryContents[]);
+          setLoadingDirectories(false);
         });
       }
     });
@@ -120,6 +129,8 @@ export const FolderExplorer = () => {
       currentDriveName: device?.name,
     });
 
+    setLoadingDirectories(true);
+
     invoke('open_directory', { path: device.mount_point }).then((res: any) => {
       setRuntime({
         ...runtime,
@@ -129,13 +140,17 @@ export const FolderExplorer = () => {
       });
 
       setDirectories(res.data as DirectoryContents[]);
+
+      setLoadingDirectories(false);
     });
   }, [driveId]);
 
   useEffect(() => {
     if (runtime.currentDrive) {
+      setLoadingDirectories(true);
       invoke('open_directory', { path: runtime.currentDrive.mount_point + runtime.currentPath }).then((res: any) => {
         setDirectories(res.data as DirectoryContents[]);
+        setLoadingDirectories(false);
       });
     }
   }, []);
@@ -157,12 +172,17 @@ export const FolderExplorer = () => {
     }
 
     if (runtime.currentPath === '' && runtime.currentDrive) {
+      setLoadingDirectories(true);
       invoke('open_directory', { path: runtime.currentDrive.mount_point }).then((res: any) => {
         setDirectories(res.data as DirectoryContents[]);
+        setLoadingDirectories(false);
       });
     } else if (runtime.currentDrive) {
+      setLoadingDirectories(true);
+
       invoke('open_directory', { path: runtime.currentDrive.mount_point + runtime.currentPath }).then((res: any) => {
         setDirectories(res.data as DirectoryContents[]);
+        setLoadingDirectories(false);
       });
     }
   }, [runtime.currentPath]);
@@ -530,7 +550,21 @@ export const FolderExplorer = () => {
             </p>
           </div>
           <div className="flex flex-col overflow-auto h-[89vh]">
+            {loadingDirectories && (
+              <div className="m-auto flex flex-col justify-center items-center">
+                <Triangle color="var(--icon-color)" />
+                <p
+                  className="mt-8"
+                  style={{
+                    opacity: 'var(--light-text-opacity)',
+                  }}
+                >
+                  Loading Directory...
+                </p>
+              </div>
+            )}
             {directories &&
+              !loadingDirectories &&
               directories.map((directory, key) => (
                 <div
                   onContextMenu={(e) => handleContextMenu(e, directory)}

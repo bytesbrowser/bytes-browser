@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use std::fs::{self, DirEntry};
 use std::io::{self};
 use std::ops::Deref;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use tokio::fs::File;
 use tokio::io::{AsyncBufReadExt, BufReader};
@@ -46,7 +46,30 @@ pub struct GitMeta {
 #[tauri::command]
 pub async fn paste_file_at(from: String, destination: String) -> Result<bool, String> {
     let from_path = Path::new(&from);
-    let dest_path = Path::new(&destination);
+    let mut dest_path = PathBuf::from(destination);
+
+    let mut counter = 1;
+    while dest_path.exists() {
+        let extension = dest_path
+            .extension()
+            .and_then(|os_str| os_str.to_str())
+            .unwrap_or("");
+        let without_extension = dest_path
+            .file_stem()
+            .and_then(|os_str| os_str.to_str())
+            .unwrap_or("");
+        dest_path.set_file_name(format!(
+            "{}_{}{}",
+            without_extension,
+            counter,
+            if extension.is_empty() {
+                "".to_string()
+            } else {
+                format!(".{}", extension)
+            }
+        ));
+        counter += 1;
+    }
 
     match fs::copy(&from_path, &dest_path) {
         Ok(_) => Ok(true),
@@ -57,10 +80,16 @@ pub async fn paste_file_at(from: String, destination: String) -> Result<bool, St
 #[tauri::command]
 pub async fn paste_directory_at(from: String, destination: String) -> Result<bool, String> {
     let from_path = Path::new(&from);
-    let dest_path = Path::new(&destination);
+    let mut dest_path = PathBuf::from(&destination);
 
     if !from_path.is_dir() {
         return Err("Source is not a directory".to_string());
+    }
+
+    let mut counter = 1;
+    while dest_path.exists() {
+        dest_path = PathBuf::from(format!("{}_{}", destination, counter));
+        counter += 1;
     }
 
     let copy_result = copy_dir(&from_path, &dest_path);
@@ -213,11 +242,18 @@ pub async fn delete_file(
     is_dir: bool,
     mount_point: String,
 ) -> Result<(), Error> {
+    println!("Deleting file from cache: {}", path);
+
     let fs_event_manager = FsEventHandler::new(state_mux.deref().clone(), mount_point.into());
-    fs_event_manager.handle_delete(Path::new(&path));
+
+    let future_path = path.clone();
+
+    tokio::spawn(async move {
+        fs_event_manager.handle_delete(Path::new(&future_path));
+    });
 
     if is_dir {
-        let res = fs::remove_dir_all(&path);
+        let res = fs::remove_dir_all(&*path);
         match res {
             Ok(_) => Ok(()),
             Err(err) => Err(Error::Custom(err.to_string())),

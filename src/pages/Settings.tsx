@@ -23,7 +23,9 @@ export const Settings = () => {
   const navigate = useNavigate();
   const [getSubStatus] = useGetSubscriptionStatusLazyQuery();
   const [themeState, setThemeState] = useRecoilState(themeProvider);
-  const { data, loading, error } = useGetThemesQuery();
+  const { data, loading, error } = useGetThemesQuery({
+    fetchPolicy: 'cache-and-network',
+  });
 
   console.log(data);
 

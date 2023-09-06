@@ -118,7 +118,7 @@ export const Tags = () => {
               (result, key) =>
                 result.File && (
                   <div className="flex items-center cursor-pointer justify-between opacity-50 hover:ml-2 hover:opacity-100 transition-all">
-                    <div className="flex items-center">
+                    <div className="flex items-center mt-4">
                       <SmartFileIcon file={result} />
                       <p
                         className="ml-2"

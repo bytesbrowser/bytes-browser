@@ -1,7 +1,7 @@
 [package]
 name = "bytes-browser"
 version = "1.0.0"
-description = "A Tauri App"
+description = "Bytes Browser"
 authors = ["you"]
 license = ""
 repository = ""
