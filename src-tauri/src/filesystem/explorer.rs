@@ -211,10 +211,9 @@ pub async fn delete_file(
     state_mux: State<'_, StateSafe>,
     path: String,
     is_dir: bool,
+    mount_point: String,
 ) -> Result<(), Error> {
-    let mount_point_str = get_mount_point(path.clone()).unwrap_or_default();
-
-    let fs_event_manager = FsEventHandler::new(state_mux.deref().clone(), mount_point_str.into());
+    let fs_event_manager = FsEventHandler::new(state_mux.deref().clone(), mount_point.into());
     fs_event_manager.handle_delete(Path::new(&path));
 
     if is_dir {

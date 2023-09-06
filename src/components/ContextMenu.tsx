@@ -40,18 +40,26 @@ export const ContextMenu = () => {
         invoke('delete_file', {
           path: item['Directory'] ? item['Directory']![1] : item['File']![1],
           isDir: item['Directory'] ? true : false,
-        }).then(() => {
-          DirectoryEmitter.emit('delete', {});
+          mountPoint: runtime.currentDrive?.mount_point,
+        })
+          .then((res) => {
+            DirectoryEmitter.emit('delete', {});
 
-          setCurrentContext({
-            ...currentContext,
-            currentItem: null,
-          });
-        }),
+            setCurrentContext({
+              ...currentContext,
+              currentItem: null,
+            });
+          })
+          .catch((err) => {
+            console.error(err);
+          }),
         {
           error: 'Failed to delete ' + (item['Directory'] ? item['Directory']![0] : item['File']![0]),
           loading: 'Deleting ' + (item['Directory'] ? item['Directory']![0] : item['File']![0]),
           success: 'Deleted ' + (item['Directory'] ? item['Directory']![0] : item['File']![0]),
+        },
+        {
+          duration: 3000,
         },
       );
     }
@@ -129,6 +137,42 @@ export const ContextMenu = () => {
     });
 
     toast.success('Copied ' + (item.File ? item.File[0] : item.Directory![0]) + ' to clipboard.');
+  };
+
+  const onPaste = () => {
+    const item = currentContext.currentItem;
+
+    if (!item) return;
+
+    if (item['File']) {
+      invoke('paste_file_at', {
+        from: pasteboard.file?.File![1],
+        destination: runtime.currentDrive?.mount_point + runtime.currentPath + pasteboard.file?.File![0],
+      })
+        .then((res) => {
+          console.log(res);
+          toast.success('Pasted ' + pasteboard.file?.File![0] + ' to ' + item['File']![0] + '.');
+        })
+        .catch((err) => {
+          console.error(err);
+          toast.error('Failed to paste ' + pasteboard.file?.File![0] + ' to ' + item['File']![0] + '.');
+        });
+
+      DirectoryEmitter.emit('delete', {});
+    } else if (item.Directory) {
+      invoke('paste_directory_at', {
+        from: pasteboard.file?.Directory![1],
+        destination: runtime.currentDrive?.mount_point + runtime.currentPath + pasteboard.file?.Directory![0],
+      })
+        .then((res) => {
+          console.log(res);
+          toast.success('Pasted ' + pasteboard.file?.Directory![0] + ' to ' + item['Directory']![0] + '.');
+        })
+        .catch((err) => {
+          console.error(err);
+          toast.error('Failed to paste ' + pasteboard.file?.Directory![0] + ' to ' + item['Directory']![0] + '.');
+        });
+    }
   };
 
   const onFetch = () => {
@@ -514,8 +558,8 @@ export const ContextMenu = () => {
         <Item id="copy" onClick={onCopy}>
           Copy
         </Item>
-        <Item disabled id="paste">
-          Paste
+        <Item disabled={pasteboard.currentOperation === 'NONE'} id="paste" onClick={onPaste}>
+          Paste {pasteboard.file?.File ? pasteboard.file.File[0] : pasteboard.file?.Directory![0]}
         </Item>
         <Item id="rename">Rename</Item>
         <Item id="delete" onClick={onDelete} color="red">
