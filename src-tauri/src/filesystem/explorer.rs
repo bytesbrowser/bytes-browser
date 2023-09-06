@@ -104,9 +104,22 @@ pub async fn cut_file_from(from: String, destination: String) -> Result<bool, St
     let from_path = Path::new(&from);
     let dest_path = Path::new(&destination);
 
+    // First, try the rename operation
     match fs::rename(&from_path, &dest_path) {
         Ok(_) => Ok(true),
-        Err(e) => Err(format!("Could not move file: {}", e)),
+        Err(_) => {
+            // If rename fails, try copying and then deleting the original
+            match fs::copy(&from_path, &dest_path) {
+                Ok(_) => {
+                    // After copying, delete the original file
+                    match fs::remove_file(&from_path) {
+                        Ok(_) => Ok(true),
+                        Err(e) => Err(format!("Could not delete original file: {}", e)),
+                    }
+                }
+                Err(e) => Err(format!("Could not copy file: {}", e)),
+            }
+        }
     }
 }
 
@@ -119,10 +132,48 @@ pub async fn cut_directory_from(from: String, destination: String) -> Result<boo
         return Err("Source is not a directory".to_string());
     }
 
+    // First, try the rename operation
     match fs::rename(&from_path, &dest_path) {
         Ok(_) => Ok(true),
-        Err(e) => Err(format!("Could not move directory: {}", e)),
+        Err(_) => {
+            // If rename fails, try copying the directory recursively and then deleting the original
+            match copy_dir_recursive(&from_path, &dest_path) {
+                Ok(_) => {
+                    // After copying, delete the original directory
+                    match fs::remove_dir_all(&from_path) {
+                        Ok(_) => Ok(true),
+                        Err(e) => Err(format!("Could not delete original directory: {}", e)),
+                    }
+                }
+                Err(e) => Err(format!("Could not copy directory: {}", e)),
+            }
+        }
     }
+}
+
+fn copy_dir_recursive(src: &Path, dest: &Path) -> std::io::Result<()> {
+    if !src.is_dir() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "Source is not a directory",
+        ));
+    }
+
+    fs::create_dir_all(&dest)?;
+
+    for entry_result in src.read_dir()? {
+        let entry = entry_result?;
+        let entry_path = entry.path();
+        let dest_child = dest.join(entry.file_name());
+
+        if entry_path.is_dir() {
+            copy_dir_recursive(&entry_path, &dest_child)?;
+        } else {
+            fs::copy(&entry_path, &dest_child)?;
+        }
+    }
+
+    Ok(())
 }
 
 // Helper function to recursively copy a directory

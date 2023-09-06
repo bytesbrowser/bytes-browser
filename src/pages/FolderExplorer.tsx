@@ -48,11 +48,16 @@ export const FolderExplorer = () => {
       if (runtime.currentDrive) {
         setLoadingDirectories(true);
 
-        invoke('open_directory', { path: runtime.currentDrive.mount_point + runtime.currentPath }).then((res: any) => {
-          console.log(res.data);
-          setDirectories(res.data as DirectoryContents[]);
-          setLoadingDirectories(false);
-        });
+        setTimeout(() => {
+          if (runtime.currentDrive) {
+            invoke('open_directory', { path: runtime.currentDrive.mount_point + runtime.currentPath }).then(
+              (res: any) => {
+                setDirectories(res.data as DirectoryContents[]);
+                setLoadingDirectories(false);
+              },
+            );
+          }
+        }, 3000);
       }
     });
 

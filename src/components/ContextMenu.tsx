@@ -145,34 +145,75 @@ export const ContextMenu = () => {
 
     if (!item) return;
 
-    if (pasteboard.file && pasteboard.file['File']) {
-      invoke('paste_file_at', {
+    if (pasteboard.currentOperation === 'COPY') {
+      if (pasteboard.file && pasteboard.file['File']) {
+        invoke('paste_file_at', {
+          from: pasteboard.file?.File![1],
+          destination: runtime.currentDrive?.mount_point + runtime.currentPath + pasteboard.file?.File![0],
+        })
+          .then(() => {
+            DirectoryEmitter.emit('delete', {});
+
+            toast.success('Pasted ' + pasteboard.file?.File![0]);
+          })
+          .catch((err) => {
+            console.error(err);
+            toast.error('Failed to paste ' + pasteboard.file?.File![0]);
+          });
+      } else if (pasteboard.file && pasteboard.file['Directory']) {
+        invoke('paste_directory_at', {
+          from: pasteboard.file?.Directory![1],
+          destination: runtime.currentDrive?.mount_point + runtime.currentPath + pasteboard.file?.Directory![0],
+        })
+          .then(() => {
+            toast.success('Pasted ' + pasteboard.file?.Directory![0]);
+            DirectoryEmitter.emit('delete', {});
+          })
+          .catch((err) => {
+            console.error(err);
+            toast.error('Failed to paste ' + pasteboard.file?.Directory![0]);
+          });
+      }
+    } else if (pasteboard.currentOperation === 'CUT') {
+      invoke('cut_file_from', {
         from: pasteboard.file?.File![1],
         destination: runtime.currentDrive?.mount_point + runtime.currentPath + pasteboard.file?.File![0],
       })
         .then(() => {
           DirectoryEmitter.emit('delete', {});
 
-          toast.success('Pasted ' + pasteboard.file?.File![0]);
+          toast.success('Cut ' + pasteboard.file?.File![0]);
         })
         .catch((err) => {
           console.error(err);
-          toast.error('Failed to paste ' + pasteboard.file?.File![0]);
+          toast.error('Failed to cut ' + pasteboard.file?.File![0]);
         });
     } else if (pasteboard.file && pasteboard.file['Directory']) {
-      invoke('paste_directory_at', {
+      invoke('cut_directory_from', {
         from: pasteboard.file?.Directory![1],
         destination: runtime.currentDrive?.mount_point + runtime.currentPath + pasteboard.file?.Directory![0],
       })
         .then(() => {
-          toast.success('Pasted ' + pasteboard.file?.Directory![0]);
+          toast.success('Cut ' + pasteboard.file?.Directory![0]);
           DirectoryEmitter.emit('delete', {});
         })
         .catch((err) => {
           console.error(err);
-          toast.error('Failed to paste ' + pasteboard.file?.Directory![0]);
+          toast.error('Failed to cut ' + pasteboard.file?.Directory![0]);
         });
     }
+  };
+
+  const onCut = () => {
+    const item = currentContext.currentItem;
+
+    if (!item) return;
+
+    setPasteboard({
+      currentOperation: 'CUT',
+      file: item,
+      mountPoint: runtime.currentDrive?.mount_point!,
+    });
   };
 
   const onDuplicate = () => {
@@ -591,7 +632,9 @@ export const ContextMenu = () => {
         <Item id="duplicate" onClick={onDuplicate}>
           Duplicate
         </Item>
-        <Item id="cut">Cut</Item>
+        <Item id="cut" onClick={onCut}>
+          Cut
+        </Item>
         <Item id="copy" onClick={onCopy}>
           Copy
         </Item>
