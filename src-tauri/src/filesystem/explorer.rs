@@ -693,26 +693,18 @@ pub async fn clear_recycle_bin(_window: tauri::Window) -> Result<(), Error> {
     // macOS-specific code
     #[cfg(target_os = "macos")]
     {
-        use objc::runtime::Class;
-        use objc::runtime::Object;
-        use objc_foundation::{INSObject, INSString, NSString};
-        use objc_id::Id;
+        use std::process::Command;
 
-        unsafe {
-            let pool = Class::get("NSAutoreleasePool").unwrap();
-            let pool: *mut Object = msg_send![pool.alloc().unwrap(), init];
+        let status = Command::new("rm")
+            .args(&["-rf", "~/.Trash/*"])
+            .status()
+            .expect("Failed to clear trash on macOS");
 
-            let file_manager: Id<Object> =
-                msg_send![Class::get("NSFileManager").unwrap().alloc().unwrap(), init];
-            let trash_url: Id<Object> = msg_send![file_manager, URLForDirectory:1
-                                                                           inDomain:1
-                                                                      appropriateFor:nil
-                                                                                 create:false
-                                                                                  error:nil];
-            let trash_path: Id<NSString> = msg_send![trash_url, path];
-            let _: msg_send![file_manager, removeItemAtPath:trash_path error:nil];
-
-            msg_send![pool, release];
+        if !status.success() {
+            return Err(Error::from(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Failed to clear trash on macOS",
+            )));
         }
     }
 

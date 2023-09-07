@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "run-dev.sh",
-    "build": "run-build.sh",
+    "build": "bash run-build.sh",
     "dev:mac": "export REACT_APP_VERSION=$(git rev-parse HEAD) && concurrently \"vite\" \"tauri dev\"",
     "dev:win": "for /f %i in ('git rev-parse HEAD') do set REACT_APP_VERSION=%i && concurrently \"vite\" \"tauri dev\"",
     "build:mac": "export REACT_APP_VERSION=$(git rev-parse HEAD) && tsc && vite build",

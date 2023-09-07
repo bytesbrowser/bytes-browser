@@ -25,7 +25,8 @@ pub async fn get_installed_themes() -> Result<Vec<Value>, String> {
 
     // Check if the directory exists
     if !fs::metadata(themes_dir).is_ok() {
-        return Err(format!("Directory {} does not exist", themes_dir));
+        println!("{}", format!("Directory {} does not exist", themes_dir));
+        return Ok(Vec::new());
     }
 
     let entries = fs::read_dir(themes_dir).map_err(|e| e.to_string())?;

@@ -90,6 +90,9 @@ export const Login = ({
           className={`text-sm w-full p-3 rounded-md border border-light-border transition-all outline-none focus:border-gray-400 max-w-[500px] ${
             !form.email.valid && 'border-error focus:border-error'
           }`}
+          style={{
+            backgroundColor: 'var(--sidebar-bg)',
+          }}
           placeholder="you@example.com"
           value={form.email.value}
           onChange={(e) =>
@@ -111,6 +114,9 @@ export const Login = ({
           </p>
         </div>
         <input
+          style={{
+            backgroundColor: 'var(--sidebar-bg)',
+          }}
           required
           type="password"
           className={`text-sm w-full p-3 rounded-md bg-sidebar border border-light-border transition-all outline-none focus:border-gray-400 max-w-[500px] ${

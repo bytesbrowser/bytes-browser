@@ -23,7 +23,9 @@ const App = () => {
   useEffect(() => {
     invoke('get_installed_themes')
       .then(async (res: any) => {
-        if (res.includes('does not exist')) return;
+        if (res.includes('does not exist')) {
+          res = [];
+        }
 
         res = res.map((item: Theme) => ({
           ...item,
@@ -34,8 +36,6 @@ const App = () => {
           runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then(async (db) => {
             if (db) {
               if (db.themePreference) {
-                console.log('FOund theme pref');
-
                 setThemeState({
                   ...themeState,
                   themes: [BytesBrowserDarkTheme, BytesBrowserLightTheme, ...res],
@@ -52,6 +52,10 @@ const App = () => {
                   themes: [BytesBrowserDarkTheme, BytesBrowserLightTheme, ...res],
                 });
               }
+            } else {
+              setThemeState({
+                ...themeState,
+              });
             }
           });
         }
