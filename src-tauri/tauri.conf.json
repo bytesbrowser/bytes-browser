@@ -10,6 +10,14 @@
     "version": "1.0.0"
   },
   "tauri": {
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://dist.anystack.sh/v1/tauri/9a15c03e-da4b-46dc-a6d0-aeed3d05085b/{{current_version}}"
+      ],
+      "dialog": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDRBNkJCNjU5MkZEQ0ZBMEYKUldRUCt0d3ZXYlpyU3BxcG53MlFzMkpQbUNvYkxJV1dUa0djU2MzS3BjOWEzUnQvYjI4eDBUZmcK"
+    },
     "allowlist": {
       "os": {
         "all": true
