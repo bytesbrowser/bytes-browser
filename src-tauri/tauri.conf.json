@@ -1,13 +1,12 @@
 {
   "build": {
-    "beforeBuildCommand": "yarn build",
     "devPath": "http://localhost:1420",
     "distDir": "../dist",
     "withGlobalTauri": false
   },
   "package": {
     "productName": "Bytes Browser",
-    "version": "1.0.0"
+    "version": "1.0.1"
   },
   "tauri": {
     "updater": {
