@@ -1,4 +1,6 @@
 import { invoke, os } from '@tauri-apps/api';
+import { relaunch } from '@tauri-apps/api/process';
+import { checkUpdate, installUpdate, onUpdaterEvent } from '@tauri-apps/api/updater';
 import { appWindow } from '@tauri-apps/api/window';
 import 'animate.css/animate.min.css';
 //@ts-ignore
@@ -19,6 +21,40 @@ const App = () => {
   const runtime = useRecoilValue(runtimeState);
   const [useTitlebar, setUseTitlebar] = useState<boolean>(false);
   const [themeState, setThemeState] = useRecoilState(themeStateRoot);
+
+  useEffect(() => {
+    checkUpdateForApp();
+  }, []);
+
+  const checkUpdateForApp = async () => {
+    const { shouldUpdate, manifest } = await checkUpdate()
+      .then((res) => {
+        console.log(res);
+
+        return res;
+      })
+      .catch((err) => {
+        console.error(err);
+
+        return err;
+      });
+
+    console.log(manifest);
+
+    console.log(`Update available: ${shouldUpdate}`); // true
+
+    if (shouldUpdate) {
+      // You could show a dialog asking the user if they want to install the update here.
+      console.log(`Installing update ${manifest?.version}, ${manifest?.date}, ${manifest?.body}`);
+
+      // Install the update. This will also restart the app on Windows!
+      await installUpdate();
+
+      // On macOS and Linux you will need to restart the app manually.
+      // You could use this step to display another confirmation dialog.
+      await relaunch();
+    }
+  };
 
   useEffect(() => {
     invoke('get_installed_themes')
