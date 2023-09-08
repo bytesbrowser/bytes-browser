@@ -5,7 +5,7 @@ import { runtimeState } from '../state/runtime.state';
 import { Profile } from '../types';
 
 const httpLink = new HttpLink({
-  uri: 'https://bytes-browser-server-c02da281c0f3.herokuapp.com/',
+  uri: 'https://server.bytesbrowser.com',
 });
 
 const authMiddleware = new ApolloLink((operation, forward) => {
