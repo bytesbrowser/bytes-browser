@@ -23,7 +23,7 @@ export const Settings = () => {
   const navigate = useNavigate();
   const [getSubStatus] = useGetSubscriptionStatusLazyQuery();
   const [themeState, setThemeState] = useRecoilState(themeProvider);
-  const { data, loading, error } = useGetThemesQuery({
+  const { data } = useGetThemesQuery({
     fetchPolicy: 'cache-and-network',
   });
 
@@ -127,7 +127,7 @@ export const Settings = () => {
     invoke('remove_theme', {
       themeNameToRemove: theme.name,
     })
-      .then((res) => {
+      .then(() => {
         if (theme.name === themeState.currentTheme?.name) {
           setThemeState({
             ...themeState,

@@ -62,9 +62,11 @@ export const Auth = () => {
               navigate('/no-subscription');
             }
           })
-          .catch((err) => {
+          .catch(() => {
             toast.error('There was an issue checking your subscription status. Please try again later.');
           });
+      } else {
+        setCheckedAuth(true);
       }
     } else {
       setCheckedAuth(true);

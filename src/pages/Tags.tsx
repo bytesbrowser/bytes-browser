@@ -12,7 +12,7 @@ import { formatLongText } from '../lib/utils/formatLongText';
 import { removeLastCharOf } from '../lib/utils/removeLastCharOf';
 
 export const Tags = () => {
-  const [runtime, setRuntime] = useRecoilState(runtimeState);
+  const [runtime] = useRecoilState(runtimeState);
 
   const navigate = useNavigate();
 

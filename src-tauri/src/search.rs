@@ -1,4 +1,3 @@
-
 use crate::filesystem::get_file_description;
 use crate::CachedPath;
 use crate::{filesystem::volume::DirectoryChild, StateSafe};
@@ -42,9 +41,10 @@ fn tokenize(filename: &str) -> Vec<String> {
 
         if i != 0 {
             match (prev_char_type, char_type) {
-                (CharType::Uppercase | CharType::Numeric, CharType::Lowercase) |
-(CharType::Lowercase, CharType::Uppercase | CharType::Numeric) |
-(CharType::Other, _) | (_, CharType::Other) => {
+                (CharType::Uppercase | CharType::Numeric, CharType::Lowercase)
+                | (CharType::Lowercase, CharType::Uppercase | CharType::Numeric)
+                | (CharType::Other, _)
+                | (_, CharType::Other) => {
                     if token_start < i {
                         let token: String = chars[token_start..i].iter().collect();
                         tokens.push(token.to_lowercase());
