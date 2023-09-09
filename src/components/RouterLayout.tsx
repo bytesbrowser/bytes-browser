@@ -1,5 +1,6 @@
 import { invoke, os } from '@tauri-apps/api';
 import { Event, listen } from '@tauri-apps/api/event';
+import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/api/notification';
 import { appWindow } from '@tauri-apps/api/window';
 import { useEffect, useState } from 'react';
 import { Triangle } from 'react-loader-spinner';
@@ -113,7 +114,7 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
   const getVolumes = () => {
     if (refreshingVolumes) return;
 
-    invoke('get_volumes').then((volumes: any) => {
+    invoke('get_volumes').then(async (volumes: any) => {
       const new_volumes: DeviceInterface[] = [];
 
       for (const volume of volumes) {
@@ -130,6 +131,24 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
         currentDrive: new_volumes[0]!,
         devices: new_volumes,
       });
+
+      let permissionGranted = await isPermissionGranted();
+
+      if (!permissionGranted) {
+        const permission = await requestPermission();
+        sendNotification({
+          title: 'Bytes Browser',
+          body: 'Bytes Browser is ready to use and has finished caching volumes.',
+          icon: '/byteslogo.svg',
+        });
+        permissionGranted = permission === 'granted';
+      } else {
+        sendNotification({
+          title: 'Bytes Browser',
+          body: 'Bytes Browser is ready to use and has finished caching volumes.',
+          icon: '/byteslogo.svg',
+        });
+      }
 
       pause();
     });
@@ -285,9 +304,11 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
             className="mt-8"
             style={{
               opacity: 'var(--light-text-opacity)',
+              maxWidth: '250px',
             }}
           >
-            {tauriLoadEventMessage ?? 'Getting things ready...'}
+            {tauriLoadEventMessage ??
+              'Getting things ready. Feel free to leave the app open in the background. If you have notifcations enabled, you will be notified when the app is done starting up.'}
           </p>
           <TimeText seconds={seconds} className="mt-8 opacity-50" prefix="Elapsed Caching Time:" />
         </div>

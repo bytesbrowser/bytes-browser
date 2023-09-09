@@ -1,4 +1,5 @@
 import { invoke, os } from '@tauri-apps/api';
+import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/api/notification';
 import { appWindow } from '@tauri-apps/api/window';
 import 'animate.css/animate.min.css';
 import { useEffect, useState } from 'react';
@@ -17,6 +18,21 @@ const App = () => {
   const runtime = useRecoilValue(runtimeState);
   const [useTitlebar, setUseTitlebar] = useState<boolean>(false);
   const [themeState, setThemeState] = useRecoilState(themeStateRoot);
+
+  useEffect(() => {
+    checkNotificationPermission();
+  }, []);
+
+  const checkNotificationPermission = async () => {
+    let permissionGranted = await isPermissionGranted();
+
+    console.log(permissionGranted);
+
+    if (!permissionGranted) {
+      const permission = await requestPermission();
+      permissionGranted = permission === 'granted';
+    }
+  };
 
   useEffect(() => {
     invoke('get_installed_themes')

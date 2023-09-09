@@ -100,7 +100,7 @@ export const SidebarBottom = ({ profile }: { profile: Profile }) => {
                 />
               </svg>
             </div>
-            <img src="/bytes_logo.svg" className="w-[150px]" />
+            <img src="/byteslogo.svg" className="w-[150px]" />
             <h1
               className="text-3xl font-light"
               style={{

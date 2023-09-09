@@ -117,7 +117,7 @@ export const Register = ({
   return (
     <div className="animate__animated animate__fadeIn flex flex-col justify-between items-center w-screen h-full mt-8 bg-content pb-4">
       <div>
-        <img src="/bytes_logo.svg" className="w-[120px]" />
+        <img src="/byteslogo.svg" className="w-[120px]" />
       </div>
       <form onSubmit={onRegister} className="flex flex-col w-[500px]">
         <h1 className="text-2xl">Get Started</h1>

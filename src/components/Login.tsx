@@ -77,7 +77,7 @@ export const Login = ({
   return (
     <div className="animate__animated animate__fadeIn flex flex-col justify-between items-center w-screen h-full bg-content mt-8 pb-4">
       <div>
-        <img src="/bytes_logo.svg" className="w-[120px]" />
+        <img src="/byteslogo.svg" className="w-[120px]" />
       </div>
       <form onSubmit={onLogin} className="flex flex-col w-[500px]">
         <h1 className="text-2xl">Welcome Back</h1>
