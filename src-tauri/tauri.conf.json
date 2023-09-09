@@ -6,7 +6,7 @@
   },
   "package": {
     "productName": "Bytes Browser",
-    "version": "1.0.1"
+    "version": "1.0.0"
   },
   "tauri": {
     "updater": {
@@ -14,8 +14,8 @@
       "endpoints": [
         "https://server.bytesbrowser.com/releases/{{target}}/{{arch}}/{{current_version}}"
       ],
-      "dialog": false,
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEVCQzNFQTlEMUUxNkU2N0EKUldSNjVoWWVuZXJENjVlSERBY2RyTWtvb0lSWkhTaHh6NFhPVDNCcG9xMHgyUy9FNWdlNkpRSjQK"
+      "dialog": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEU4MTZDOEM3Q0U2QkU1NEYKUldSUDVXdk94OGdXNkl5OGFyZURVRXYzWUpyMFdJc2NEZWNQRzE3KzU1ZDQ0enBST2hUdjA0NHoK"
     },
     "allowlist": {
       "os": {
