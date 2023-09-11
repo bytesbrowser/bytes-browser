@@ -12,6 +12,7 @@ import { currentContextState } from '../lib/state/currentContext.state';
 import { pasteboardState } from '../lib/state/pasteboard.state';
 import { runtimeState } from '../lib/state/runtime.state';
 import { DirectoryContents, GitMeta, ProfileStore, TagDoc } from '../lib/types';
+import { generateUUID } from '../lib/utils/generateUUID';
 
 export const ContextMenu = () => {
   const [runtime, setRuntime] = useRecoilState(runtimeState);
@@ -249,6 +250,60 @@ export const ContextMenu = () => {
           toast.error('Failed to duplicate ' + item?.Directory![0]);
         });
     }
+  };
+
+  const handleHide = async () => {
+    const item = currentContext.currentItem;
+
+    if (!item) return;
+
+    await runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then(async (db) => {
+      if (db) {
+        let hiddenFldrs = db.hiddenFolders ? db.hiddenFolders : [];
+
+        if (item.File) {
+          hiddenFldrs.push({
+            uuid: generateUUID(),
+            file_path: item.File!['1'].replace(runtime.currentDrive?.mount_point!, ''),
+            identifier: runtime.currentPath,
+            mount_point: runtime.currentDrive?.mount_point,
+          });
+        } else {
+          hiddenFldrs.push({
+            uuid: generateUUID(),
+            file_path: item.Directory!['1'].replace(runtime.currentDrive?.mount_point!, ''),
+            identifier: runtime.currentPath,
+            mount_point: runtime.currentDrive?.mount_point,
+          });
+        }
+
+        await runtime.store.set(`profile-store-${runtime.currentUser}`, {
+          ...db,
+          hiddenFolders: hiddenFldrs,
+        });
+
+        await runtime.store.save();
+
+        DirectoryEmitter.emit('delete', {});
+      } else {
+        await runtime.store.set(`profile-store-${runtime.currentUser}`, {
+          hiddenFolders: [
+            {
+              uuid: generateUUID(),
+              file_path: item.File
+                ? item.File!['1'].replace(runtime.currentDrive?.mount_point!, '')
+                : item.Directory!['1'].replace(runtime.currentDrive?.mount_point!, ''),
+              identifier: runtime.currentPath,
+              mount_point: runtime.currentDrive?.mount_point,
+            },
+          ],
+        });
+
+        await runtime.store.save();
+
+        DirectoryEmitter.emit('delete', {});
+      }
+    });
   };
 
   const onFetch = () => {
@@ -628,6 +683,9 @@ export const ContextMenu = () => {
           ))}
         </Submenu>
         <Separator />
+        <Item id="hide" onClick={handleHide}>
+          Hide
+        </Item>
         <Item id="open">Open</Item>
         <Item id="duplicate" onClick={onDuplicate}>
           Duplicate

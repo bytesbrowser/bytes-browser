@@ -16,7 +16,7 @@ import DirectoryEmitter from '../lib/emitters/directory.emitter';
 import RuntimeEmitter from '../lib/emitters/runtime.emitter';
 import { currentContextState } from '../lib/state/currentContext.state';
 import { runtimeState } from '../lib/state/runtime.state';
-import { DirectoryContents } from '../lib/types';
+import { DirectoryContents, ProfileStore } from '../lib/types';
 import { formatBytes } from '../lib/utils/formatBytes';
 import { secondsAgoToDate } from '../lib/utils/secondsToTimestamp';
 
@@ -43,6 +43,37 @@ export const FolderExplorer = () => {
     id: 'PAGE_MENU',
   });
 
+  const setDirectoriesFiltered = async (dirs: DirectoryContents[]) => {
+    await runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then(async (db) => {
+      console.log(db);
+
+      if (db) {
+        if (!db.hiddenFolders) {
+          setDirectories(dirs);
+          return;
+        }
+
+        const filtered = dirs.filter((dir) => {
+          const isHidden = db.hiddenFolders.find(
+            (file) =>
+              file.file_path ===
+              (dir.File
+                ? dir.File!['1'].replace(runtime.currentDrive?.mount_point!, '')
+                : dir.Directory!['1'].replace(runtime.currentDrive?.mount_point!, '')),
+          );
+
+          return !isHidden;
+        });
+
+        setDirectories(filtered);
+        return;
+      } else {
+        setDirectories(dirs);
+        return;
+      }
+    });
+  };
+
   useEffect(() => {
     DirectoryEmitter.on('delete', () => {
       if (runtime.currentDrive) {
@@ -52,7 +83,7 @@ export const FolderExplorer = () => {
           if (runtime.currentDrive) {
             invoke('open_directory', { path: runtime.currentDrive.mount_point + runtime.currentPath }).then(
               (res: any) => {
-                setDirectories(res.data as DirectoryContents[]);
+                setDirectoriesFiltered(res.data as DirectoryContents[]);
                 setLoadingDirectories(false);
               },
             );
@@ -66,7 +97,7 @@ export const FolderExplorer = () => {
         setLoadingDirectories(true);
 
         invoke('open_directory', { path: runtime.currentDrive.mount_point + runtime.currentPath }).then((res: any) => {
-          setDirectories(res.data as DirectoryContents[]);
+          setDirectoriesFiltered(res.data as DirectoryContents[]);
           setLoadingDirectories(false);
         });
       }
@@ -111,7 +142,7 @@ export const FolderExplorer = () => {
           currentPath: path,
         });
 
-        setDirectories(res.data as DirectoryContents[]);
+        setDirectoriesFiltered(res.data as DirectoryContents[]);
       });
     }
   }, [loc]);
@@ -144,7 +175,7 @@ export const FolderExplorer = () => {
         currentPath: '',
       });
 
-      setDirectories(res.data as DirectoryContents[]);
+      setDirectoriesFiltered(res.data as DirectoryContents[]);
 
       setLoadingDirectories(false);
     });
@@ -154,7 +185,7 @@ export const FolderExplorer = () => {
     if (runtime.currentDrive) {
       setLoadingDirectories(true);
       invoke('open_directory', { path: runtime.currentDrive.mount_point + runtime.currentPath }).then((res: any) => {
-        setDirectories(res.data as DirectoryContents[]);
+        setDirectoriesFiltered(res.data as DirectoryContents[]);
         setLoadingDirectories(false);
       });
     }
@@ -179,14 +210,14 @@ export const FolderExplorer = () => {
     if (runtime.currentPath === '' && runtime.currentDrive) {
       setLoadingDirectories(true);
       invoke('open_directory', { path: runtime.currentDrive.mount_point }).then((res: any) => {
-        setDirectories(res.data as DirectoryContents[]);
+        setDirectoriesFiltered(res.data as DirectoryContents[]);
         setLoadingDirectories(false);
       });
     } else if (runtime.currentDrive) {
       setLoadingDirectories(true);
 
       invoke('open_directory', { path: runtime.currentDrive.mount_point + runtime.currentPath }).then((res: any) => {
-        setDirectories(res.data as DirectoryContents[]);
+        setDirectoriesFiltered(res.data as DirectoryContents[]);
         setLoadingDirectories(false);
       });
     }

@@ -301,10 +301,10 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
         >
           <Triangle height="80" width="80" color="var(--icon-color)" ariaLabel="triangle-loading" visible={true} />
           <p
-            className="mt-8"
+            className="mt-8 text-center"
             style={{
               opacity: 'var(--light-text-opacity)',
-              maxWidth: '250px',
+              maxWidth: '500px',
             }}
           >
             {tauriLoadEventMessage ??

@@ -29,11 +29,19 @@ export interface BookmarkDoc {
   mount_point: string;
 }
 
+export interface HiddenFolderDoc {
+  uuid: string;
+  file_path: string;
+  identifier: string;
+  mount_point: string;
+}
+
 export interface ProfileStore {
   tags: TagDoc[];
   bookmarks: BookmarkDoc[];
   recentSearches: string[];
   themePreference: string;
+  hiddenFolders: HiddenFolderDoc[];
 }
 
 export interface Profile {
