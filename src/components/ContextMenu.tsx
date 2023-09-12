@@ -548,7 +548,7 @@ export const ContextMenu = () => {
       }
     });
 
-    TagsEmitter.on('change', () => {
+    TagsEmitter.registerWithSafety('change', () => {
       runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then((db) => {
         if (db) {
           setTags(db.tags);

@@ -1,23 +1,31 @@
 import { invoke, os } from '@tauri-apps/api';
-import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/api/notification';
+import { isPermissionGranted, requestPermission } from '@tauri-apps/api/notification';
 import { appWindow } from '@tauri-apps/api/window';
 import 'animate.css/animate.min.css';
 import { useEffect, useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { BrowserRouter } from 'react-router-dom';
-import { useRecoilState, useRecoilValue } from 'recoil';
+import { useRecoilState } from 'recoil';
 
 import Router from './components/Router';
 import { Theme } from './graphql';
+import { useHotkey } from './lib/commands';
 import { BytesBrowserDarkTheme, BytesBrowserLightTheme } from './lib/constants';
 import { runtimeState } from './lib/state/runtime.state';
 import { themeState as themeStateRoot } from './lib/state/theme.state';
 import { Profile, ProfileStore } from './lib/types';
 
 const App = () => {
-  const runtime = useRecoilValue(runtimeState);
+  const [runtime, setRuntime] = useRecoilState(runtimeState);
   const [useTitlebar, setUseTitlebar] = useState<boolean>(false);
   const [themeState, setThemeState] = useRecoilState(themeStateRoot);
+
+  useHotkey('CommandOrControl+Shift+Space', (_shortcut) => {
+    setRuntime({
+      ...runtime,
+      searchOpen: true,
+    });
+  });
 
   useEffect(() => {
     checkNotificationPermission();
