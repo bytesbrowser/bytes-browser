@@ -80,17 +80,23 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    BookmarksEmitter.registerWithSafety('change', () => {
+    BookmarksEmitter.on('change', () => {
       getUserStore();
     });
 
-    TagsEmitter.registerWithSafety('change', () => {
+    TagsEmitter.on('change', () => {
       getUserStore();
     });
 
     appWindow.listen('get_volumes_event', (msg: Event<string>) => {
       setTauriLoadEventMessage(msg.payload);
     });
+
+    return () => {
+      BookmarksEmitter.off('change', () => {});
+      TagsEmitter.off('change', () => {});
+      appWindow.listeners['get_volumes_event'] = [];
+    };
   }, []);
 
   const updateProfile = async () => {

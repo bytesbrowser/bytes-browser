@@ -7,7 +7,7 @@ import { Triangle } from 'react-loader-spinner';
 import Moment from 'react-moment';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { Tooltip } from 'react-tooltip';
-import { useRecoilState } from 'recoil';
+import { useRecoilCallback, useRecoilState } from 'recoil';
 
 import { ContextMenu } from '../components/ContextMenu';
 import { PageContextMenu } from '../components/PageContextMenu';
@@ -32,6 +32,16 @@ export const FolderExplorer = () => {
   const [loadingDirectories, setLoadingDirectories] = useState(false);
   const [settingDirectory, setSettingDirectory] = useState(false);
 
+  const showHiddenFiles = useRecoilCallback(
+    ({ snapshot }) =>
+      async () => {
+        const show = await snapshot.getPromise(runtimeState);
+
+        return show.showHiddenFiles;
+      },
+    [],
+  );
+
   const { driveId } = useParams();
 
   const loc = useLocation();
@@ -45,19 +55,19 @@ export const FolderExplorer = () => {
   });
 
   const setDirectoriesFiltered = async (dirs: DirectoryContents[], debugFrom: string) => {
-    console.log('FROM', debugFrom);
-
     if (settingDirectory) return;
 
     setSettingDirectory(true);
 
-    if (runtime.showHiddenFiles) {
-      console.log('NOT FILTERING BY CHOICE');
+    const show = await showHiddenFiles();
 
+    if (show) {
       setSettingDirectory(false);
       setDirectories(dirs);
       return;
     } else {
+      console.log('FILTERING', show);
+
       await runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then(async (db) => {
         if (db) {
           if (!db.hiddenFolders) {
@@ -89,7 +99,7 @@ export const FolderExplorer = () => {
   };
 
   useEffect(() => {
-    DirectoryEmitter.registerWithSafety('delete', () => {
+    DirectoryEmitter.on('delete', () => {
       if (runtime.currentDrive) {
         setLoadingDirectories(true);
 
@@ -106,7 +116,7 @@ export const FolderExplorer = () => {
       }
     });
 
-    DirectoryEmitter.registerWithSafety('refresh', (data: any) => {
+    DirectoryEmitter.on('refresh', (data: any) => {
       console.log('REFRESHING', data);
       if (runtime.currentDrive) {
         setLoadingDirectories(true);
@@ -117,7 +127,12 @@ export const FolderExplorer = () => {
         });
       }
     });
-  }, [runtime]);
+
+    return () => {
+      DirectoryEmitter.off('delete', () => {});
+      DirectoryEmitter.off('refresh', () => {});
+    };
+  }, []);
 
   const handleContextMenu = (event: any, item: DirectoryContents) => {
     event.preventDefault();

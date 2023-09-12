@@ -548,7 +548,7 @@ export const ContextMenu = () => {
       }
     });
 
-    TagsEmitter.registerWithSafety('change', () => {
+    TagsEmitter.on('change', () => {
       runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then((db) => {
         if (db) {
           setTags(db.tags);
@@ -557,6 +557,10 @@ export const ContextMenu = () => {
         }
       });
     });
+
+    return () => {
+      TagsEmitter.off('change', () => {});
+    };
   }, []);
 
   return (
