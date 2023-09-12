@@ -557,6 +557,10 @@ export const ContextMenu = () => {
         }
       });
     });
+
+    return () => {
+      TagsEmitter.off('change', () => {});
+    };
   }, []);
 
   return (

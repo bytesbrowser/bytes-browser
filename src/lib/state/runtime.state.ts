@@ -18,6 +18,7 @@ export const runtimeState = atom<{
   searchOpen: boolean;
   currentDriveName?: string;
   isInRecycleBin: boolean;
+  showHiddenFiles: boolean;
 }>({
   key: 'runtime_state',
   default: {
@@ -35,5 +36,6 @@ export const runtimeState = atom<{
     searchOpen: false,
     currentDriveName: undefined,
     isInRecycleBin: false,
+    showHiddenFiles: false,
   },
 });

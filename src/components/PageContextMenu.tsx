@@ -104,7 +104,7 @@ export const PageContextMenu = () => {
   const handleEmptyTrash = () => {
     invoke('clear_recycle_bin')
       .then(() => {
-        DirectoryEmitter.emit('refresh', {});
+        DirectoryEmitter.emit('refresh', { from: 'context-menu-empty-trash' });
       })
       .catch((err) => {
         console.log(err);
@@ -153,7 +153,7 @@ export const PageContextMenu = () => {
       <Item
         id="refresh"
         onClick={() => {
-          DirectoryEmitter.emit('refresh', {});
+          DirectoryEmitter.emit('refresh', { from: 'context-menu-refresh-dir' });
         }}
       >
         <div className="flex justify-between items-center w-full">
@@ -178,6 +178,19 @@ export const PageContextMenu = () => {
             />
           </svg>
         </div>
+      </Item>
+      <Item
+        id="show-hidden"
+        onClick={() => {
+          setRuntime({
+            ...runtime,
+            showHiddenFiles: !runtime.showHiddenFiles,
+          });
+
+          DirectoryEmitter.emit('refresh', { from: 'context-menu-show-hidden' });
+        }}
+      >
+        {runtime.showHiddenFiles ? "Don't Show Hidden Files" : 'Show Hidden Files'}
       </Item>
     </Menu>
   );

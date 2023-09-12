@@ -31,13 +31,6 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
 
   const [tauriLoadEventMessage, setTauriLoadEventMessage] = useState<string | null>(null);
 
-  useHotkey('CommandOrControl+Shift+Space', (_shortcut) => {
-    setRuntime({
-      ...runtime,
-      searchOpen: true,
-    });
-  });
-
   const [tags, setTags] = useState<TagDoc[]>([]);
   const [bookmarks, setBookmarks] = useState<BookmarkDoc[]>([]);
   const [refreshingVolumes, setRefreshingVolumes] = useState<boolean>(false);
@@ -98,6 +91,12 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
     appWindow.listen('get_volumes_event', (msg: Event<string>) => {
       setTauriLoadEventMessage(msg.payload);
     });
+
+    return () => {
+      BookmarksEmitter.off('change', () => {});
+      TagsEmitter.off('change', () => {});
+      appWindow.listeners['get_volumes_event'] = [];
+    };
   }, []);
 
   const updateProfile = async () => {

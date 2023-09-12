@@ -7,7 +7,7 @@ import { Triangle } from 'react-loader-spinner';
 import Moment from 'react-moment';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { Tooltip } from 'react-tooltip';
-import { useRecoilState } from 'recoil';
+import { useRecoilCallback, useRecoilState } from 'recoil';
 
 import { ContextMenu } from '../components/ContextMenu';
 import { PageContextMenu } from '../components/PageContextMenu';
@@ -30,6 +30,17 @@ export const FolderExplorer = () => {
   const currentIndex = location.pathname.split('/')[2];
   const [currentContext, setCurrentContext] = useRecoilState(currentContextState);
   const [loadingDirectories, setLoadingDirectories] = useState(false);
+  const [settingDirectory, setSettingDirectory] = useState(false);
+
+  const showHiddenFiles = useRecoilCallback(
+    ({ snapshot }) =>
+      async () => {
+        const show = await snapshot.getPromise(runtimeState);
+
+        return show.showHiddenFiles;
+      },
+    [],
+  );
 
   const { driveId } = useParams();
 
@@ -43,35 +54,48 @@ export const FolderExplorer = () => {
     id: 'PAGE_MENU',
   });
 
-  const setDirectoriesFiltered = async (dirs: DirectoryContents[]) => {
-    await runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then(async (db) => {
-      console.log(db);
+  const setDirectoriesFiltered = async (dirs: DirectoryContents[], debugFrom: string) => {
+    if (settingDirectory) return;
 
-      if (db) {
-        if (!db.hiddenFolders) {
+    setSettingDirectory(true);
+
+    const show = await showHiddenFiles();
+
+    if (show) {
+      setSettingDirectory(false);
+      setDirectories(dirs);
+      return;
+    } else {
+      console.log('FILTERING', show);
+
+      await runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then(async (db) => {
+        if (db) {
+          if (!db.hiddenFolders) {
+            setSettingDirectory(false);
+            setDirectories(dirs);
+            return;
+          }
+
+          const filtered = dirs.filter((dir) => {
+            const isHidden = db.hiddenFolders.find((file) => {
+              return file.file_path === (dir.File ? dir.File!['0'] : dir.Directory!['0']);
+            });
+
+            return isHidden ? false : true;
+          });
+
+          setSettingDirectory(false);
+          setDirectories(filtered);
+          return;
+        } else {
+          console.log('NOT FILTERING');
+
+          setSettingDirectory(false);
           setDirectories(dirs);
           return;
         }
-
-        const filtered = dirs.filter((dir) => {
-          const isHidden = db.hiddenFolders.find(
-            (file) =>
-              file.file_path ===
-              (dir.File
-                ? dir.File!['1'].replace(runtime.currentDrive?.mount_point!, '')
-                : dir.Directory!['1'].replace(runtime.currentDrive?.mount_point!, '')),
-          );
-
-          return !isHidden;
-        });
-
-        setDirectories(filtered);
-        return;
-      } else {
-        setDirectories(dirs);
-        return;
-      }
-    });
+      });
+    }
   };
 
   useEffect(() => {
@@ -83,7 +107,7 @@ export const FolderExplorer = () => {
           if (runtime.currentDrive) {
             invoke('open_directory', { path: runtime.currentDrive.mount_point + runtime.currentPath }).then(
               (res: any) => {
-                setDirectoriesFiltered(res.data as DirectoryContents[]);
+                setDirectoriesFiltered(res.data as DirectoryContents[], 'DELETE EVENT');
                 setLoadingDirectories(false);
               },
             );
@@ -92,17 +116,23 @@ export const FolderExplorer = () => {
       }
     });
 
-    DirectoryEmitter.on('refresh', () => {
+    DirectoryEmitter.on('refresh', (data: any) => {
+      console.log('REFRESHING', data);
       if (runtime.currentDrive) {
         setLoadingDirectories(true);
 
         invoke('open_directory', { path: runtime.currentDrive.mount_point + runtime.currentPath }).then((res: any) => {
-          setDirectoriesFiltered(res.data as DirectoryContents[]);
+          setDirectoriesFiltered(res.data as DirectoryContents[], 'REFRESH EVENT');
           setLoadingDirectories(false);
         });
       }
     });
-  }, [runtime]);
+
+    return () => {
+      DirectoryEmitter.off('delete', () => {});
+      DirectoryEmitter.off('refresh', () => {});
+    };
+  }, []);
 
   const handleContextMenu = (event: any, item: DirectoryContents) => {
     event.preventDefault();
@@ -142,7 +172,9 @@ export const FolderExplorer = () => {
           currentPath: path,
         });
 
-        setDirectoriesFiltered(res.data as DirectoryContents[]);
+        console.log('FROM HERE 1');
+
+        setDirectoriesFiltered(res.data as DirectoryContents[], 'LOC USE EFFECT');
       });
     }
   }, [loc]);
@@ -175,7 +207,7 @@ export const FolderExplorer = () => {
         currentPath: '',
       });
 
-      setDirectoriesFiltered(res.data as DirectoryContents[]);
+      setDirectoriesFiltered(res.data as DirectoryContents[], 'DRIVE ID USE EFFECT');
 
       setLoadingDirectories(false);
     });
@@ -185,7 +217,7 @@ export const FolderExplorer = () => {
     if (runtime.currentDrive) {
       setLoadingDirectories(true);
       invoke('open_directory', { path: runtime.currentDrive.mount_point + runtime.currentPath }).then((res: any) => {
-        setDirectoriesFiltered(res.data as DirectoryContents[]);
+        setDirectoriesFiltered(res.data as DirectoryContents[], 'GENERAL USE EFFECT');
         setLoadingDirectories(false);
       });
     }
@@ -210,14 +242,14 @@ export const FolderExplorer = () => {
     if (runtime.currentPath === '' && runtime.currentDrive) {
       setLoadingDirectories(true);
       invoke('open_directory', { path: runtime.currentDrive.mount_point }).then((res: any) => {
-        setDirectoriesFiltered(res.data as DirectoryContents[]);
+        setDirectoriesFiltered(res.data as DirectoryContents[], 'CURRENT PATH USE EFFECT');
         setLoadingDirectories(false);
       });
     } else if (runtime.currentDrive) {
       setLoadingDirectories(true);
 
       invoke('open_directory', { path: runtime.currentDrive.mount_point + runtime.currentPath }).then((res: any) => {
-        setDirectoriesFiltered(res.data as DirectoryContents[]);
+        setDirectoriesFiltered(res.data as DirectoryContents[], 'CURRENT PATH USE EFFECT');
         setLoadingDirectories(false);
       });
     }
