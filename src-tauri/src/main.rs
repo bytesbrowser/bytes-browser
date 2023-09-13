@@ -1,12 +1,14 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod archiver;
 mod encryption;
 mod error;
 mod filesystem;
 mod search;
 mod themes;
 
+use archiver::{archive_folder, extract_archive};
 use encryption::{decrypt_file, encrypt_file, is_file_encrypted};
 use filesystem::explorer::{
     add_all_changes, checkout_branch_for_directory, clear_recycle_bin,
@@ -86,7 +88,9 @@ async fn main() {
             get_theme_by_name,
             encrypt_file,
             decrypt_file,
-            is_file_encrypted
+            is_file_encrypted,
+            archive_folder,
+            extract_archive
         ])
         .manage(Arc::new(Mutex::new(AppState::default())))
         .plugin(tauri_plugin_store::Builder::default().build())

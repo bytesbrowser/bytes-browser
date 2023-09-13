@@ -46,6 +46,7 @@ aes = "0.8.3"
 pkcs7 = "0.4.1"
 rand = "0.8.5"
 cfb8 = "0.8.1"
+zip = "0.6.6"
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["winuser", "shellapi"] }
