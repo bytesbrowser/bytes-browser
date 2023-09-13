@@ -185,8 +185,15 @@ impl Volume {
 /// If there is a cache stored on volume it is loaded.
 /// If there is no cache stored on volume, one is created as well as stored in memory.
 #[tauri::command]
-#[enforce_single_instance]
 pub async fn get_volumes(
+    state_mux: State<'_, StateSafe>,
+    window: tauri::Window,
+) -> Result<Vec<Volume>, Error> {
+    get_volumes_internal(state_mux, window).await
+}
+
+#[enforce_single_instance]
+pub async fn get_volumes_internal(
     state_mux: State<'_, StateSafe>,
     window: tauri::Window,
 ) -> Result<Vec<Volume>, Error> {
