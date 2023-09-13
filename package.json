@@ -1,7 +1,7 @@
 {
   "name": "bytes-browser",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.2",
   "type": "module",
   "scripts": {
     "dev": "run-dev.sh",
@@ -9,7 +9,7 @@
     "dev:mac": "export VITE_ENCRYPTOR_KEY=18555633796118980712105531288426 && export VITE_ENCRYPTOR_IV=1344411990181459 && export REACT_APP_VERSION=$(git rev-parse HEAD) && concurrently \"vite\"",
     "dev:win": "set VITE_ENCRYPTOR_KEY=18555633796118980712105531288426 && set VITE_ENCRYPTOR_IV=1344411990181459 && for /f %i in ('git rev-parse HEAD') do set REACT_APP_VERSION=%i && concurrently \"vite\"",
     "build:mac": "export VITE_ENCRYPTOR_KEY=18555633796118980712105531288426 && export VITE_ENCRYPTOR_IV=1344411990181459 && export REACT_APP_VERSION=$(git rev-parse HEAD) && tsc && vite build",
-    "build:win": "for /f %i in ('git rev-parse HEAD') do set REACT_APP_VERSION=%i && tsc && vite build",
+    "build:win": "set VITE_ENCRYPTOR_KEY=18555633796118980712105531288426 && set VITE_ENCRYPTOR_IV=1344411990181459 && for /f %i in ('git rev-parse HEAD') do set REACT_APP_VERSION=%i && tsc && vite build",
     "codegen:build": "graphql-codegen --config codegen.yml",
     "tauri": "tauri"
   },
