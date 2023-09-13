@@ -454,6 +454,26 @@ export const ContextMenu = () => {
     }
   };
 
+  const handleUnzip = async () => {
+    const item = currentContext.currentItem;
+
+    if (!item) return;
+
+    if (item['File']) {
+      invoke('extract_archive', { path: item['File']![1] })
+        .then((res) => {
+          console.log(res);
+          toast.success('Extracted ' + item['File']![0] + '.');
+
+          DirectoryEmitter.emit('refresh', {});
+        })
+        .catch((err) => {
+          console.log(err);
+          toast.error('Failed to extract ' + item['File']![0] + '.');
+        });
+    }
+  };
+
   const handleArchive = async () => {
     const item = currentContext.currentItem;
 
@@ -464,6 +484,8 @@ export const ContextMenu = () => {
         .then((res) => {
           console.log(res);
           toast.success('Archived ' + item['Directory']![0] + '.');
+
+          DirectoryEmitter.emit('refresh', {});
         })
         .catch((err) => {
           console.log(err);
@@ -823,7 +845,14 @@ export const ContextMenu = () => {
           id="archive"
           onClick={handleArchive}
         >
-          Archive Folder
+          Archive
+        </Item>
+        <Item
+          disabled={currentContext.currentItem && currentContext.currentItem['Directory'] ? true : false}
+          id="unarchive"
+          onClick={handleUnzip}
+        >
+          Unzip Archive
         </Item>
         <Item
           onClick={() => {
