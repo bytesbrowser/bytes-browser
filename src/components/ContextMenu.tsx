@@ -24,6 +24,7 @@ export const ContextMenu = () => {
   const [commitItem, setCommitItem] = useState<DirectoryContents | null>(null);
   const [tags, setTags] = useState<TagDoc[]>([]);
   const [pasteboard, setPasteboard] = useRecoilState(pasteboardState);
+  const [isHidden, setIsHidden] = useState(false);
 
   const onDelete = async () => {
     if (currentContext.currentItem) {
@@ -71,6 +72,8 @@ export const ContextMenu = () => {
     const item = currentContext.currentItem;
 
     if (!item) return;
+
+    checkHidden();
 
     setPreview({ value: '', loading: true });
 
@@ -125,6 +128,30 @@ export const ContextMenu = () => {
         }
       });
     }
+  };
+
+  const checkHidden = async () => {
+    setIsHidden(false);
+
+    await runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then((db) => {
+      if (db) {
+        let hiddenFiles = db.hiddenFolders ? db.hiddenFolders : [];
+
+        if (hiddenFiles.length < 1) return;
+
+        let found = hiddenFiles.find(
+          (doc) =>
+            doc.file_path ===
+            (currentContext.currentItem?.File
+              ? currentContext.currentItem?.File!['0']
+              : currentContext.currentItem?.Directory!['0']),
+        );
+
+        setIsHidden(found ? true : false);
+      } else {
+        setIsHidden(false);
+      }
+    });
   };
 
   const onCopy = () => {
@@ -250,6 +277,35 @@ export const ContextMenu = () => {
           toast.error('Failed to duplicate ' + item?.Directory![0]);
         });
     }
+  };
+
+  const handleUnHide = async () => {
+    const item = currentContext.currentItem;
+
+    if (!item) return;
+
+    await runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then(async (db) => {
+      if (db) {
+        let hiddenFldrs = db.hiddenFolders ? db.hiddenFolders : [];
+
+        if (hiddenFldrs.length < 1) return;
+
+        hiddenFldrs = hiddenFldrs.filter(
+          (doc) =>
+            doc.file_path !==
+            (currentContext.currentItem?.File
+              ? currentContext.currentItem?.File!['0']
+              : currentContext.currentItem?.Directory!['0']),
+        );
+
+        await runtime.store.set(`profile-store-${runtime.currentUser}`, {
+          ...db,
+          hiddenFolders: hiddenFldrs,
+        });
+
+        await runtime.store.save();
+      }
+    });
   };
 
   const handleHide = async () => {
@@ -687,8 +743,17 @@ export const ContextMenu = () => {
           ))}
         </Submenu>
         <Separator />
-        <Item id="hide" onClick={handleHide}>
-          Hide
+        <Item
+          id="hide"
+          onClick={() => {
+            if (isHidden) {
+              handleUnHide();
+            } else {
+              handleHide();
+            }
+          }}
+        >
+          {isHidden ? 'Unhide' : 'Hide'}
         </Item>
         <Item id="open">Open</Item>
         <Item id="duplicate" onClick={onDuplicate}>
