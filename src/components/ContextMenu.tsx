@@ -25,6 +25,7 @@ export const ContextMenu = () => {
   const [tags, setTags] = useState<TagDoc[]>([]);
   const [pasteboard, setPasteboard] = useRecoilState(pasteboardState);
   const [isHidden, setIsHidden] = useState(false);
+  const [isEncrypted, setIsEncrypted] = useState(false);
 
   const onDelete = async () => {
     if (currentContext.currentItem) {
@@ -74,6 +75,14 @@ export const ContextMenu = () => {
     if (!item) return;
 
     checkHidden();
+
+    invoke<boolean>('is_file_encrypted', { filePath: item['File']![1] })
+      .then((res) => {
+        setIsEncrypted(res);
+      })
+      .catch((err) => {
+        setIsEncrypted(false);
+      });
 
     setPreview({ value: '', loading: true });
 
@@ -283,6 +292,7 @@ export const ContextMenu = () => {
     const item = currentContext.currentItem;
 
     if (!item) return;
+    ``;
 
     await runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then(async (db) => {
       if (db) {
@@ -619,6 +629,39 @@ export const ContextMenu = () => {
     };
   }, []);
 
+  const handleEncrypt = async () => {
+    const item = currentContext.currentItem;
+
+    if (!item) return;
+
+    if (!isEncrypted) {
+      invoke('encrypt_file', {
+        sourceFilePath: item['File']![1],
+        key: import.meta.env.VITE_ENCRYPTOR_KEY.trim(),
+        iv: import.meta.env.VITE_ENCRYPTOR_IV.trim(),
+      })
+        .then((res) => {
+          toast.success('Encrypted ' + item['File']![0]);
+        })
+        .catch((err) => {
+          console.error(err);
+          toast.error('Failed to encrypt ' + item['File']![0]);
+        });
+    } else {
+      invoke('decrypt_file', {
+        sourceFilePath: item['File']![1],
+        key: import.meta.env.VITE_ENCRYPTOR_KEY.trim(),
+        iv: import.meta.env.VITE_ENCRYPTOR_IV.trim(),
+      })
+        .then((res) => {
+          toast.success('Decrypted ' + item['File']![0]);
+        })
+        .catch((err) => {
+          toast.error('Failed to decrypt ' + item['File']![0]);
+        });
+    }
+  };
+
   return (
     <>
       <Menu
@@ -754,6 +797,17 @@ export const ContextMenu = () => {
           }}
         >
           {isHidden ? 'Unhide' : 'Hide'}
+        </Item>
+        <Item
+          onClick={() => {
+            if (currentContext.currentItem && currentContext.currentItem['File']) {
+              handleEncrypt();
+            }
+          }}
+          id="encrypt"
+          disabled={currentContext.currentItem && currentContext.currentItem['File'] ? false : true}
+        >
+          {isEncrypted ? 'Decrypt' : 'Encrypt'}
         </Item>
         <Item id="open">Open</Item>
         <Item id="duplicate" onClick={onDuplicate}>
