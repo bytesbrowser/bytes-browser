@@ -4,6 +4,7 @@ use crate::filesystem::cache::{
 };
 use crate::filesystem::{DIRECTORY, FILE};
 use crate::{CachedPath, StateSafe};
+use lazy_static::lazy_static;
 use notify::{RecursiveMode, Watcher};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -12,10 +13,12 @@ use std::fs::File;
 use std::path::PathBuf;
 use std::time::Instant;
 use std::{fs, thread};
-use sysinfo::{Disk, DiskExt, RefreshKind, System, SystemExt};
+use sysinfo::{Disk, DiskExt, System, SystemExt};
 use tauri::State;
 use tokio::task::block_in_place;
 use walkdir::WalkDir;
+
+use enforce_single_instance::enforce_single_instance;
 
 use super::cache::build_token_index_root;
 
@@ -183,6 +186,14 @@ impl Volume {
 /// If there is no cache stored on volume, one is created as well as stored in memory.
 #[tauri::command]
 pub async fn get_volumes(
+    state_mux: State<'_, StateSafe>,
+    window: tauri::Window,
+) -> Result<Vec<Volume>, Error> {
+    get_volumes_internal(state_mux, window).await
+}
+
+#[enforce_single_instance]
+pub async fn get_volumes_internal(
     state_mux: State<'_, StateSafe>,
     window: tauri::Window,
 ) -> Result<Vec<Volume>, Error> {

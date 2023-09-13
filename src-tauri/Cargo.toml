@@ -47,6 +47,8 @@ pkcs7 = "0.4.1"
 rand = "0.8.5"
 cfb8 = "0.8.1"
 zip = "0.6.6"
+enforce-single-instance = { path = "../crates/enforce-single-instance" }
+
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["winuser", "shellapi"] }

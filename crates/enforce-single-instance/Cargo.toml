@@ -1,0 +1,16 @@
+[package]
+name = "enforce-single-instance"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+git2 = "0.18.0"
+lazy_static = "1.4.0"
+quote = "1.0.33"
+serde = "1.0.188"
+syn = "2.0.33"
+thiserror = "1.0.48"
+tokio = "1.32.0"
