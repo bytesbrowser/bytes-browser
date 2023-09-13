@@ -63,6 +63,7 @@ export const FolderExplorer = () => {
 
     if (show) {
       setSettingDirectory(false);
+      
       setDirectories(dirs);
       return;
     } else {
