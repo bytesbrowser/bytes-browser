@@ -968,44 +968,59 @@ export const ContextMenu = () => {
         }}
         style={{
           content: {
-            background: 'radial-gradient(circle, rgba(28,27,32,0.9) 0%, rgba(25,25,24,1) 100%)',
+            backgroundColor: 'var(--sidebar-bg)',
             border: 'none',
             padding: 0,
             width: '60%',
             height: 'min-content',
             margin: 'auto',
-            borderRadius: '12px',
+            borderRadius: '8px',
           },
           overlay: {
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
           },
         }}
       >
-        <p>Enter a commit message</p>
-        <input
-          type="text"
-          className="w-full p-2 rounded-lg bg-gray-800 text-white outline-none"
-          value={commitMessage}
-          onChange={(e) => setCommitMessage(e.target.value)}
-        />
-        <div className="flex justify-end">
-          <button
-            className="bg-gray-800 text-white p-2 rounded-lg mt-2 mr-2"
-            onClick={() => {
-              setShow(false);
+        <div className="p-4">
+          <p className="mb-4 text-lg">Enter a commit message</p>
+          <p
+            style={{
+              opacity: 'var(--light-text-opacity)',
             }}
+            className="my-4 text-xs"
           >
-            Cancel
-          </button>
-          <button
-            className="bg-gray-800 text-white p-2 rounded-lg mt-2 mr-2"
-            onClick={() => {
-              onCommit();
-              setShow(false);
+            All character and length rules set by git still apply.
+          </p>
+          <input
+            type="text"
+            placeholder='i.e. "Initial commit"'
+            className="w-full p-2 px-4 rounded-md text-white outline-none font-mono"
+            style={{
+              backgroundColor: 'var(--sidebar-inset-bg)',
+              color: 'var(--sidebar-inset-text-color)',
             }}
-          >
-            Commit
-          </button>
+            value={commitMessage}
+            onChange={(e) => setCommitMessage(e.target.value)}
+          />
+          <div className="flex justify-end my-4">
+            <button
+              className="bg-red-600 text-white p-2 rounded-lg mt-2 mr-4 text-sm hover:opacity-80 transition-all"
+              onClick={() => {
+                setShow(false);
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              className="bg-green-600 text-white p-2 rounded-lg mt-2 text-sm hover:opacity-80 transition-all"
+              onClick={() => {
+                onCommit();
+                setShow(false);
+              }}
+            >
+              Confirm
+            </button>
+          </div>
         </div>
       </ReactModal>
     </>
