@@ -5,6 +5,7 @@ mod archiver;
 mod encryption;
 mod error;
 mod filesystem;
+mod macros;
 mod search;
 mod themes;
 
