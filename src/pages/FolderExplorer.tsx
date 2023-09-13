@@ -35,9 +35,29 @@ export const FolderExplorer = () => {
   const showHiddenFiles = useRecoilCallback(
     ({ snapshot }) =>
       async () => {
-        const show = await snapshot.getPromise(runtimeState);
+        const _runtime = await snapshot.getPromise(runtimeState);
 
-        return show.showHiddenFiles;
+        return _runtime.showHiddenFiles;
+      },
+    [],
+  );
+
+  const currentPath = useRecoilCallback(
+    ({ snapshot }) =>
+      async () => {
+        const _runtime = await snapshot.getPromise(runtimeState);
+
+        return _runtime.currentPath;
+      },
+    [],
+  );
+
+  const currentMountPath = useRecoilCallback(
+    ({ snapshot }) =>
+      async () => {
+        const _runtime = await snapshot.getPromise(runtimeState);
+
+        return _runtime.currentDrive?.mount_point;
       },
     [],
   );
@@ -63,7 +83,7 @@ export const FolderExplorer = () => {
 
     if (show) {
       setSettingDirectory(false);
-      
+
       setDirectories(dirs);
       return;
     } else {
@@ -100,29 +120,32 @@ export const FolderExplorer = () => {
   };
 
   useEffect(() => {
-    DirectoryEmitter.on('delete', () => {
+    DirectoryEmitter.on('delete', async () => {
       if (runtime.currentDrive) {
         setLoadingDirectories(true);
 
-        setTimeout(() => {
+        setTimeout(async () => {
+          const curPath = await currentPath();
+          const mountPoint = await currentMountPath();
+
           if (runtime.currentDrive) {
-            invoke('open_directory', { path: runtime.currentDrive.mount_point + runtime.currentPath }).then(
-              (res: any) => {
-                setDirectoriesFiltered(res.data as DirectoryContents[], 'DELETE EVENT');
-                setLoadingDirectories(false);
-              },
-            );
+            invoke('open_directory', { path: mountPoint + curPath }).then((res: any) => {
+              setDirectoriesFiltered(res.data as DirectoryContents[], 'DELETE EVENT');
+              setLoadingDirectories(false);
+            });
           }
         }, 3000);
       }
     });
 
-    DirectoryEmitter.on('refresh', (data: any) => {
-      console.log('REFRESHING', data);
+    DirectoryEmitter.on('refresh', async (data: any) => {
+      const curPath = await currentPath();
+      const mountPoint = await currentMountPath();
+
       if (runtime.currentDrive) {
         setLoadingDirectories(true);
 
-        invoke('open_directory', { path: runtime.currentDrive.mount_point + runtime.currentPath }).then((res: any) => {
+        invoke('open_directory', { path: mountPoint + curPath }).then((res: any) => {
           setDirectoriesFiltered(res.data as DirectoryContents[], 'REFRESH EVENT');
           setLoadingDirectories(false);
         });

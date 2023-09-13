@@ -76,13 +76,15 @@ export const ContextMenu = () => {
 
     checkHidden();
 
-    invoke<boolean>('is_file_encrypted', { filePath: item['File']![1] })
-      .then((res) => {
-        setIsEncrypted(res);
-      })
-      .catch((err) => {
-        setIsEncrypted(false);
-      });
+    if (item['File'] && item['File'][1]) {
+      invoke<boolean>('is_file_encrypted', { filePath: item['File']![1] })
+        .then((res) => {
+          setIsEncrypted(res);
+        })
+        .catch((err) => {
+          setIsEncrypted(false);
+        });
+    }
 
     setPreview({ value: '', loading: true });
 
@@ -452,6 +454,46 @@ export const ContextMenu = () => {
     }
   };
 
+  const handleUnzip = async () => {
+    const item = currentContext.currentItem;
+
+    if (!item) return;
+
+    if (item['File']) {
+      invoke('extract_archive', { path: item['File']![1] })
+        .then((res) => {
+          console.log(res);
+          toast.success('Extracted ' + item['File']![0] + '.');
+
+          DirectoryEmitter.emit('refresh', {});
+        })
+        .catch((err) => {
+          console.log(err);
+          toast.error('Failed to extract ' + item['File']![0] + '.');
+        });
+    }
+  };
+
+  const handleArchive = async () => {
+    const item = currentContext.currentItem;
+
+    if (!item) return;
+
+    if (item['Directory']) {
+      invoke('archive_folder', { path: item['Directory']![1] })
+        .then((res) => {
+          console.log(res);
+          toast.success('Archived ' + item['Directory']![0] + '.');
+
+          DirectoryEmitter.emit('refresh', {});
+        })
+        .catch((err) => {
+          console.log(err);
+          toast.error('Failed to archive ' + item['Directory']![0] + '.');
+        });
+    }
+  };
+
   const onPush = () => {
     const item = currentContext.currentItem;
 
@@ -797,6 +839,20 @@ export const ContextMenu = () => {
           }}
         >
           {isHidden ? 'Unhide' : 'Hide'}
+        </Item>
+        <Item
+          disabled={currentContext.currentItem && currentContext.currentItem['File'] ? true : false}
+          id="archive"
+          onClick={handleArchive}
+        >
+          Archive
+        </Item>
+        <Item
+          disabled={currentContext.currentItem && currentContext.currentItem['Directory'] ? true : false}
+          id="unarchive"
+          onClick={handleUnzip}
+        >
+          Unzip Archive
         </Item>
         <Item
           onClick={() => {
