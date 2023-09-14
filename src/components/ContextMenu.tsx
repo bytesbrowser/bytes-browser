@@ -704,6 +704,54 @@ export const ContextMenu = () => {
     }
   };
 
+  const handleOpenWith = async () => {
+    const item = currentContext.currentItem;
+
+    if (!item) return;
+
+    if (!item['File']) return;
+
+    // let path = item['File']![1].replace(/\//g, '\\\\');
+
+    // invoke('trigger_open_with_options', {
+    //   path: 'F:\\\\file-to-cut.txt',
+    // })
+    //   .then((_) => {})
+    //   .catch((err) => {
+    //     toast.error(err);
+    //   });
+  };
+
+  const handleOpenExplorer = () => {
+    const item = currentContext.currentItem;
+
+    if (!item) return;
+
+    invoke('open_with_explorer', { path: item.File ? item.File[1] : item.Directory![1] })
+      .then((res) => {
+        console.log(res);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
+  const onOpen = async () => {
+    const item = currentContext.currentItem;
+
+    if (!item) return;
+
+    if (!item['File']) return;
+
+    invoke('open_file', {
+      path: item['File']![1],
+    })
+      .then((_) => {})
+      .catch((err) => {
+        toast.error(err);
+      });
+  };
+
   return (
     <>
       <Menu
@@ -865,23 +913,53 @@ export const ContextMenu = () => {
         >
           {isEncrypted ? 'Decrypt' : 'Encrypt'}
         </Item>
-        <Item id="open">Open</Item>
-        <Item id="duplicate" onClick={onDuplicate}>
-          Duplicate
+        <Submenu label="Open">
+          <Item
+            onClick={onOpen}
+            id="open"
+            disabled={currentContext.currentItem && currentContext.currentItem['File'] ? false : true}
+          >
+            Open With Default App
+          </Item>
+          <Item id="open-explorer" onClick={handleOpenExplorer}>
+            Open In Explorer
+          </Item>
+          {/* <Item id="open-with" onClick={handleOpenWith}>
+            Open With
+          </Item> */}
+        </Submenu>
+        <Item
+          id="copy-path"
+          onClick={() => {
+            if (currentContext.currentItem && currentContext.currentItem['File']) {
+              navigator.clipboard.writeText(currentContext.currentItem['File']![1]);
+              toast.success('Copied path to clipboard.');
+            } else if (currentContext.currentItem && currentContext.currentItem['Directory']) {
+              navigator.clipboard.writeText(currentContext.currentItem['Directory']![1]);
+              toast.success('Copied path to clipboard.');
+            }
+          }}
+        >
+          Copy Path
         </Item>
-        <Item id="cut" onClick={onCut}>
-          Cut
-        </Item>
-        <Item id="copy" onClick={onCopy}>
-          Copy
-        </Item>
-        <Item disabled={pasteboard.currentOperation === 'NONE'} id="paste" onClick={onPaste}>
-          Paste {pasteboard.file?.File ? pasteboard.file.File[0] : pasteboard.file?.Directory![0]}
-        </Item>
-        <Item id="rename">Rename</Item>
-        <Item id="delete" onClick={onDelete} color="red">
-          <p className="text-error">Delete</p>
-        </Item>
+        <Submenu label="Operations">
+          <Item id="duplicate" onClick={onDuplicate}>
+            Duplicate
+          </Item>
+          <Item id="cut" onClick={onCut}>
+            Cut
+          </Item>
+          <Item id="copy" onClick={onCopy}>
+            Copy
+          </Item>
+          <Item disabled={pasteboard.currentOperation === 'NONE'} id="paste" onClick={onPaste}>
+            Paste {pasteboard.file?.File ? pasteboard.file.File[0] : pasteboard.file?.Directory![0]}
+          </Item>
+          <Item id="rename">Rename</Item>
+          <Item id="delete" onClick={onDelete} color="red">
+            <p className="text-error">Delete</p>
+          </Item>
+        </Submenu>
         <Separator />
         <Submenu
           label={
