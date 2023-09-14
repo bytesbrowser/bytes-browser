@@ -1,8 +1,5 @@
 use crate::error::{Error, GitError};
 use crate::StateSafe;
-use clipboard::{ClipboardContext, ClipboardProvider};
-use futures::future;
-use rayon::prelude::{ParallelBridge, ParallelIterator};
 use serde::Serialize;
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -13,7 +10,16 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use tokio::fs::File;
 use tokio::io::{AsyncBufReadExt, BufReader};
-use tokio::task;
+
+#[cfg(target_os = "windows")]
+extern crate winapi;
+
+#[cfg(target_os = "windows")]
+use std::ptr::null_mut;
+#[cfg(target_os = "windows")]
+use winapi::um::shellapi::ShellExecuteW;
+#[cfg(target_os = "windows")]
+use winapi::um::winuser::SW_SHOWNORMAL;
 
 use super::audio::generate_waveform;
 use super::cache::FsEventHandler;
@@ -392,6 +398,47 @@ pub async fn open_file(path: String) -> Result<(), Error> {
     let err_msg = String::from_utf8(output.stderr)
         .unwrap_or(String::from("Failed to open file and deserialize stderr."));
     Err(Error::Custom(err_msg))
+}
+
+#[tauri::command]
+pub async fn trigger_open_with_options(path: String) -> Result<(), Error> {
+    #[cfg(target_os = "macos")]
+    {
+        let status = std::process::Command::new("open")
+            .arg("-R")
+            .arg(path)
+            .status()
+            .expect("Failed to run macOS command");
+        assert!(status.success());
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        let status = std::process::Command::new("xdg-open")
+            .arg(path)
+            .status()
+            .expect("Failed to run Linux command");
+        assert!(status.success());
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        let openas_wide: Vec<u16> = "openas".encode_utf16().collect();
+        let file_path_wide: Vec<u16> = path.encode_utf16().collect();
+
+        unsafe {
+            ShellExecuteW(
+                null_mut(),
+                openas_wide.as_ptr(),
+                file_path_wide.as_ptr(),
+                null_mut(),
+                null_mut(),
+                SW_SHOWNORMAL,
+            );
+        }
+    }
+
+    Ok(())
 }
 
 pub fn is_git_directory(path: &str) -> Result<bool, io::Error> {

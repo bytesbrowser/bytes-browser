@@ -16,6 +16,7 @@ use filesystem::explorer::{
     fetch_repo_for_directory, get_file_preview, get_files_for_paths, get_git_meta_for_directory,
     init_git_repo_in_directory, open_directory, open_file, paste_directory_at, paste_file_at,
     pull_changes_for_directory, push_changes_for_directory, stash_changes_for_directory,
+    trigger_open_with_options,
 };
 use filesystem::volume::{get_volumes, safely_eject_removable};
 use search::search_directory;
@@ -90,7 +91,8 @@ async fn main() {
             decrypt_file,
             is_file_encrypted,
             archive_folder,
-            extract_archive
+            extract_archive,
+            trigger_open_with_options
         ])
         .manage(Arc::new(Mutex::new(AppState::default())))
         .plugin(tauri_plugin_store::Builder::default().build())

@@ -687,7 +687,10 @@ export const FolderExplorer = () => {
                           ...runtime,
                           currentPath: runtime.currentPath + directory['Directory']![0] + '/',
                         });
-                      } else if (directory['File']) {
+                      }
+                    }}
+                    onDoubleClick={() => {
+                      if (directory['File']) {
                         invoke('open_file', {
                           path: directory['File']![1],
                         })
