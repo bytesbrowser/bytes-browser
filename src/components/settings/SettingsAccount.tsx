@@ -1,9 +1,13 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import Moment from 'react-moment';
+import { useRecoilState } from 'recoil';
 
 import { User, useGetUserQuery } from '../../graphql';
+import { runtimeState } from '../../lib/state/runtime.state';
+import { ProfileStore } from '../../lib/types';
 
 export const SettingsAccount = () => {
+  const [runtime, setRuntime] = useRecoilState(runtimeState);
   const { data, error } = useGetUserQuery();
   const [profile, setProfile] = useState<User | undefined>(undefined);
   const [changes, setChanges] = useState({
@@ -13,7 +17,13 @@ export const SettingsAccount = () => {
   });
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
 
+  const [editingPin, setEditingPin] = useState<boolean>(false);
+
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+
+  const [hasPin, setHasPin] = useState<boolean>(false);
+
+  const onSetPin = () => {};
 
   useEffect(() => {
     if (data?.getUser) {
@@ -24,6 +34,18 @@ export const SettingsAccount = () => {
         email: data.getUser.email,
       });
       setAvatarPreview(data.getUser.avatar!);
+
+      runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then(async (db) => {
+        if (db) {
+          if (db.pinLock) {
+            setHasPin(true);
+          } else {
+            setHasPin(false);
+          }
+        } else {
+          setHasPin(false);
+        }
+      });
     }
   }, [data]);
 
@@ -145,7 +167,15 @@ export const SettingsAccount = () => {
         placeholder="*********"
         className="text-sm w-full p-3 rounded-md bg-sidebar border border-light-border transition-all outline-none focus:border-gray-400 max-w-[500px]"
       />
-
+      <p
+        onClick={onSetPin}
+        style={{
+          color: 'var(--sidebar-inset-text-color)',
+        }}
+        className="mb-4 text-sm mt-10 bg-blue-500 w-[150px] p-2 rounded-md text-center cursor-pointer hover:opacity-80 transition-all"
+      >
+        {hasPin ? 'Change PIN' : 'Add PIN'}
+      </p>
       <button
         type="submit"
         style={{
