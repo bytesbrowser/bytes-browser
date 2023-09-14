@@ -704,6 +704,38 @@ export const ContextMenu = () => {
     }
   };
 
+  const handleOpenWith = async () => {
+    const item = currentContext.currentItem;
+
+    if (!item) return;
+
+    if (!item['File']) return;
+
+    // let path = item['File']![1].replace(/\//g, '\\\\');
+
+    // invoke('trigger_open_with_options', {
+    //   path: 'F:\\\\file-to-cut.txt',
+    // })
+    //   .then((_) => {})
+    //   .catch((err) => {
+    //     toast.error(err);
+    //   });
+  };
+
+  const handleOpenExplorer = () => {
+    const item = currentContext.currentItem;
+
+    if (!item) return;
+
+    invoke('open_with_explorer', { path: item.File ? item.File[1] : item.Directory![1] })
+      .then((res) => {
+        console.log(res);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
   const onOpen = async () => {
     const item = currentContext.currentItem;
 
@@ -889,13 +921,12 @@ export const ContextMenu = () => {
           >
             Open With Default App
           </Item>
-          <Item id="open">Open In Explorer</Item>
-          <Submenu
-            label="Open With"
-            disabled={currentContext.currentItem && currentContext.currentItem['File'] ? false : true}
-          >
-            <Item id="notepad">Notepad</Item>
-          </Submenu>
+          <Item id="open-explorer" onClick={handleOpenExplorer}>
+            Open In Explorer
+          </Item>
+          {/* <Item id="open-with" onClick={handleOpenWith}>
+            Open With
+          </Item> */}
         </Submenu>
         <Item
           id="copy-path"
@@ -911,7 +942,6 @@ export const ContextMenu = () => {
         >
           Copy Path
         </Item>
-        <Item id="open">Copy Absolute Path</Item>
         <Submenu label="Operations">
           <Item id="duplicate" onClick={onDuplicate}>
             Duplicate

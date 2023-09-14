@@ -10,6 +10,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use tokio::fs::File;
 use tokio::io::{AsyncBufReadExt, BufReader};
+use winapi::shared::minwindef::HINSTANCE;
 
 #[cfg(target_os = "windows")]
 extern crate winapi;
@@ -380,65 +381,84 @@ async fn handle_entry(entry: DirEntry) -> io::Result<Vec<DirectoryChild>> {
 }
 
 #[tauri::command]
-pub async fn open_file(path: String) -> Result<(), Error> {
-    let output_res = open::commands(path)[0].output();
+pub async fn open_file(path: &str) -> Result<(), Error> {
+    let commands = open::commands(path);
 
-    let output = match output_res {
-        Ok(output) => output,
-        Err(err) => {
-            let err_msg = format!("Failed to get open command output: {err}");
-            return Err(Error::Custom(err_msg));
+    for mut command in commands {
+        match command.output() {
+            Ok(output) if output.status.success() => return Ok(()),
+            Ok(output) => {
+                let err_msg = String::from_utf8(output.stderr)
+                    .unwrap_or_else(|_| "Failed to deserialize stderr.".to_string());
+                eprintln!("Error: {}", err_msg);
+            }
+            Err(err) => {
+                eprintln!("Error executing open command: {}", err);
+            }
         }
-    };
-
-    if output.status.success() {
-        return Ok(());
     }
 
-    let err_msg = String::from_utf8(output.stderr)
-        .unwrap_or(String::from("Failed to open file and deserialize stderr."));
-    Err(Error::Custom(err_msg))
+    Err(Error::Custom("All open commands failed.".to_string()))
 }
 
 #[tauri::command]
-pub async fn trigger_open_with_options(path: String) -> Result<(), Error> {
-    #[cfg(target_os = "macos")]
-    {
-        let status = std::process::Command::new("open")
-            .arg("-R")
-            .arg(path)
-            .status()
-            .expect("Failed to run macOS command");
-        assert!(status.success());
-    }
+pub fn open_with_explorer(path: String) -> Result<(), Error> {
+    open_with_explorer_internal(&path)
+}
 
-    #[cfg(target_os = "linux")]
-    {
-        let status = std::process::Command::new("xdg-open")
-            .arg(path)
-            .status()
-            .expect("Failed to run Linux command");
-        assert!(status.success());
-    }
+#[cfg(target_os = "windows")]
+pub fn open_with_explorer_internal(path: &str) -> Result<(), Error> {
+    let parent_dir = std::path::Path::new(path).parent();
 
-    #[cfg(target_os = "windows")]
-    {
-        let openas_wide: Vec<u16> = "openas".encode_utf16().collect();
-        let file_path_wide: Vec<u16> = path.encode_utf16().collect();
-
-        unsafe {
-            ShellExecuteW(
-                null_mut(),
-                openas_wide.as_ptr(),
-                file_path_wide.as_ptr(),
-                null_mut(),
-                null_mut(),
-                SW_SHOWNORMAL,
-            );
+    match parent_dir {
+        Some(parent_path) => {
+            match Command::new("explorer").arg(parent_path).spawn() {
+                Ok(mut child) => {
+                    // Wait for the process to finish
+                    let status = child.wait()?;
+                    if status.success() {
+                        Ok(())
+                    } else {
+                        Err(Error::Custom(format!(
+                            "Failed to open explorer: {:?}",
+                            status
+                        )))
+                    }
+                }
+                Err(e) => Err(Error::Custom(e.to_string())),
+            }
         }
+        None => Err(Error::Custom("Invalid file path".to_string())),
     }
+}
 
-    Ok(())
+#[cfg(target_os = "macos")]
+pub fn open_with_explorer_internal(path: &str) -> Result<(), Error> {
+    let result = Command::new("open")
+        .arg("-R")
+        .arg(path)
+        .spawn()
+        .map_err(|e| Error::Custom(e.to_string()))?;
+
+    if result.success() {
+        Ok(())
+    } else {
+        Err(Error::Custom("Failed to open file".to_string()))
+    }
+}
+
+#[cfg(target_os = "linux")]
+pub fn open_with_explorer_internal(path: &str) -> Result<(), Error> {
+    let result = Command::new("xdg-open")
+        .arg(path)
+        .spawn()
+        .map_err(|e| Error::Custom(e.to_string()))?;
+
+    if result.success() {
+        Ok(())
+    } else {
+        Err(Error::Custom("Failed to open file".to_string()))
+    }
 }
 
 pub fn is_git_directory(path: &str) -> Result<bool, io::Error> {
