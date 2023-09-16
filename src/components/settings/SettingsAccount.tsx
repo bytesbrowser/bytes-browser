@@ -67,7 +67,15 @@ export const SettingsAccount = () => {
     if (editingPin) {
       document.querySelectorAll('.pin-input').forEach((input, index, inputArray) => {
         input.addEventListener('keyup', (e) => {
-          if (e && e.target && e.target) {
+          if (e && e.target) {
+            //@ts-ignore
+            console.log(e.target['value']);
+
+            //@ts-ignore
+            if (!e.target['value'] || e.target['value'].length < 1) {
+              return;
+            }
+
             const nextInput = inputArray[index + 1];
             if (nextInput) {
               //@ts-ignore
@@ -98,7 +106,7 @@ export const SettingsAccount = () => {
   };
 
   const setPinWithRules = (value: string, index: 0 | 1 | 2 | 3) => {
-    console.log(value);
+    console.log('Setting pin with rules', value);
 
     if (value.length === 0) {
       const newPinCopy = { ...newPin };
@@ -106,17 +114,37 @@ export const SettingsAccount = () => {
       newPinCopy[index] = undefined;
 
       setNewPin(newPinCopy);
+      return;
     }
 
     if (value.length > 1) {
+      const newPinCopy = { ...newPin };
+
+      newPinCopy[index] = 0;
+
+      setNewPin(newPinCopy);
       return;
     }
 
     if (isNaN(Number(value))) {
+      console.log('NAN!!!');
+
+      const newPinCopy = { ...newPin };
+
+      newPinCopy[index] = 0;
+
+      console.log(newPinCopy);
+
+      setNewPin(newPinCopy);
       return;
     }
 
     if (Number(value) < 0 || Number(value) > 9) {
+      const newPinCopy = { ...newPin };
+
+      newPinCopy[index] = 0;
+
+      setNewPin(newPinCopy);
       return;
     }
 
@@ -244,7 +272,7 @@ export const SettingsAccount = () => {
             <h2 className="text-md opacity-80 mb-4">Pin Code</h2>
             <div className="flex space-x-8">
               <input
-                type="number"
+                type="text"
                 placeholder="0"
                 maxLength={1}
                 value={newPin[0] ?? undefined}
@@ -254,7 +282,7 @@ export const SettingsAccount = () => {
                 className="pin-input bg-transparent rounded-lg border w-20 h-20 text-center"
               />
               <input
-                type="number"
+                type="text"
                 placeholder="0"
                 maxLength={1}
                 value={newPin[1]}
@@ -264,7 +292,7 @@ export const SettingsAccount = () => {
                 className="pin-input bg-transparent rounded-lg border w-20 h-20 text-center"
               />
               <input
-                type="number"
+                type="text"
                 placeholder="0"
                 maxLength={1}
                 value={newPin[2]}
@@ -274,7 +302,7 @@ export const SettingsAccount = () => {
                 className="pin-input bg-transparent rounded-lg border w-20 h-20 text-center"
               />
               <input
-                type="number"
+                type="text"
                 placeholder="0"
                 maxLength={1}
                 value={newPin[3]}
