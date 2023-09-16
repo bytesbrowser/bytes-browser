@@ -23,7 +23,9 @@ export const SettingsAccount = () => {
 
   const [hasPin, setHasPin] = useState<boolean>(false);
 
-  const onSetPin = () => {};
+  const onSetPin = () => {
+    setEditingPin(true);
+  };
 
   useEffect(() => {
     if (data?.getUser) {
@@ -48,6 +50,22 @@ export const SettingsAccount = () => {
       });
     }
   }, [data]);
+
+  useEffect(() => {
+    if (editingPin) {
+      document.querySelectorAll('.pin-input').forEach((input, index, inputArray) => {
+        input.addEventListener('keyup', (e) => {
+          if (e && e.target && e.target) {
+            const nextInput = inputArray[index + 1];
+            if (nextInput) {
+              //@ts-ignore
+              nextInput.focus();
+            }
+          }
+        });
+      });
+    }
+  }, [editingPin]);
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -167,15 +185,76 @@ export const SettingsAccount = () => {
         placeholder="*********"
         className="text-sm w-full p-3 rounded-md bg-sidebar border border-light-border transition-all outline-none focus:border-gray-400 max-w-[500px]"
       />
-      <p
-        onClick={onSetPin}
-        style={{
-          color: 'var(--sidebar-inset-text-color)',
-        }}
-        className="mb-4 text-sm mt-10 bg-blue-500 w-[150px] p-2 rounded-md text-center cursor-pointer hover:opacity-80 transition-all"
-      >
-        {hasPin ? 'Change PIN' : 'Add PIN'}
-      </p>
+      {!editingPin && (
+        <p
+          onClick={onSetPin}
+          style={{
+            color: 'var(--sidebar-inset-text-color)',
+          }}
+          className="mb-4 text-sm mt-10 bg-blue-500 w-[150px] p-2 rounded-md text-center cursor-pointer hover:opacity-80 transition-all"
+        >
+          {hasPin ? 'Change PIN' : 'Add PIN'}
+        </p>
+      )}
+      {editingPin && (
+        <>
+          <div className="py-6 shadow-md rounded-md">
+            <h2 className="text-md opacity-80 mb-4">Pin Code</h2>
+            <div className="flex space-x-8">
+              <input
+                type="number"
+                placeholder="0"
+                maxLength={1}
+                min={0}
+                max={9}
+                className="pin-input bg-transparent rounded-lg border w-20 h-20 text-center"
+              />
+              <input
+                type="number"
+                placeholder="0"
+                maxLength={1}
+                min={0}
+                max={9}
+                className="pin-input bg-transparent rounded-lg border w-20 h-20 text-center"
+              />
+              <input
+                type="number"
+                placeholder="0"
+                maxLength={1}
+                min={0}
+                max={9}
+                className="pin-input bg-transparent rounded-lg border w-20 h-20 text-center"
+              />
+              <input
+                type="number"
+                placeholder="0"
+                maxLength={1}
+                min={0}
+                max={9}
+                className="pin-input bg-transparent rounded-lg border w-20 h-20 text-center"
+              />
+            </div>
+            <div className="flex">
+              <p
+                style={{
+                  color: 'var(--sidebar-inset-text-color)',
+                }}
+                className="mr-4 mb-4 text-sm mt-10 bg-error w-[150px] p-2 rounded-md text-center cursor-pointer hover:opacity-80 transition-all"
+              >
+                Cancel
+              </p>
+              <p
+                style={{
+                  color: 'var(--sidebar-inset-text-color)',
+                }}
+                className="mb-4 text-sm mt-10 bg-blue-500 w-[150px] p-2 rounded-md text-center cursor-pointer hover:opacity-80 transition-all"
+              >
+                Confirm
+              </p>
+            </div>
+          </div>
+        </>
+      )}
       <button
         type="submit"
         style={{
