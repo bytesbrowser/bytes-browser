@@ -23,6 +23,18 @@ export const SettingsAccount = () => {
 
   const [hasPin, setHasPin] = useState<boolean>(false);
 
+  const [newPin, setNewPin] = useState<{
+    0: number | undefined;
+    1: number | undefined;
+    2: number | undefined;
+    3: number | undefined;
+  }>({
+    0: undefined,
+    1: undefined,
+    2: undefined,
+    3: undefined,
+  });
+
   const onSetPin = () => {
     setEditingPin(true);
   };
@@ -83,6 +95,36 @@ export const SettingsAccount = () => {
 
       reader.readAsDataURL(file);
     }
+  };
+
+  const setPinWithRules = (value: string, index: 0 | 1 | 2 | 3) => {
+    console.log(value);
+
+    if (value.length === 0) {
+      const newPinCopy = { ...newPin };
+
+      newPinCopy[index] = undefined;
+
+      setNewPin(newPinCopy);
+    }
+
+    if (value.length > 1) {
+      return;
+    }
+
+    if (isNaN(Number(value))) {
+      return;
+    }
+
+    if (Number(value) < 0 || Number(value) > 9) {
+      return;
+    }
+
+    const newPinCopy = { ...newPin };
+
+    newPinCopy[index] = Number(value);
+
+    setNewPin(newPinCopy);
   };
 
   const triggerAvatarUpload = () => {
@@ -198,13 +240,15 @@ export const SettingsAccount = () => {
       )}
       {editingPin && (
         <>
-          <div className="py-6 shadow-md rounded-md">
+          <div className="py-6 shadow-md rounded-md animate__animated animate__fadeIn">
             <h2 className="text-md opacity-80 mb-4">Pin Code</h2>
             <div className="flex space-x-8">
               <input
                 type="number"
                 placeholder="0"
                 maxLength={1}
+                value={newPin[0] ?? undefined}
+                onChange={(e) => setPinWithRules(e.target.value, 0)}
                 min={0}
                 max={9}
                 className="pin-input bg-transparent rounded-lg border w-20 h-20 text-center"
@@ -213,6 +257,8 @@ export const SettingsAccount = () => {
                 type="number"
                 placeholder="0"
                 maxLength={1}
+                value={newPin[1]}
+                onChange={(e) => setPinWithRules(e.target.value, 1)}
                 min={0}
                 max={9}
                 className="pin-input bg-transparent rounded-lg border w-20 h-20 text-center"
@@ -221,6 +267,8 @@ export const SettingsAccount = () => {
                 type="number"
                 placeholder="0"
                 maxLength={1}
+                value={newPin[2]}
+                onChange={(e) => setPinWithRules(e.target.value, 2)}
                 min={0}
                 max={9}
                 className="pin-input bg-transparent rounded-lg border w-20 h-20 text-center"
@@ -229,6 +277,8 @@ export const SettingsAccount = () => {
                 type="number"
                 placeholder="0"
                 maxLength={1}
+                value={newPin[3]}
+                onChange={(e) => setPinWithRules(e.target.value, 3)}
                 min={0}
                 max={9}
                 className="pin-input bg-transparent rounded-lg border w-20 h-20 text-center"
@@ -236,6 +286,15 @@ export const SettingsAccount = () => {
             </div>
             <div className="flex">
               <p
+                onClick={() => {
+                  setEditingPin(false);
+                  setNewPin({
+                    0: undefined,
+                    1: undefined,
+                    2: undefined,
+                    3: undefined,
+                  });
+                }}
                 style={{
                   color: 'var(--sidebar-inset-text-color)',
                 }}
