@@ -11,7 +11,7 @@ import { ProfileStore } from '../../lib/types';
 
 export const SettingsAccount = () => {
   const [runtime, setRuntime] = useRecoilState(runtimeState);
-  const { data, error } = useGetUserQuery();
+  const { data, error, refetch } = useGetUserQuery();
   const [profile, setProfile] = useState<User | undefined>(undefined);
   const [changes, setChanges] = useState({
     fullName: '',
@@ -39,6 +39,10 @@ export const SettingsAccount = () => {
     3: undefined,
   });
 
+  useEffect(() => {
+    refetch();
+  }, [runtime.currentUser]);
+
   const onSetPin = () => {
     setEditingPin(true);
     setShow(true);
@@ -65,7 +69,10 @@ export const SettingsAccount = () => {
     setShow(false);
     setEditingPin(false);
 
-    let allValuesFilledIn = newPin[0] && newPin[1] && newPin[2] && newPin[3];
+    let allValuesFilledIn =
+      newPin[0] !== undefined && newPin[1] !== undefined && newPin[2] !== undefined && newPin[3] !== undefined;
+
+    console.log('All values filled in', allValuesFilledIn);
 
     if (allValuesFilledIn) {
       runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then(async (db) => {
@@ -90,6 +97,8 @@ export const SettingsAccount = () => {
           runtime.store.set(`profile-store-${runtime.currentUser}`, newDB);
           setHasPin(true);
         }
+
+        await runtime.store.save();
 
         toast.success('Pin Set Successfully');
       });

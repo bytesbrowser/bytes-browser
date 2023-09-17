@@ -246,7 +246,6 @@ export const SettingsProfiles = () => {
         if (profiles) {
           setRuntime({
             ...runtime,
-            readVolumes: false,
             currentUser: key,
           });
 
@@ -257,6 +256,7 @@ export const SettingsProfiles = () => {
   };
 
   const onConfirmPin = async () => {
+    setShow(false);
     const nums = [pin[0], pin[1], pin[2], pin[3]];
 
     if (!pinState || !pinState.encrypted) return;
@@ -270,7 +270,6 @@ export const SettingsProfiles = () => {
           if (profiles) {
             setRuntime({
               ...runtime,
-              readVolumes: false,
               currentUser: pinState.for,
             });
 
@@ -278,6 +277,15 @@ export const SettingsProfiles = () => {
           }
         });
       }
+    } else {
+      setPinState(null);
+      setPin({
+        0: undefined,
+        1: undefined,
+        2: undefined,
+        3: undefined,
+      });
+      toast.error('Incorrect pin.');
     }
   };
 
