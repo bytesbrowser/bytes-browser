@@ -1,13 +1,15 @@
+import CryptoJS from 'crypto-js';
 import { FormEvent, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { LineWave } from 'react-loader-spinner';
+import ReactModal from 'react-modal';
 import Moment from 'react-moment';
 import { useNavigate } from 'react-router-dom';
 import { useRecoilState } from 'recoil';
 
 import { useGetSubscriptionStatusLazyQuery, useGetUserLazyQuery, useLoginLazyQuery } from '../../graphql';
 import { runtimeState } from '../../lib/state/runtime.state';
-import { Profile } from '../../lib/types';
+import { Profile, ProfileStore } from '../../lib/types';
 import { is_email } from '../../lib/utils/formChecker';
 
 export const SettingsProfiles = () => {
@@ -19,6 +21,20 @@ export const SettingsProfiles = () => {
   const [getUserQuery] = useGetUserLazyQuery();
   const navigate = useNavigate();
   const [getSubStatus] = useGetSubscriptionStatusLazyQuery();
+  const [show, setShow] = useState(false);
+  const [pin, setPin] = useState<{
+    0: number | undefined;
+    1: number | undefined;
+    2: number | undefined;
+    3: number | undefined;
+  }>({
+    0: undefined,
+    1: undefined,
+    2: undefined,
+    3: undefined,
+  });
+
+  const [pinState, setPinState] = useState<{ for: number; encrypted: string } | null>(null);
 
   const checkNetwork = () => {
     setHasNetwork(navigator.onLine);
@@ -136,6 +152,29 @@ export const SettingsProfiles = () => {
     }
   };
 
+  const checkHasPin = async (key: number): Promise<[boolean, string]> => {
+    let res = false;
+    let encrypted = '';
+
+    await runtime.store.get<ProfileStore>(`profile-store-${key}`).then(async (db) => {
+      if (db) {
+        if (db.pinLock) {
+          res = true;
+          encrypted = db.pinLock;
+          return;
+        } else {
+          res = false;
+          return;
+        }
+      } else {
+        res = false;
+        return;
+      }
+    });
+
+    return [res, encrypted];
+  };
+
   const on_remove = async (index: number) => {
     if (runtime.currentUser === index) {
       toast.error('Cannot remove the current user. Please logout or switch profiles first.');
@@ -193,7 +232,15 @@ export const SettingsProfiles = () => {
     }
   };
 
-  const useUser = (key: number) => {
+  const useUser = async (key: number) => {
+    const [hasPin, encrypted] = await checkHasPin(key);
+
+    if (hasPin) {
+      setShow(true);
+      setPinState({ for: key, encrypted });
+      return;
+    }
+
     if (runtime.profileStore) {
       runtime.profileStore.get<Profile[]>('profiles').then((profiles) => {
         if (profiles) {
@@ -209,8 +256,180 @@ export const SettingsProfiles = () => {
     }
   };
 
+  const onConfirmPin = async () => {
+    const nums = [pin[0], pin[1], pin[2], pin[3]];
+
+    if (!pinState || !pinState.encrypted) return;
+
+    const bytes = CryptoJS.AES.decrypt(pinState.encrypted, import.meta.env.VITE_ENCRYPTOR_KEY.trim());
+    const data = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+
+    if (nums.join('') === data) {
+      if (runtime.profileStore) {
+        runtime.profileStore.get<Profile[]>('profiles').then((profiles) => {
+          if (profiles) {
+            setRuntime({
+              ...runtime,
+              readVolumes: false,
+              currentUser: pinState.for,
+            });
+
+            navigate('/');
+          }
+        });
+      }
+    }
+  };
+
+  const setPinWithRules = (value: string, index: 0 | 1 | 2 | 3) => {
+    console.log('Setting pin with rules', value);
+
+    if (value.length === 0) {
+      const newPinCopy = { ...pin };
+
+      newPinCopy[index] = undefined;
+
+      setPin(newPinCopy);
+      return;
+    }
+
+    if (value.length > 1) {
+      const newPinCopy = { ...pin };
+
+      newPinCopy[index] = 0;
+
+      setPin(newPinCopy);
+      return;
+    }
+
+    if (isNaN(Number(value))) {
+      console.log('NAN!!!');
+
+      const newPinCopy = { ...pin };
+
+      newPinCopy[index] = 0;
+
+      console.log(newPinCopy);
+
+      setPin(newPinCopy);
+      return;
+    }
+
+    if (Number(value) < 0 || Number(value) > 9) {
+      const newPinCopy = { ...pin };
+
+      newPinCopy[index] = 0;
+
+      setPin(newPinCopy);
+      return;
+    }
+
+    const newPinCopy = { ...pin };
+
+    newPinCopy[index] = Number(value);
+
+    setPin(newPinCopy);
+  };
+
   return (
     <>
+      <ReactModal
+        isOpen={show}
+        onRequestClose={() => {
+          setShow(false);
+        }}
+        style={{
+          content: {
+            backgroundColor: 'var(--sidebar-bg)',
+            border: 'none',
+            padding: 0,
+            width: '60%',
+            height: 'min-content',
+            margin: 'auto',
+            borderRadius: '8px',
+          },
+          overlay: {
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          },
+        }}
+      >
+        <>
+          <div className="py-6 shadow-md rounded-md animate__animated animate__fadeIn flex flex-col justify-center items-center">
+            <h2 className="text-md opacity-80 mb-4">Enter A New Pin</h2>
+            <div className="flex space-x-8">
+              <input
+                type="text"
+                placeholder="0"
+                maxLength={1}
+                value={pin[0] ?? undefined}
+                onChange={(e) => setPinWithRules(e.target.value, 0)}
+                min={0}
+                max={9}
+                className="pin-input bg-transparent rounded-lg border w-14 h-14 text-center"
+              />
+              <input
+                type="text"
+                placeholder="0"
+                maxLength={1}
+                value={pin[1]}
+                onChange={(e) => setPinWithRules(e.target.value, 1)}
+                min={0}
+                max={9}
+                className="pin-input bg-transparent rounded-lg border w-14 h-14 text-center"
+              />
+              <input
+                type="text"
+                placeholder="0"
+                maxLength={1}
+                value={pin[2]}
+                onChange={(e) => setPinWithRules(e.target.value, 2)}
+                min={0}
+                max={9}
+                className="pin-input bg-transparent rounded-lg border w-14 h-14 text-center"
+              />
+              <input
+                type="text"
+                placeholder="0"
+                maxLength={1}
+                value={pin[3]}
+                onChange={(e) => setPinWithRules(e.target.value, 3)}
+                min={0}
+                max={9}
+                className="pin-input bg-transparent rounded-lg border w-14 h-14 text-center"
+              />
+            </div>
+            <div className="flex">
+              <p
+                onClick={() => {
+                  setPin({
+                    0: undefined,
+                    1: undefined,
+                    2: undefined,
+                    3: undefined,
+                  });
+                  setShow(false);
+                }}
+                style={{
+                  color: 'var(--sidebar-inset-text-color)',
+                }}
+                className="mr-4 mb-4 text-sm mt-10 bg-error w-[150px] p-2 rounded-md text-center cursor-pointer hover:opacity-80 transition-all"
+              >
+                Cancel
+              </p>
+              <p
+                onClick={onConfirmPin}
+                style={{
+                  color: 'var(--sidebar-inset-text-color)',
+                  opacity: pin[0] && pin[1] && pin[2] && pin[3] ? 1 : 0.5,
+                }}
+                className="mb-4 text-sm mt-10 bg-blue-500 w-[150px] p-2 rounded-md text-center cursor-pointer hover:opacity-80 transition-all"
+              >
+                Confirm
+              </p>
+            </div>
+          </div>
+        </>
+      </ReactModal>
       <form onSubmit={onLogin} className="flex flex-col w-[500px]">
         <h2>Add a profile</h2>
         <p className="text-sm mt-4 mb-4 opacity-70">Sign in to your account</p>
