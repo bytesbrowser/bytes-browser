@@ -113,6 +113,8 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
   const getVolumes = () => {
     if (refreshingVolumes) return;
 
+    if (runtime.readVolumes) return;
+
     invoke('get_volumes').then(async (volumes: any) => {
       const new_volumes: DeviceInterface[] = [];
 

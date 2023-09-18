@@ -16,7 +16,7 @@ pub fn enforce_single_instance(_attrs: TokenStream, input: TokenStream) -> Token
 
     // Clone the function name and generate a unique mutex name based on the function name
     let fn_name = input.sig.ident.clone();
-    let mutex_name = format_ident!("{}_MUTEX", fn_name);
+    let mutex_name = format_ident!("{}_MUTEX", fn_name.to_string().to_uppercase());
     let original_fn_name = format_ident!("{}_original", fn_name);
     let vis = &input.vis;
     let asyncness = &input.sig.asyncness;

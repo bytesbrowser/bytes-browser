@@ -87,8 +87,6 @@ export const FolderExplorer = () => {
       setDirectories(dirs);
       return;
     } else {
-      console.log('FILTERING', show);
-
       await runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then(async (db) => {
         if (db) {
           if (!db.hiddenFolders) {
@@ -223,18 +221,22 @@ export const FolderExplorer = () => {
 
     setLoadingDirectories(true);
 
-    invoke('open_directory', { path: device.mount_point }).then((res: any) => {
-      setRuntime({
-        ...runtime,
-        currentDrive: device,
-        currentDriveName: device?.name,
-        currentPath: '',
+    invoke('open_directory', { path: device.mount_point })
+      .then((res: any) => {
+        setRuntime({
+          ...runtime,
+          currentDrive: device,
+          currentDriveName: device?.name,
+          currentPath: '',
+        });
+
+        setDirectoriesFiltered(res.data as DirectoryContents[], 'DRIVE ID USE EFFECT');
+
+        setLoadingDirectories(false);
+      })
+      .catch((err) => {
+        console.error('BRUH', err);
       });
-
-      setDirectoriesFiltered(res.data as DirectoryContents[], 'DRIVE ID USE EFFECT');
-
-      setLoadingDirectories(false);
-    });
   }, [driveId]);
 
   useEffect(() => {

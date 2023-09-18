@@ -10,10 +10,12 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use tokio::fs::File;
 use tokio::io::{AsyncBufReadExt, BufReader};
-use winapi::shared::minwindef::HINSTANCE;
 
 #[cfg(target_os = "windows")]
 extern crate winapi;
+
+#[cfg(target_os = "windows")]
+use winapi::shared::minwindef::HINSTANCE;
 
 #[cfg(target_os = "windows")]
 use std::ptr::null_mut;
@@ -348,7 +350,10 @@ async fn handle_entry(entry: DirEntry) -> io::Result<Vec<DirectoryChild>> {
     let size = fs::metadata(&path)?.len();
     let last_modified_sys_time = fs::metadata(&path)?.modified()?;
 
-    let last_modified = last_modified_sys_time.elapsed().unwrap().as_secs();
+    let last_modified = match last_modified_sys_time.elapsed() {
+        Ok(duration) => duration.as_secs(),
+        Err(_) => 0,
+    };
 
     let extension = entry
         .path()
@@ -434,16 +439,27 @@ pub fn open_with_explorer_internal(path: &str) -> Result<(), Error> {
 
 #[cfg(target_os = "macos")]
 pub fn open_with_explorer_internal(path: &str) -> Result<(), Error> {
-    let result = Command::new("open")
-        .arg("-R")
-        .arg(path)
-        .spawn()
-        .map_err(|e| Error::Custom(e.to_string()))?;
+    let parent_dir = std::path::Path::new(path).parent();
 
-    if result.success() {
-        Ok(())
-    } else {
-        Err(Error::Custom("Failed to open file".to_string()))
+    match parent_dir {
+        Some(parent_path) => {
+            match Command::new("open").arg("-R").arg(parent_path).spawn() {
+                Ok(mut child) => {
+                    // Wait for the process to finish
+                    let status = child.wait()?;
+                    if status.success() {
+                        Ok(())
+                    } else {
+                        Err(Error::Custom(format!(
+                            "Failed to open Finder: {:?}",
+                            status
+                        )))
+                    }
+                }
+                Err(e) => Err(Error::Custom(e.to_string())),
+            }
+        }
+        None => Err(Error::Custom("Invalid file path".to_string())),
     }
 }
 

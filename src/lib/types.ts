@@ -42,6 +42,7 @@ export interface ProfileStore {
   recentSearches: string[];
   themePreference: string;
   hiddenFolders: HiddenFolderDoc[];
+  pinLock?: string;
 }
 
 export interface Profile {
