@@ -10,6 +10,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use tokio::fs::File;
 use tokio::io::{AsyncBufReadExt, BufReader};
+use walkdir::WalkDir;
 
 #[cfg(target_os = "windows")]
 extern crate winapi;
@@ -828,4 +829,23 @@ pub async fn get_files_for_paths(
     }
 
     Ok(result_map)
+}
+
+#[tauri::command]
+pub async fn get_folder_size(path: String) -> Result<u64, String> {
+    let mut total_size: u64 = 0;
+
+    for entry in WalkDir::new(path) {
+        let entry = match entry {
+            Ok(e) => e,
+            Err(e) => return Err(format!("Error walking directory: {}", e)),
+        };
+
+        // If it's a file, add its size to the total size.
+        if entry.file_type().is_file() {
+            total_size += entry.metadata().map(|m| m.len()).unwrap_or(0);
+        }
+    }
+
+    Ok(total_size)
 }
