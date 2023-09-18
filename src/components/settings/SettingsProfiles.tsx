@@ -264,7 +264,7 @@ export const SettingsProfiles = () => {
     const bytes = CryptoJS.AES.decrypt(pinState.encrypted, import.meta.env.VITE_ENCRYPTOR_KEY.trim());
     const data = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
 
-    if (nums.join('') === data) {
+    if (nums.join('') === String(data)) {
       if (runtime.profileStore) {
         runtime.profileStore.get<Profile[]>('profiles').then((profiles) => {
           if (profiles) {

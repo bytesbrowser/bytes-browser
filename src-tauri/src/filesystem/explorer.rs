@@ -350,7 +350,10 @@ async fn handle_entry(entry: DirEntry) -> io::Result<Vec<DirectoryChild>> {
     let size = fs::metadata(&path)?.len();
     let last_modified_sys_time = fs::metadata(&path)?.modified()?;
 
-    let last_modified = last_modified_sys_time.elapsed().unwrap().as_secs();
+    let last_modified = match last_modified_sys_time.elapsed() {
+        Ok(duration) => duration.as_secs(),
+        Err(_) => 0,
+    };
 
     let extension = entry
         .path()
