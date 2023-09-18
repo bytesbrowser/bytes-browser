@@ -23,6 +23,8 @@ import { secondsAgoToDate } from '../lib/utils/secondsToTimestamp';
 export const FolderExplorer = () => {
   const [runtime, setRuntime] = useRecoilState(runtimeState);
   const [directories, setDirectories] = useState<DirectoryContents[]>([]);
+  const [sortedDirectories, setSortedDirectories] = useState<DirectoryContents[]>([]);
+  const [sortMode, setSortMode] = useState<'ASC' | 'DESC' | 'NONE' | 'SIZE' | 'TYPE'>('NONE');
   const [navigationRules, setNavigationRules] = useState<{ forward: string[]; back: string[] }>({
     forward: [],
     back: [],
@@ -31,6 +33,67 @@ export const FolderExplorer = () => {
   const [currentContext, setCurrentContext] = useRecoilState(currentContextState);
   const [loadingDirectories, setLoadingDirectories] = useState(false);
   const [settingDirectory, setSettingDirectory] = useState(false);
+
+  const onSetSortMode = (val: any) => {
+    setSortMode(val);
+
+    if (val === 'NONE') {
+      setSortedDirectories([...directories]);
+      return;
+    } else if (val === 'ASC') {
+      setSortedDirectories(
+        [...directories].sort((a, b) => {
+          if (a.File && b.File) {
+            return a.File![0].localeCompare(b.File![0]);
+          } else if (a.Directory && b.Directory) {
+            return a.Directory![0].localeCompare(b.Directory![0]);
+          } else {
+            return 0;
+          }
+        }),
+      );
+      return;
+    } else if (val === 'DESC') {
+      setSortedDirectories(
+        [...directories].sort((a, b) => {
+          if (a.File && b.File) {
+            return b.File![0].localeCompare(a.File![0]);
+          } else if (a.Directory && b.Directory) {
+            return b.Directory![0].localeCompare(a.Directory![0]);
+          } else {
+            return 0;
+          }
+        }),
+      );
+      return;
+    } else if (val === 'SIZE') {
+      setSortedDirectories(
+        [...directories].sort((a, b) => {
+          if (a.File && b.File) {
+            return a.File![2] - b.File![2];
+          } else if (a.Directory && b.Directory) {
+            return a.Directory![2] - b.Directory![2];
+          } else {
+            return 0;
+          }
+        }),
+      );
+      return;
+    } else if (val === 'TYPE') {
+      setSortedDirectories(
+        [...directories].sort((a, b) => {
+          if (a.File && b.File) {
+            return a.File![1].localeCompare(b.File![1]);
+          } else if (a.Directory && b.Directory) {
+            return -1;
+          } else {
+            return 0;
+          }
+        }),
+      );
+      return;
+    }
+  };
 
   const showHiddenFiles = useRecoilCallback(
     ({ snapshot }) =>
@@ -663,7 +726,80 @@ export const FolderExplorer = () => {
             )}
             {directories &&
               !loadingDirectories &&
+              sortMode === 'NONE' &&
               directories.map((directory, key) => (
+                <div
+                  onContextMenu={(e) => handleContextMenu(e, directory)}
+                  className="row flex
+            px-4 py-2 cursor-pointer transition-all hover:opacity-50 items-center"
+                  key={key}
+                >
+                  {directory['Directory'] ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                      <path
+                        fill="var(--icon-color)"
+                        d="M4 20q-.825 0-1.413-.588T2 18V6q0-.825.588-1.413T4 4h6l2 2h8q.825 0 1.413.588T22 8v10q0 .825-.588 1.413T20 20H4Z"
+                      />
+                    </svg>
+                  ) : (
+                    <SmartFileIcon file={directory} />
+                  )}
+                  <div
+                    className="ml-4 flex items-center justify-between w-full pr-12"
+                    onClick={() => {
+                      if (directory['Directory']) {
+                        setNavigationRules((prevRules) => ({
+                          forward: [],
+                          back: [...prevRules.back, runtime.currentPath],
+                        }));
+
+                        setRuntime({
+                          ...runtime,
+                          currentPath: runtime.currentPath + directory['Directory']![0] + '/',
+                        });
+                      }
+                    }}
+                    onDoubleClick={() => {
+                      if (directory['File']) {
+                        invoke('open_file', {
+                          path: directory['File']![1],
+                        })
+                          .then((_) => {})
+                          .catch((err) => {
+                            toast.error(err);
+                          });
+                      }
+                    }}
+                  >
+                    <p className="min-w-[250px] text-ellipsis truncate w-[250px]">
+                      {directory['Directory'] ? directory['Directory'][0] : directory['File']![0]}
+                    </p>
+                    <Moment
+                      fromNow
+                      date={secondsAgoToDate(
+                        directory['Directory'] ? directory['Directory']![3] : directory['File']![3],
+                      ).toISOString()}
+                      className="min-w-[250px] flex justify-left opacity-50 pl-2"
+                    />
+                    <p className="min-w-[250px] flex justify-left opacity-50 pl-6">
+                      {directory['Directory']
+                        ? directory['Directory']![4] === 'File'
+                          ? 'Folder'
+                          : directory['Directory']![4]
+                        : directory['File']![4]}
+                    </p>
+                    <p className="opacity-50 min-w-[250px] flex justify-left pl-8">
+                      {directory['Directory']
+                        ? formatBytes(directory['Directory']![2])
+                        : formatBytes(directory['File']![2])}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            {directories &&
+              !loadingDirectories &&
+              sortMode !== 'NONE' &&
+              sortedDirectories.map((directory, key) => (
                 <div
                   onContextMenu={(e) => handleContextMenu(e, directory)}
                   className="row flex
@@ -744,7 +880,7 @@ export const FolderExplorer = () => {
         </div>
       </div>
       <ContextMenu />
-      <PageContextMenu />
+      <PageContextMenu sortMode={sortMode} setSortMode={onSetSortMode} />
     </>
   );
 };
