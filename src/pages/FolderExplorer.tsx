@@ -75,7 +75,11 @@ export const FolderExplorer = () => {
   });
 
   const setDirectoriesFiltered = async (dirs: DirectoryContents[], debugFrom: string) => {
+    console.log('SETTING DIRECTORIES', debugFrom);
+
     if (settingDirectory) return;
+
+    console.log('SETTING DIRECTORIES 2', debugFrom);
 
     setSettingDirectory(true);
 
@@ -221,7 +225,7 @@ export const FolderExplorer = () => {
 
     setLoadingDirectories(true);
 
-    invoke('open_directory', { path: device.mount_point })
+    invoke('open_directory', { path: device.mount_point + runtime.currentPath })
       .then((res: any) => {
         setRuntime({
           ...runtime,
