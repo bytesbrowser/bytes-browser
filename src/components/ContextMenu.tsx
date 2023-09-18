@@ -11,10 +11,13 @@ import TagsEmitter from '../lib/emitters/tags.emitter';
 import { currentContextState } from '../lib/state/currentContext.state';
 import { pasteboardState } from '../lib/state/pasteboard.state';
 import { runtimeState } from '../lib/state/runtime.state';
+import { stateCacheState } from '../lib/state/stateCache.state';
 import { DirectoryContents, GitMeta, ProfileStore, TagDoc } from '../lib/types';
+import { formatBytes } from '../lib/utils/formatBytes';
 import { generateUUID } from '../lib/utils/generateUUID';
 
 export const ContextMenu = () => {
+  const [cache, setCache] = useRecoilState(stateCacheState);
   const [runtime, setRuntime] = useRecoilState(runtimeState);
   const [currentContext, setCurrentContext] = useRecoilState(currentContextState);
   const [preview, setPreview] = useState({ value: '', loading: true });
@@ -318,6 +321,34 @@ export const ContextMenu = () => {
         await runtime.store.save();
       }
     });
+  };
+
+  const calcFolderSize = () => {
+    const item = currentContext.currentItem;
+
+    if (!item) return;
+
+    if (item['Directory']) {
+      invoke<number>('get_folder_size', { path: item['Directory']![1] })
+        .then((res) => {
+          const newSizes = { ...cache.folderSizes };
+
+          newSizes[item['Directory']![1] as any] = { size: res };
+
+          console.log(newSizes);
+
+          setCache({
+            folderSizes: newSizes,
+          });
+
+          toast.success('Folder size: ' + formatBytes(res));
+        })
+        .catch((err: string) => {
+          if (err.includes('Access is denied')) {
+            toast.error('Access is denied.');
+          }
+        });
+    }
   };
 
   const handleHide = async () => {
@@ -820,6 +851,7 @@ export const ContextMenu = () => {
           </p>
         </div>
         <Separator />
+
         <Submenu
           label="Tags"
           disabled={() => {
@@ -888,6 +920,25 @@ export const ContextMenu = () => {
         >
           {isHidden ? 'Unhide' : 'Hide'}
         </Item>
+        {currentContext.currentItem && currentContext.currentItem['Directory'] && (
+          <Item
+            id="calculate-fldr-size"
+            onClick={() => {
+              if (currentContext.currentItem) {
+                if (!cache.folderSizes[currentContext.currentItem['Directory']![1] as any]) {
+                  calcFolderSize();
+                }
+              }
+            }}
+          >
+            <>
+              {cache.folderSizes[currentContext.currentItem['Directory']![1] as any]
+                ? 'Total Size: ' +
+                  formatBytes(cache.folderSizes[currentContext.currentItem['Directory']![1] as any].size)
+                : 'Calculate Folder Size'}
+            </>
+          </Item>
+        )}
         <Item
           disabled={currentContext.currentItem && currentContext.currentItem['File'] ? true : false}
           id="archive"

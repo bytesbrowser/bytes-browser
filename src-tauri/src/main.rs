@@ -13,10 +13,10 @@ use encryption::{decrypt_file, encrypt_file, is_file_encrypted};
 use filesystem::explorer::{
     add_all_changes, checkout_branch_for_directory, clear_recycle_bin,
     commit_changes_for_directory, cut_directory_from, cut_file_from, delete_file,
-    fetch_repo_for_directory, get_file_preview, get_files_for_paths, get_git_meta_for_directory,
-    init_git_repo_in_directory, open_directory, open_file, open_with_explorer, paste_directory_at,
-    paste_file_at, pull_changes_for_directory, push_changes_for_directory,
-    stash_changes_for_directory,
+    fetch_repo_for_directory, get_file_preview, get_files_for_paths, get_folder_size,
+    get_git_meta_for_directory, init_git_repo_in_directory, open_directory, open_file,
+    open_with_explorer, paste_directory_at, paste_file_at, pull_changes_for_directory,
+    push_changes_for_directory, stash_changes_for_directory,
 };
 use filesystem::volume::{get_volumes, safely_eject_removable};
 use search::search_directory;
@@ -92,7 +92,8 @@ async fn main() {
             is_file_encrypted,
             archive_folder,
             extract_archive,
-            open_with_explorer
+            open_with_explorer,
+            get_folder_size
         ])
         .manage(Arc::new(Mutex::new(AppState::default())))
         .plugin(tauri_plugin_store::Builder::default().build())
