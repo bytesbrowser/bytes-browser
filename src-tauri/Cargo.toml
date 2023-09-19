@@ -48,6 +48,7 @@ rand = "0.8.5"
 cfb8 = "0.8.1"
 zip = "0.6.6"
 enforce-single-instance = { path = "../crates/enforce-single-instance" }
+toml = "0.8.0"
 
 
 [target.'cfg(windows)'.dependencies]

@@ -9,35 +9,41 @@ use std::ops::Deref;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use tokio::fs::File;
-use tokio::io::{AsyncBufReadExt, BufReader};
+use tokio::io::{AsyncBufReadExt, AsyncReadExt, BufReader};
 use walkdir::WalkDir;
 
 #[cfg(target_os = "windows")]
 extern crate winapi;
 
-#[cfg(target_os = "windows")]
-use winapi::shared::minwindef::HINSTANCE;
-
-#[cfg(target_os = "windows")]
-use std::ptr::null_mut;
-#[cfg(target_os = "windows")]
-use winapi::um::shellapi::ShellExecuteW;
-#[cfg(target_os = "windows")]
-use winapi::um::winuser::SW_SHOWNORMAL;
-
 use super::audio::generate_waveform;
 use super::cache::FsEventHandler;
 use super::git_utils::get_user_git_config_signature;
-use super::utils::get_mount_point;
 use super::volume::DirectoryChild;
 use super::{get_file_description, AUDIO_EXTENSIONS, IMAGE_EXTENSIONS, TEXT_EXTENSIONS};
 use git2::{ErrorCode, Repository, StashFlags};
+use serde_json::Value as JsonValue;
 use tauri::State;
+use toml::Value as TomlValue;
 
 #[derive(Serialize)]
 pub struct DirectoryResult {
     data: Option<Vec<DirectoryChild>>,
     error: Option<String>,
+}
+
+#[derive(Debug)]
+enum ProjectType {
+    NPM,
+    Cargo,
+}
+
+#[derive(Debug)]
+struct ProjectMetadata {
+    project_type: ProjectType,
+    name: String,
+    version: String,
+    description: Option<String>,
+    dependencies: HashMap<String, String>,
 }
 
 pub type GitResult<T> = std::result::Result<T, GitError>;
@@ -359,6 +365,69 @@ pub fn check_is_supported_project(path: String) -> Result<bool, std::io::Error> 
     }
 
     Ok(false)
+}
+
+#[tauri::command]
+pub async fn get_supported_project_metadata(path: String) -> Result<ProjectMetadata, Error> {
+    // Check for NPM project
+    let npm_project_path = Path::new(&path).join("package.json");
+    if let Ok(mut file) = File::open(npm_project_path).await {
+        let mut contents = String::new();
+        file.read_to_string(&mut contents).await?;
+        let data: JsonValue = serde_json::from_str(&contents).unwrap();
+
+        let deps = match data["dependencies"].as_object() {
+            Some(obj) => obj
+                .iter()
+                .map(|(k, v)| (k.clone(), v.as_str().unwrap_or("").to_string()))
+                .collect(),
+            None => HashMap::new(),
+        };
+
+        return Ok(ProjectMetadata {
+            project_type: ProjectType::NPM,
+            name: data["name"].as_str().unwrap_or("Unknown").to_string(),
+            version: data["version"].as_str().unwrap_or("Unknown").to_string(),
+            description: data["description"].as_str().map(|s| s.to_string()),
+            dependencies: deps,
+        });
+    }
+
+    // Check for Cargo project
+    let cargo_project_path = Path::new(&path).join("Cargo.toml");
+    if let Ok(mut file) = File::open(cargo_project_path).await {
+        let mut contents = String::new();
+        file.read_to_string(&mut contents).await?;
+        let data: TomlValue = toml::from_str(&contents).unwrap();
+
+        let deps = match data["dependencies"].as_table() {
+            Some(table) => table
+                .iter()
+                .map(|(k, v)| {
+                    (k.clone(), v.as_str().unwrap_or("").to_string()) // This assumes simple dependencies. Complex dependencies with version requirements can be more involved.
+                })
+                .collect(),
+            None => HashMap::new(),
+        };
+
+        return Ok(ProjectMetadata {
+            project_type: ProjectType::Cargo,
+            name: data["package"]["name"]
+                .as_str()
+                .unwrap_or("Unknown")
+                .to_string(),
+            version: data["package"]["version"]
+                .as_str()
+                .unwrap_or("Unknown")
+                .to_string(),
+            description: data["package"]["description"]
+                .as_str()
+                .map(|s| s.to_string()),
+            dependencies: deps,
+        });
+    }
+
+    Err(Error::Custom("Not a supported project".to_string()))
 }
 
 async fn handle_entry(entry: DirEntry) -> io::Result<Vec<DirectoryChild>> {
