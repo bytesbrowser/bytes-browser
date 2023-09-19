@@ -345,6 +345,22 @@ async fn fetch_directory(path: String) -> io::Result<Vec<DirectoryChild>> {
     Ok(results)
 }
 
+pub fn check_is_supported_project(path: String) -> Result<bool, std::io::Error> {
+    // Check for NPM project
+    let npm_project_path = Path::new(&path).join("package.json");
+    if fs::metadata(&npm_project_path).is_ok() {
+        return Ok(true);
+    }
+
+    // Check for Cargo project
+    let cargo_project_path = Path::new(&path).join("Cargo.toml");
+    if fs::metadata(&cargo_project_path).is_ok() {
+        return Ok(true);
+    }
+
+    Ok(false)
+}
+
 async fn handle_entry(entry: DirEntry) -> io::Result<Vec<DirectoryChild>> {
     let file_name = entry.file_name().to_string_lossy().to_string();
     let path = entry.path().to_string_lossy().to_string();
@@ -375,6 +391,11 @@ async fn handle_entry(entry: DirEntry) -> io::Result<Vec<DirectoryChild>> {
     } else {
         let is_git = is_git_directory(&path).unwrap_or(false);
 
+        let is_project = match check_is_supported_project(path.clone()) {
+            Ok(is_project) => is_project,
+            Err(_) => false,
+        };
+
         Ok(vec![DirectoryChild::Directory(
             file_name,
             path,
@@ -382,6 +403,7 @@ async fn handle_entry(entry: DirEntry) -> io::Result<Vec<DirectoryChild>> {
             last_modified,
             "File".to_string(),
             is_git,
+            is_project,
         )])
     }
 }
