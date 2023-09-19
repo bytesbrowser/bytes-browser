@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api';
 import { useEffect, useState } from 'react';
-import { Item, Menu, Separator } from 'react-contexify';
+import { Item, Menu, Separator, Submenu } from 'react-contexify';
 import { toast } from 'react-hot-toast';
 import { useRecoilState } from 'recoil';
 
@@ -10,7 +10,13 @@ import { runtimeState } from '../lib/state/runtime.state';
 import { ProfileStore } from '../lib/types';
 import { generateUUID } from '../lib/utils/generateUUID';
 
-export const PageContextMenu = () => {
+export const PageContextMenu = ({
+  sortMode,
+  setSortMode,
+}: {
+  sortMode: 'ASC' | 'DESC' | 'NONE' | 'SIZE' | 'TYPE';
+  setSortMode: (mode: any) => void;
+}) => {
   const [runtime, setRuntime] = useRecoilState(runtimeState);
   const [isBookMarked, setIsBookMarked] = useState(false);
 
@@ -192,6 +198,24 @@ export const PageContextMenu = () => {
       >
         {runtime.showHiddenFiles ? "Don't Show Hidden Files" : 'Show Hidden Files'}
       </Item>
+      <Separator />
+      <Submenu label="Sort By">
+        <Item disabled={sortMode === 'NONE'} onClick={() => setSortMode('NONE')}>
+          None
+        </Item>
+        <Item disabled={sortMode === 'ASC'} onClick={() => setSortMode('ASC')}>
+          Ascending (Alphabetical)
+        </Item>
+        <Item disabled={sortMode === 'DESC'} onClick={() => setSortMode('DESC')}>
+          Descending (Alphabetical)
+        </Item>
+        <Item disabled={sortMode === 'SIZE'} onClick={() => setSortMode('SIZE')}>
+          Size
+        </Item>
+        <Item disabled={sortMode === 'TYPE'} onClick={() => setSortMode('TYPE')}>
+          Type
+        </Item>
+      </Submenu>
     </Menu>
   );
 };
