@@ -133,4 +133,5 @@ export interface ProjectMetadata {
 //     version: String,
 //     description: Option<String>,
 //     dependencies: HashMap<String, String>,
+// dev_dependencies: HashMap<String, String>,
 // }

@@ -44,6 +44,7 @@ pub struct ProjectMetadata {
     version: String,
     description: Option<String>,
     dependencies: HashMap<String, String>,
+    dev_dependencies: HashMap<String, String>,
 }
 
 pub type GitResult<T> = std::result::Result<T, GitError>;
@@ -373,10 +374,18 @@ pub async fn get_supported_project_metadata(path: String) -> Result<ProjectMetad
     let npm_project_path = Path::new(&path).join("package.json");
     if let Ok(mut file) = File::open(npm_project_path).await {
         let mut contents = String::new();
-        file.read_to_string(&mut contents).await;
+        file.read_to_string(&mut contents).await?;
         let data: JsonValue = serde_json::from_str(&contents).unwrap();
 
         let deps = match data["dependencies"].as_object() {
+            Some(obj) => obj
+                .iter()
+                .map(|(k, v)| (k.clone(), v.as_str().unwrap_or("").to_string()))
+                .collect(),
+            None => HashMap::new(),
+        };
+
+        let dev_deps = match data["devDependencies"].as_object() {
             Some(obj) => obj
                 .iter()
                 .map(|(k, v)| (k.clone(), v.as_str().unwrap_or("").to_string()))
@@ -390,6 +399,7 @@ pub async fn get_supported_project_metadata(path: String) -> Result<ProjectMetad
             version: data["version"].as_str().unwrap_or("Unknown").to_string(),
             description: data["description"].as_str().map(|s| s.to_string()),
             dependencies: deps,
+            dev_dependencies: dev_deps,
         });
     }
 
@@ -397,10 +407,19 @@ pub async fn get_supported_project_metadata(path: String) -> Result<ProjectMetad
     let cargo_project_path = Path::new(&path).join("Cargo.toml");
     if let Ok(mut file) = File::open(cargo_project_path).await {
         let mut contents = String::new();
-        file.read_to_string(&mut contents).await?;
-        let data: TomlValue = toml::from_str(&contents).unwrap();
 
-        let deps = match data["dependencies"].as_table() {
+        println!("Reading cargo toml");
+
+        file.read_to_string(&mut contents).await?;
+
+        println!("Read cargo toml");
+
+        let data: TomlValue = match toml::from_str(&contents) {
+            Ok(data) => data,
+            Err(e) => return Err(Error::Custom(format!("Failed to parse Cargo.toml: {}", e))),
+        };
+
+        let deps = match data.get("dependencies").and_then(|v| v.as_table()) {
             Some(table) => table
                 .iter()
                 .map(|(k, v)| {
@@ -412,18 +431,25 @@ pub async fn get_supported_project_metadata(path: String) -> Result<ProjectMetad
 
         return Ok(ProjectMetadata {
             project_type: ProjectType::Cargo,
-            name: data["package"]["name"]
-                .as_str()
+            name: data
+                .get("package")
+                .and_then(|pkg| pkg.get("name"))
+                .and_then(|v| v.as_str())
                 .unwrap_or("Unknown")
                 .to_string(),
-            version: data["package"]["version"]
-                .as_str()
+            version: data
+                .get("package")
+                .and_then(|pkg| pkg.get("version"))
+                .and_then(|v| v.as_str())
                 .unwrap_or("Unknown")
                 .to_string(),
-            description: data["package"]["description"]
-                .as_str()
+            description: data
+                .get("package")
+                .and_then(|pkg| pkg.get("description"))
+                .and_then(|v| v.as_str())
                 .map(|s| s.to_string()),
             dependencies: deps,
+            dev_dependencies: HashMap::new(),
         });
     }
 

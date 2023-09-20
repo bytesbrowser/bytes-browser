@@ -30,6 +30,7 @@ export const ContextMenu = () => {
   const [isHidden, setIsHidden] = useState(false);
   const [isEncrypted, setIsEncrypted] = useState(false);
   const [curProject, setCurProject] = useState<ProjectMetadata | null>(null);
+  const [showProjectWindow, setShowProjectWindow] = useState(false);
 
   const onDelete = async () => {
     if (currentContext.currentItem) {
@@ -74,18 +75,22 @@ export const ContextMenu = () => {
   };
 
   useEffect(() => {
+    if (!showProjectWindow) {
+      setCurProject(null);
+    }
+
     const item = currentContext.currentItem;
 
     if (!item) return;
 
-    if (currentContext.currentItem?.Directory && currentContext.currentItem.Directory[6]) {
-      // TODO: Set current project
+    if (item?.Directory && item.Directory[6]) {
       invoke<ProjectMetadata>('get_supported_project_metadata', { path: item['Directory']![1] })
         .then((res) => {
           setCurProject(res);
+          console.log(res);
         })
         .catch((err) => {
-          console.log(err);
+          console.error(err);
           setCurProject(null);
         });
     } else {
@@ -312,7 +317,6 @@ export const ContextMenu = () => {
     const item = currentContext.currentItem;
 
     if (!item) return;
-    ``;
 
     await runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then(async (db) => {
       if (db) {
@@ -1087,7 +1091,12 @@ export const ContextMenu = () => {
           )}
         </Submenu>
         {curProject && (
-          <Item id="select-project">
+          <Item
+            id="select-project"
+            onClick={() => {
+              setShowProjectWindow(true);
+            }}
+          >
             {curProject.project_type.toString() === 'NPM' && (
               <svg xmlns="http://www.w3.org/2000/svg" width="20" className="mr-2" height="20" viewBox="0 0 256 256">
                 <path fill="#C12127" d="M0 256V0h256v256z" />
@@ -1106,6 +1115,41 @@ export const ContextMenu = () => {
           </Item>
         )}
       </Menu>
+      <ReactModal
+        isOpen={showProjectWindow}
+        onRequestClose={() => {
+          setShowProjectWindow(false);
+        }}
+        style={{
+          content: {
+            backgroundColor: 'var(--sidebar-bg)',
+            border: 'none',
+            padding: 0,
+            width: '60%',
+            height: 'min-content',
+            margin: 'auto',
+            borderRadius: '8px',
+          },
+          overlay: {
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          },
+        }}
+      >
+        <>
+          {curProject && (
+            <>
+              <p>{curProject.project_type.toString()} Project</p>
+              <p>{curProject.name}</p>
+              <p>{Object.keys(curProject.dependencies).length} dependencies detected</p>
+              <div className="deps">
+                {Object.keys(curProject.dependencies).map((dep, key) => (
+                  <p key={key}>{dep}</p>
+                ))}
+              </div>
+            </>
+          )}
+        </>
+      </ReactModal>
       <ReactModal
         isOpen={show}
         onRequestClose={() => {
