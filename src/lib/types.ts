@@ -104,3 +104,33 @@ export interface ThemeJSONSchema {
   scrollbarThumbActiveColor?: string;
   scrollbarTrackColor?: string;
 }
+
+export enum ProjectType {
+  NPM,
+  Cargo,
+}
+
+export interface ProjectMetadata {
+  project_type: ProjectType;
+  name: string;
+  version: string;
+  description: string | null;
+  dependencies: {
+    [key: string]: string;
+  };
+}
+
+// #[derive(Debug, Serialize)]
+// pub enum ProjectType {
+//     NPM,
+//     Cargo,
+// }
+
+// #[derive(Debug, Serialize)]
+// pub struct ProjectMetadata {
+//     project_type: ProjectType,
+//     name: String,
+//     version: String,
+//     description: Option<String>,
+//     dependencies: HashMap<String, String>,
+// }

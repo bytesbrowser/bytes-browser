@@ -31,14 +31,14 @@ pub struct DirectoryResult {
     error: Option<String>,
 }
 
-#[derive(Debug)]
-enum ProjectType {
+#[derive(Debug, Serialize)]
+pub enum ProjectType {
     NPM,
     Cargo,
 }
 
-#[derive(Debug)]
-struct ProjectMetadata {
+#[derive(Debug, Serialize)]
+pub struct ProjectMetadata {
     project_type: ProjectType,
     name: String,
     version: String,
@@ -373,7 +373,7 @@ pub async fn get_supported_project_metadata(path: String) -> Result<ProjectMetad
     let npm_project_path = Path::new(&path).join("package.json");
     if let Ok(mut file) = File::open(npm_project_path).await {
         let mut contents = String::new();
-        file.read_to_string(&mut contents).await?;
+        file.read_to_string(&mut contents).await;
         let data: JsonValue = serde_json::from_str(&contents).unwrap();
 
         let deps = match data["dependencies"].as_object() {
