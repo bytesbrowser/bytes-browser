@@ -118,6 +118,9 @@ export interface ProjectMetadata {
   dependencies: {
     [key: string]: string;
   };
+  dev_dependencies: {
+    [key: string]: string;
+  };
 }
 
 // #[derive(Debug, Serialize)]

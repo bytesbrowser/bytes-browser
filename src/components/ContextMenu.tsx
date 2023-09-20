@@ -1141,8 +1141,15 @@ export const ContextMenu = () => {
               <p>{curProject.project_type.toString()} Project</p>
               <p>{curProject.name}</p>
               <p>{Object.keys(curProject.dependencies).length} dependencies detected</p>
+              <p>Dependencies</p>
               <div className="deps">
                 {Object.keys(curProject.dependencies).map((dep, key) => (
+                  <p key={key}>{dep}</p>
+                ))}
+              </div>
+              <p>Dev Dependencies</p>
+              <div className="dev-deps">
+                {Object.keys(curProject.dev_dependencies).map((dep, key) => (
                   <p key={key}>{dep}</p>
                 ))}
               </div>
