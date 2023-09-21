@@ -1,6 +1,6 @@
 use crate::error::{Error, GitError};
 use crate::StateSafe;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fs::{self, DirEntry};
@@ -31,7 +31,7 @@ pub struct DirectoryResult {
     error: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum ProjectType {
     NPM,
     Cargo,
@@ -366,6 +366,123 @@ pub fn check_is_supported_project(path: String) -> Result<bool, std::io::Error> 
     }
 
     Ok(false)
+}
+
+#[tauri::command]
+pub async fn install_dep(
+    project_type: ProjectType,
+    path: String,
+    package_name: String,
+    as_dev: Option<bool>,
+) -> Result<String, String> {
+    let dev_strng = match as_dev {
+        Some(true) => "--save-dev",
+        _ => "",
+    };
+
+    let command_string = format!("npm install {} {}", &package_name, dev_strng);
+
+    match project_type {
+        ProjectType::NPM => {
+            let output = std::process::Command::new("bash")
+                .arg("-c")
+                .arg(&command_string)
+                .current_dir(&path)
+                .output();
+
+            match output {
+                Ok(output) => {
+                    if output.status.success() {
+                        Ok(format!("Successfully installed package: {}", package_name))
+                    } else {
+                        Err(format!(
+                            "Failed to install package: {}",
+                            String::from_utf8_lossy(&output.stderr)
+                        ))
+                    }
+                }
+                Err(err) => Err(format!("Error: {}", err)),
+            }
+        }
+        ProjectType::Cargo => {
+            let output = std::process::Command::new("cargo")
+                .arg("add")
+                .arg(&package_name)
+                .current_dir(&path)
+                .output();
+
+            match output {
+                Ok(output) => {
+                    if output.status.success() {
+                        Ok(format!("Successfully added crate: {}", package_name))
+                    } else {
+                        Err(format!(
+                            "Failed to add crate: {}",
+                            String::from_utf8_lossy(&output.stderr)
+                        ))
+                    }
+                }
+                Err(err) => Err(format!("Error: {}", err)),
+            }
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn remove_dep(
+    project_type: ProjectType,
+    path: String,
+    package_name: String,
+) -> Result<String, String> {
+    let command_string = format!("npm uninstall {}", &package_name);
+
+    match project_type {
+        ProjectType::NPM => {
+            let output = std::process::Command::new("bash")
+                .arg("-c")
+                .arg(&command_string)
+                .current_dir(&path)
+                .output();
+
+            match output {
+                Ok(output) => {
+                    if output.status.success() {
+                        Ok(format!(
+                            "Successfully uninstalled package: {}",
+                            package_name
+                        ))
+                    } else {
+                        Err(format!(
+                            "Failed to uninstall package: {}",
+                            String::from_utf8_lossy(&output.stderr)
+                        ))
+                    }
+                }
+                Err(err) => Err(format!("Error: {}", err)),
+            }
+        }
+        ProjectType::Cargo => {
+            let output = std::process::Command::new("cargo")
+                .arg("rm")
+                .arg(&package_name)
+                .current_dir(&path)
+                .output();
+
+            match output {
+                Ok(output) => {
+                    if output.status.success() {
+                        Ok(format!("Successfully removed crate: {}", package_name))
+                    } else {
+                        Err(format!(
+                            "Failed to remove crate: {}",
+                            String::from_utf8_lossy(&output.stderr)
+                        ))
+                    }
+                }
+                Err(err) => Err(format!("Error: {}", err)),
+            }
+        }
+    }
 }
 
 #[tauri::command]

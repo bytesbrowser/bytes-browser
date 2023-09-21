@@ -38,6 +38,7 @@ export const ContextMenu = () => {
   const [commitMessage, setCommitMessage] = useState('');
   const [show, setShow] = useState(false);
   const [commitItem, setCommitItem] = useState<DirectoryContents | null>(null);
+  const [projectManagerItemTemp, setProjectManagerItemTemp] = useState<DirectoryContents | null>(null);
   const [tags, setTags] = useState<TagDoc[]>([]);
   const [pasteboard, setPasteboard] = useRecoilState(pasteboardState);
   const [isHidden, setIsHidden] = useState(false);
@@ -47,6 +48,7 @@ export const ContextMenu = () => {
   const [packageResults, setPackageResults] = useState<NPMPackageResults | null>(null);
   const [packageLoading, setPackageLoading] = useState(false);
   const [searchVal, setSearchVal] = useState('');
+  const [installing, setInstalling] = useState(false);
 
   const onDelete = async () => {
     if (currentContext.currentItem) {
@@ -88,6 +90,63 @@ export const ContextMenu = () => {
         },
       );
     }
+  };
+
+  const onIntallDep = (dep: string, asDev?: boolean) => {
+    if (!projectManagerItemTemp) return;
+
+    setInstalling(true);
+    setPackageLoading(true);
+
+    invoke('install_dep', {
+      path: projectManagerItemTemp.Directory![1],
+      projectType: curProject?.project_type,
+      packageName: dep,
+      asDev: asDev,
+    })
+      .then((res) => {
+        toast.success(
+          <>
+            <p>
+              Installed <span className="font-mono text-green-500">{dep}</span>
+            </p>
+          </>,
+        );
+
+        if (projectManagerItemTemp?.Directory && projectManagerItemTemp.Directory[6]) {
+          invoke<ProjectMetadata>('get_supported_project_metadata', { path: projectManagerItemTemp['Directory']![1] })
+            .then((res) => {
+              setInstalling(false);
+              setPackageLoading(false);
+
+              setCurProject(res);
+              console.log(res);
+              setPackageResults(null);
+            })
+            .catch((err) => {
+              console.error(err);
+              setCurProject(null);
+            });
+        } else {
+          setInstalling(false);
+          setPackageLoading(false);
+
+          setCurProject(null);
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        setInstalling(false);
+        setPackageLoading(false);
+
+        toast.error(
+          <>
+            <p>
+              Failed to install <span className="font-mono text-yellow-500">{dep}</span>
+            </p>
+          </>,
+        );
+      });
   };
 
   useEffect(() => {
@@ -478,7 +537,16 @@ export const ContextMenu = () => {
     setPackageLoading(true);
 
     axios.get<NPMPackageResults>(NPM_API_URL + '/search?q=' + encodeURIComponent(searchVal)).then((res) => {
-      setPackageResults(res.data);
+      setPackageResults({
+        ...res.data,
+        results: res.data.results.filter((doc) => {
+          if (!curProject) return true;
+
+          let found = Object.entries(curProject.dependencies).find(([dependency]) => dependency === doc.package.name);
+
+          return !found;
+        }),
+      });
       setPackageLoading(false);
     });
   };
@@ -1125,6 +1193,8 @@ export const ContextMenu = () => {
           <Item
             id="select-project"
             onClick={() => {
+              setProjectManagerItemTemp(currentContext.currentItem);
+
               setShowProjectWindow(true);
             }}
           >
@@ -1265,6 +1335,7 @@ export const ContextMenu = () => {
               {packageLoading && curProject.project_type.toString() === 'NPM' && (
                 <div className="flex items-center justify-center my-12">
                   <Triangle height="80" width="80" color="var(--icon-color)" />
+                  {installing && <p>Installing Package...</p>}
                 </div>
               )}
               {!packageLoading && packageResults && curProject.project_type.toString() === 'NPM' && (
@@ -1374,8 +1445,23 @@ export const ContextMenu = () => {
                               </div>
                             </div>
                           </div>
-                          <div className="flex items-end justify-end flex-1 hover:opacity-50 transition-all duration-200">
-                            <button className="bg-green-600 text-sm p-2 rounded-md">Install</button>
+                          <div className="flex items-end justify-end flex-1">
+                            <button
+                              onClick={() => {
+                                onIntallDep(result.package.name, false);
+                              }}
+                              className="bg-green-600 text-sm p-2 rounded-md hover:opacity-50 transition-all duration-200"
+                            >
+                              Install
+                            </button>
+                            <button
+                              onClick={() => {
+                                onIntallDep(result.package.name, true);
+                              }}
+                              className="bg-green-600 text-sm p-2 rounded-md ml-3 hover:opacity-50 transition-all duration-200"
+                            >
+                              Install Dev Dependency
+                            </button>
                           </div>
                         </div>
                       ))}
