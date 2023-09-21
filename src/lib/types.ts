@@ -55,9 +55,15 @@ export interface Profile {
 }
 
 export interface DirectoryContents {
-  Directory?: [string, string, number, number, string, boolean];
-  File?: [string, string, number, number, string];
+  Directory?: [string, string, number, number, string, boolean, boolean];
+  File?: [string, string, number, number, string, boolean];
 }
+
+// #[derive(Serialize, Deserialize, Clone)]
+// pub enum DirectoryChild {
+//     File(String, String, u64, u64, String), // Name of file, path to file, size of file, last modified seconds, type of file
+//     Directory(String, String, u64, u64, String, bool, bool), // Name of directory, path to directory, size of directory, last modified seconds, is git repo, isSupportedProject
+// }
 
 export interface SearchResult {
   results: DirectoryContents[];
@@ -98,3 +104,77 @@ export interface ThemeJSONSchema {
   scrollbarThumbActiveColor?: string;
   scrollbarTrackColor?: string;
 }
+
+export enum ProjectType {
+  NPM,
+  Cargo,
+}
+
+export interface ProjectMetadata {
+  project_type: ProjectType;
+  name: string;
+  version: string;
+  description: string | null;
+  dependencies: {
+    [key: string]: string;
+  };
+  dev_dependencies: {
+    [key: string]: string;
+  };
+}
+
+// #[derive(Debug, Serialize)]
+// pub enum ProjectType {
+//     NPM,
+//     Cargo,
+// }
+
+// #[derive(Debug, Serialize)]
+// pub struct ProjectMetadata {
+//     project_type: ProjectType,
+//     name: String,
+//     version: String,
+//     description: Option<String>,
+//     dependencies: HashMap<String, String>,
+// dev_dependencies: HashMap<String, String>,
+// }
+
+export type NPMPackageResults = {
+  results: NPMPackageResult[];
+  total: number;
+};
+
+export type NPMPackageResult = {
+  package: NPMPackageField;
+  flags: {
+    unstable: boolean;
+  };
+  score: {
+    final: number;
+    detail: {
+      quality: number;
+      popularity: number;
+      maintenance: number;
+    };
+  };
+  searchScore: number;
+};
+
+type NPMPackageField = {
+  name: string;
+  scope: string;
+  version: string;
+  description: string;
+  date: string;
+  links: {
+    [key: string]: string;
+  };
+  author: {
+    name: string;
+  };
+  publisher: {
+    username: string;
+    email: string;
+  };
+  maintainers: { username: string; email: string }[];
+};

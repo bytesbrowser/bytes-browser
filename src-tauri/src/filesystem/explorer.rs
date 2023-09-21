@@ -1,6 +1,6 @@
 use crate::error::{Error, GitError};
 use crate::StateSafe;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fs::{self, DirEntry};
@@ -9,35 +9,42 @@ use std::ops::Deref;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use tokio::fs::File;
-use tokio::io::{AsyncBufReadExt, BufReader};
+use tokio::io::{AsyncBufReadExt, AsyncReadExt, BufReader};
 use walkdir::WalkDir;
 
 #[cfg(target_os = "windows")]
 extern crate winapi;
 
-#[cfg(target_os = "windows")]
-use winapi::shared::minwindef::HINSTANCE;
-
-#[cfg(target_os = "windows")]
-use std::ptr::null_mut;
-#[cfg(target_os = "windows")]
-use winapi::um::shellapi::ShellExecuteW;
-#[cfg(target_os = "windows")]
-use winapi::um::winuser::SW_SHOWNORMAL;
-
 use super::audio::generate_waveform;
 use super::cache::FsEventHandler;
 use super::git_utils::get_user_git_config_signature;
-use super::utils::get_mount_point;
 use super::volume::DirectoryChild;
 use super::{get_file_description, AUDIO_EXTENSIONS, IMAGE_EXTENSIONS, TEXT_EXTENSIONS};
 use git2::{ErrorCode, Repository, StashFlags};
+use serde_json::Value as JsonValue;
 use tauri::State;
+use toml::Value as TomlValue;
 
 #[derive(Serialize)]
 pub struct DirectoryResult {
     data: Option<Vec<DirectoryChild>>,
     error: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum ProjectType {
+    NPM,
+    Cargo,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ProjectMetadata {
+    project_type: ProjectType,
+    name: String,
+    version: String,
+    description: Option<String>,
+    dependencies: HashMap<String, String>,
+    dev_dependencies: HashMap<String, String>,
 }
 
 pub type GitResult<T> = std::result::Result<T, GitError>;
@@ -345,6 +352,227 @@ async fn fetch_directory(path: String) -> io::Result<Vec<DirectoryChild>> {
     Ok(results)
 }
 
+pub fn check_is_supported_project(path: String) -> Result<bool, std::io::Error> {
+    // Check for NPM project
+    let npm_project_path = Path::new(&path).join("package.json");
+    if fs::metadata(&npm_project_path).is_ok() {
+        return Ok(true);
+    }
+
+    // Check for Cargo project
+    let cargo_project_path = Path::new(&path).join("Cargo.toml");
+    if fs::metadata(&cargo_project_path).is_ok() {
+        return Ok(true);
+    }
+
+    Ok(false)
+}
+
+#[tauri::command]
+pub async fn install_dep(
+    project_type: ProjectType,
+    path: String,
+    package_name: String,
+    as_dev: Option<bool>,
+) -> Result<String, String> {
+    let dev_strng = match as_dev {
+        Some(true) => "--save-dev",
+        _ => "",
+    };
+
+    let command_string = format!("npm install {} {}", &package_name, dev_strng);
+
+    match project_type {
+        ProjectType::NPM => {
+            let output = std::process::Command::new("bash")
+                .arg("-c")
+                .arg(&command_string)
+                .current_dir(&path)
+                .output();
+
+            match output {
+                Ok(output) => {
+                    if output.status.success() {
+                        Ok(format!("Successfully installed package: {}", package_name))
+                    } else {
+                        Err(format!(
+                            "Failed to install package: {}",
+                            String::from_utf8_lossy(&output.stderr)
+                        ))
+                    }
+                }
+                Err(err) => Err(format!("Error: {}", err)),
+            }
+        }
+        ProjectType::Cargo => {
+            let output = std::process::Command::new("cargo")
+                .arg("add")
+                .arg(&package_name)
+                .current_dir(&path)
+                .output();
+
+            match output {
+                Ok(output) => {
+                    if output.status.success() {
+                        Ok(format!("Successfully added crate: {}", package_name))
+                    } else {
+                        Err(format!(
+                            "Failed to add crate: {}",
+                            String::from_utf8_lossy(&output.stderr)
+                        ))
+                    }
+                }
+                Err(err) => Err(format!("Error: {}", err)),
+            }
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn remove_dep(
+    project_type: ProjectType,
+    path: String,
+    package_name: String,
+) -> Result<String, String> {
+    let command_string = format!("npm uninstall {}", &package_name);
+
+    match project_type {
+        ProjectType::NPM => {
+            let output = std::process::Command::new("bash")
+                .arg("-c")
+                .arg(&command_string)
+                .current_dir(&path)
+                .output();
+
+            match output {
+                Ok(output) => {
+                    if output.status.success() {
+                        Ok(format!(
+                            "Successfully uninstalled package: {}",
+                            package_name
+                        ))
+                    } else {
+                        Err(format!(
+                            "Failed to uninstall package: {}",
+                            String::from_utf8_lossy(&output.stderr)
+                        ))
+                    }
+                }
+                Err(err) => Err(format!("Error: {}", err)),
+            }
+        }
+        ProjectType::Cargo => {
+            let output = std::process::Command::new("cargo")
+                .arg("rm")
+                .arg(&package_name)
+                .current_dir(&path)
+                .output();
+
+            match output {
+                Ok(output) => {
+                    if output.status.success() {
+                        Ok(format!("Successfully removed crate: {}", package_name))
+                    } else {
+                        Err(format!(
+                            "Failed to remove crate: {}",
+                            String::from_utf8_lossy(&output.stderr)
+                        ))
+                    }
+                }
+                Err(err) => Err(format!("Error: {}", err)),
+            }
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn get_supported_project_metadata(path: String) -> Result<ProjectMetadata, Error> {
+    // Check for NPM project
+    let npm_project_path = Path::new(&path).join("package.json");
+    if let Ok(mut file) = File::open(npm_project_path).await {
+        let mut contents = String::new();
+        file.read_to_string(&mut contents).await?;
+        let data: JsonValue = serde_json::from_str(&contents).unwrap();
+
+        let deps = match data["dependencies"].as_object() {
+            Some(obj) => obj
+                .iter()
+                .map(|(k, v)| (k.clone(), v.as_str().unwrap_or("").to_string()))
+                .collect(),
+            None => HashMap::new(),
+        };
+
+        let dev_deps = match data["devDependencies"].as_object() {
+            Some(obj) => obj
+                .iter()
+                .map(|(k, v)| (k.clone(), v.as_str().unwrap_or("").to_string()))
+                .collect(),
+            None => HashMap::new(),
+        };
+
+        return Ok(ProjectMetadata {
+            project_type: ProjectType::NPM,
+            name: data["name"].as_str().unwrap_or("Unknown").to_string(),
+            version: data["version"].as_str().unwrap_or("Unknown").to_string(),
+            description: data["description"].as_str().map(|s| s.to_string()),
+            dependencies: deps,
+            dev_dependencies: dev_deps,
+        });
+    }
+
+    // Check for Cargo project
+    let cargo_project_path = Path::new(&path).join("Cargo.toml");
+    if let Ok(mut file) = File::open(cargo_project_path).await {
+        let mut contents = String::new();
+
+        println!("Reading cargo toml");
+
+        file.read_to_string(&mut contents).await?;
+
+        println!("Read cargo toml");
+
+        let data: TomlValue = match toml::from_str(&contents) {
+            Ok(data) => data,
+            Err(e) => return Err(Error::Custom(format!("Failed to parse Cargo.toml: {}", e))),
+        };
+
+        let deps = match data.get("dependencies").and_then(|v| v.as_table()) {
+            Some(table) => table
+                .iter()
+                .map(|(k, v)| {
+                    (k.clone(), v.as_str().unwrap_or("").to_string()) // This assumes simple dependencies. Complex dependencies with version requirements can be more involved.
+                })
+                .collect(),
+            None => HashMap::new(),
+        };
+
+        return Ok(ProjectMetadata {
+            project_type: ProjectType::Cargo,
+            name: data
+                .get("package")
+                .and_then(|pkg| pkg.get("name"))
+                .and_then(|v| v.as_str())
+                .unwrap_or("Unknown")
+                .to_string(),
+            version: data
+                .get("package")
+                .and_then(|pkg| pkg.get("version"))
+                .and_then(|v| v.as_str())
+                .unwrap_or("Unknown")
+                .to_string(),
+            description: data
+                .get("package")
+                .and_then(|pkg| pkg.get("description"))
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            dependencies: deps,
+            dev_dependencies: HashMap::new(),
+        });
+    }
+
+    Err(Error::Custom("Not a supported project".to_string()))
+}
+
 async fn handle_entry(entry: DirEntry) -> io::Result<Vec<DirectoryChild>> {
     let file_name = entry.file_name().to_string_lossy().to_string();
     let path = entry.path().to_string_lossy().to_string();
@@ -375,6 +603,11 @@ async fn handle_entry(entry: DirEntry) -> io::Result<Vec<DirectoryChild>> {
     } else {
         let is_git = is_git_directory(&path).unwrap_or(false);
 
+        let is_project = match check_is_supported_project(path.clone()) {
+            Ok(is_project) => is_project,
+            Err(_) => false,
+        };
+
         Ok(vec![DirectoryChild::Directory(
             file_name,
             path,
@@ -382,6 +615,7 @@ async fn handle_entry(entry: DirEntry) -> io::Result<Vec<DirectoryChild>> {
             last_modified,
             "File".to_string(),
             is_git,
+            is_project,
         )])
     }
 }

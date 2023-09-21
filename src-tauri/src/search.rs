@@ -1,3 +1,4 @@
+use crate::filesystem::explorer::check_is_supported_project;
 use crate::filesystem::get_file_description;
 use crate::CachedPath;
 use crate::{filesystem::volume::DirectoryChild, StateSafe};
@@ -303,6 +304,11 @@ pub async fn search_directory(
 
             let file_type = get_file_description(&extension);
 
+            let is_project = match check_is_supported_project(file_path.clone()) {
+                Ok(is_project) => is_project,
+                Err(_) => false,
+            };
+
             results.push(DirectoryChild::Directory(
                 (*filename).to_string(),
                 file_path.to_string(),
@@ -311,6 +317,7 @@ pub async fn search_directory(
                 file_type.to_string(),
                 // We don't care in the search results
                 false,
+                is_project,
             ));
             fuzzy_scores.push(score);
 
