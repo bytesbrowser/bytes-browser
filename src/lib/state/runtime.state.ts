@@ -16,6 +16,7 @@ export const runtimeState = atom<{
   devices: Device[];
   listStyle: 'GRID' | 'LIST' | 'TREE';
   searchOpen: boolean;
+  commandBuilderOpen: boolean;
   currentDriveName?: string;
   isInRecycleBin: boolean;
   showHiddenFiles: boolean;
@@ -24,6 +25,7 @@ export const runtimeState = atom<{
   default: {
     currentDrive: null,
     readVolumes: false,
+    commandBuilderOpen: false,
     readTags: false,
     readBookmarks: false,
     store: new Store('.settings.dat'),

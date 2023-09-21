@@ -216,6 +216,16 @@ export const PageContextMenu = ({
           Type
         </Item>
       </Submenu>
+      <Item
+        onClick={() =>
+          setRuntime({
+            ...runtime,
+            commandBuilderOpen: true,
+          })
+        }
+      >
+        Command Routines
+      </Item>
     </Menu>
   );
 };
