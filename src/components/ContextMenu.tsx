@@ -1,18 +1,31 @@
 import { invoke } from '@tauri-apps/api';
-import { useEffect, useState } from 'react';
+import axios from 'axios';
+import { FormEvent, useEffect, useState } from 'react';
 import { Item, Menu, Separator, Submenu } from 'react-contexify';
 import { toast } from 'react-hot-toast';
-import { ThreeCircles } from 'react-loader-spinner';
+import { ThreeCircles, Triangle } from 'react-loader-spinner';
 import ReactModal from 'react-modal';
+import { Link } from 'react-router-dom';
+import { Tooltip } from 'react-tooltip';
 import { useRecoilState } from 'recoil';
 
+import { NPM_API_URL } from '../lib/constants';
 import DirectoryEmitter from '../lib/emitters/directory.emitter';
 import TagsEmitter from '../lib/emitters/tags.emitter';
 import { currentContextState } from '../lib/state/currentContext.state';
 import { pasteboardState } from '../lib/state/pasteboard.state';
 import { runtimeState } from '../lib/state/runtime.state';
 import { stateCacheState } from '../lib/state/stateCache.state';
-import { DirectoryContents, GitMeta, ProfileStore, ProjectMetadata, ProjectType, TagDoc } from '../lib/types';
+import {
+  DirectoryContents,
+  GitMeta,
+  NPMPackageResult,
+  NPMPackageResults,
+  ProfileStore,
+  ProjectMetadata,
+  ProjectType,
+  TagDoc,
+} from '../lib/types';
 import { formatBytes } from '../lib/utils/formatBytes';
 import { generateUUID } from '../lib/utils/generateUUID';
 
@@ -31,6 +44,9 @@ export const ContextMenu = () => {
   const [isEncrypted, setIsEncrypted] = useState(false);
   const [curProject, setCurProject] = useState<ProjectMetadata | null>(null);
   const [showProjectWindow, setShowProjectWindow] = useState(false);
+  const [packageResults, setPackageResults] = useState<NPMPackageResults | null>(null);
+  const [packageLoading, setPackageLoading] = useState(false);
+  const [searchVal, setSearchVal] = useState('');
 
   const onDelete = async () => {
     if (currentContext.currentItem) {
@@ -82,6 +98,10 @@ export const ContextMenu = () => {
     const item = currentContext.currentItem;
 
     if (!item) return;
+
+    setPackageResults(null);
+    setPackageLoading(false);
+    setSearchVal('');
 
     if (item?.Directory && item.Directory[6]) {
       invoke<ProjectMetadata>('get_supported_project_metadata', { path: item['Directory']![1] })
@@ -450,6 +470,17 @@ export const ContextMenu = () => {
           }
         });
     }
+  };
+
+  const handleDepsSearch = (e: FormEvent) => {
+    e.preventDefault();
+
+    setPackageLoading(true);
+
+    axios.get<NPMPackageResults>(NPM_API_URL + '/search?q=' + encodeURIComponent(searchVal)).then((res) => {
+      setPackageResults(res.data);
+      setPackageLoading(false);
+    });
   };
 
   const onStash = () => {
@@ -1195,31 +1226,261 @@ export const ContextMenu = () => {
                   No description is provided.
                 </p>
               )}
-              <p className="opacity-50 font-medium text-sm mb-2">Project Dependencies</p>
-              <div className="deps">
-                {Object.entries(curProject.dependencies).map(([name, version], key) => (
+              {curProject.project_type.toString() === 'NPM' && (
+                <>
+                  <p className="opacity-50 font-medium text-sm mb-2 mt-4">Install Packages</p>
                   <div
-                    key={key}
-                    className="p-4 rounded-sm my-2"
+                    className="top border-b border-white border-opacity-10 p-3 flex items-center justify-between mb-4 rounded-lg"
                     style={{
                       backgroundColor: 'var(--sidebar-inset-bg)',
                     }}
                   >
-                    <p>{name}</p>
-                    <p>{version}</p>
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M16.148 15.352L12.6275 11.8322C13.6479 10.6071 14.1567 9.03585 14.0481 7.4452C13.9395 5.85456 13.2218 4.36701 12.0444 3.29201C10.867 2.21701 9.32041 1.63734 7.72647 1.67356C6.13253 1.70978 4.61392 2.35913 3.48654 3.4865C2.35916 4.61388 1.70982 6.13249 1.6736 7.72643C1.63737 9.32037 2.21705 10.8669 3.29205 12.0444C4.36705 13.2218 5.85459 13.9394 7.44524 14.048C9.03589 14.1566 10.6072 13.6478 11.8322 12.6274L15.3521 16.148C15.4043 16.2002 15.4664 16.2417 15.5347 16.27C15.6029 16.2983 15.6761 16.3128 15.75 16.3128C15.8239 16.3128 15.8971 16.2983 15.9654 16.27C16.0337 16.2417 16.0957 16.2002 16.148 16.148C16.2003 16.0957 16.2417 16.0337 16.27 15.9654C16.2983 15.8971 16.3129 15.8239 16.3129 15.75C16.3129 15.6761 16.2983 15.6029 16.27 15.5346C16.2417 15.4663 16.2003 15.4043 16.148 15.352ZM2.81254 7.875C2.81254 6.87373 3.10945 5.89495 3.66572 5.06243C4.222 4.2299 5.01265 3.58103 5.9377 3.19786C6.86275 2.81469 7.88065 2.71444 8.86268 2.90977C9.84471 3.10511 10.7468 3.58727 11.4548 4.29527C12.1628 5.00328 12.6449 5.90533 12.8403 6.88736C13.0356 7.86938 12.9353 8.88728 12.5522 9.81234C12.169 10.7374 11.5201 11.528 10.6876 12.0843C9.85509 12.6406 8.87631 12.9375 7.87504 12.9375C6.53284 12.936 5.24603 12.4022 4.29695 11.4531C3.34787 10.504 2.81403 9.2172 2.81254 7.875Z"
+                        fill="white"
+                        fillOpacity="0.6"
+                      />
+                    </svg>
+                    <form onSubmit={handleDepsSearch} className="flex-1">
+                      <input
+                        value={searchVal}
+                        onChange={(e) => {
+                          if (packageResults && packageResults.results.length > 0) {
+                            setPackageResults(null);
+                          }
+
+                          setSearchVal(e.target.value);
+                        }}
+                        required
+                        className="w-full mx-4 bg-transparent outline-none text-white"
+                        type="search"
+                        autoFocus
+                        placeholder="Start searching for packages, eg. @types/node"
+                      />
+                    </form>
+                  </div>
+                </>
+              )}
+              {packageLoading && curProject.project_type.toString() === 'NPM' && (
+                <div className="flex items-center justify-center my-12">
+                  <Triangle height="80" width="80" color="var(--icon-color)" />
+                </div>
+              )}
+              {!packageLoading && packageResults && curProject.project_type.toString() === 'NPM' && (
+                <div
+                  className="pckg-results animate__animated animate__fadeIn max-h-[300px] overflow-auto p-2 rounded-md border border-opacity-20 border-white"
+                  style={{
+                    backgroundColor: 'var(--sidebar-inset-bg)',
+                  }}
+                >
+                  {packageResults.results.length > 0 ? (
+                    <>
+                      {packageResults.results.map((result, key) => (
+                        <div
+                          key={key}
+                          className="flex items-center mb-4 p-2 shadow-lg"
+                          style={{
+                            backgroundColor: 'var(--sidebar-bg)',
+                          }}
+                        >
+                          <div className="flex flex-col">
+                            <p className="font-mono mb-3 flex items-center">
+                              {result.package.name}
+                              <Link
+                                className="hover:opacity-50 transition-all duration-200"
+                                to={
+                                  curProject.project_type.toString() === 'NPM'
+                                    ? `https://www.npmjs.com/package/${result.package.name}`
+                                    : `https://crates.io/crates/${name}`
+                                }
+                                target="_blank"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 50 50">
+                                  <path
+                                    fill="var(--icon-color)"
+                                    d="m38.288 10.297l1.414 1.415l-14.99 14.99l-1.414-1.414z"
+                                  />
+                                  <path
+                                    fill="var(--icon-color)"
+                                    d="M40 20h-2v-8h-8v-2h10zm-5 18H15c-1.7 0-3-1.3-3-3V15c0-1.7 1.3-3 3-3h11v2H15c-.6 0-1 .4-1 1v20c0 .6.4 1 1 1h20c.6 0 1-.4 1-1V24h2v11c0 1.7-1.3 3-3 3z"
+                                  />
+                                </svg>
+                              </Link>
+                            </p>
+                            <div className="scores flex items-center">
+                              {result.flags && result.flags.unstable && (
+                                <p className="text-xs font-mono mr-3 bg-yellow-600 text-white p-1 rounded-md">
+                                  Unstable
+                                </p>
+                              )}
+                              <p className="text-xs font-mono mr-3">{result.package.version}</p>
+                              <div
+                                className="flex items-center opacity-80 text-sm cursor-pointer mr-3"
+                                data-tooltip-id="tooltip-popularity"
+                              >
+                                <svg
+                                  className="mr-1"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="18"
+                                  height="18"
+                                  viewBox="0 0 512 512"
+                                >
+                                  <path
+                                    fill="white"
+                                    d="M414.39 97.61A224 224 0 1 0 97.61 414.39A224 224 0 1 0 414.39 97.61ZM184 208a24 24 0 1 1-24 24a23.94 23.94 0 0 1 24-24Zm167.67 106.17c-12 40.3-50.2 69.83-95.62 69.83s-83.62-29.53-95.72-69.83a8 8 0 0 1 7.83-10.17h175.69a8 8 0 0 1 7.82 10.17ZM328 256a24 24 0 1 1 24-24a23.94 23.94 0 0 1-24 24Z"
+                                  />
+                                </svg>
+                                <p
+                                  className={`${
+                                    result.score.detail.popularity * 100 < 40
+                                      ? 'text-red-500'
+                                      : result.score.detail.popularity * 100 > 40 &&
+                                        result.score.detail.popularity * 100 < 60
+                                      ? 'text-yellow-500'
+                                      : 'text-green-500'
+                                  }`}
+                                >
+                                  {(result.score.detail.popularity * 100).toFixed()}%
+                                </p>
+                              </div>
+                              <div
+                                className="flex items-center opacity-80 text-sm cursor-pointer mr-3"
+                                data-tooltip-id="tooltip-quality"
+                              >
+                                <svg
+                                  className="mr-1"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="18"
+                                  height="18"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    fill="white"
+                                    d="m19 1l-1.26 2.75L15 5l2.74 1.26L19 9l1.25-2.74L23 5l-2.75-1.25M9 4L6.5 9.5L1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5M19 15l-1.26 2.74L15 19l2.74 1.25L19 23l1.25-2.75L23 19l-2.75-1.26"
+                                  />
+                                </svg>
+                                <p
+                                  className={`${
+                                    result.score.detail.quality * 100 < 40
+                                      ? 'text-red-500'
+                                      : result.score.detail.quality * 100 > 40 && result.score.detail.quality * 100 < 60
+                                      ? 'text-yellow-500'
+                                      : 'text-green-500'
+                                  }`}
+                                >
+                                  {(result.score.detail.quality * 100).toFixed()}%
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-end justify-end flex-1 hover:opacity-50 transition-all duration-200">
+                            <button className="bg-green-600 text-sm p-2 rounded-md">Install</button>
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <p>No results found.</p>
+                  )}
+                </div>
+              )}
+              <p className="opacity-50 font-medium text-sm mb-2 mt-4">Project Dependencies</p>
+              <div className="deps">
+                {Object.entries(curProject.dependencies).length < 1 && (
+                  <p
+                    className="mb-4 text-sm w-full p-2 leading-loose"
+                    style={{
+                      backgroundColor: 'var(--sidebar-inset-bg)',
+                    }}
+                  >
+                    No dependencies are installed.
+                  </p>
+                )}
+                {Object.entries(curProject.dependencies).map(([name, version], key) => (
+                  <div
+                    key={key}
+                    className="p-4 rounded-sm my-2 flex"
+                    style={{
+                      backgroundColor: 'var(--sidebar-inset-bg)',
+                    }}
+                  >
+                    <div className="left flex flex-col justify-center">
+                      <p className="font-mono">{name}</p>
+                      <div className="flex items-center">
+                        <p className="text-xs opacity-50">{version ? version : 'Verison Not Specified'}</p>
+                        <Link
+                          className="hover:opacity-50 transition-all duration-200"
+                          to={
+                            curProject.project_type.toString() === 'NPM'
+                              ? `https://www.npmjs.com/package/${name}`
+                              : `https://crates.io/crates/${name}`
+                          }
+                          target="_blank"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 50 50">
+                            <path fill="var(--icon-color)" d="m38.288 10.297l1.414 1.415l-14.99 14.99l-1.414-1.414z" />
+                            <path
+                              fill="var(--icon-color)"
+                              d="M40 20h-2v-8h-8v-2h10zm-5 18H15c-1.7 0-3-1.3-3-3V15c0-1.7 1.3-3 3-3h11v2H15c-.6 0-1 .4-1 1v20c0 .6.4 1 1 1h20c.6 0 1-.4 1-1V24h2v11c0 1.7-1.3 3-3 3z"
+                            />
+                          </svg>
+                        </Link>
+                      </div>
+                    </div>
+                    <div className="flex items-end justify-end flex-1 hover:opacity-50 transition-all duration-200">
+                      <button className="bg-red-500 text-sm p-2 rounded-md">Uninstall</button>
+                    </div>
+                  </div>
+                ))}
+                <p className="opacity-50 font-medium text-sm mb-2 mt-8">Dev Dependencies</p>
+                {Object.entries(curProject.dev_dependencies).length < 1 && (
+                  <p
+                    className="mb-4 text-sm w-full p-2 leading-loose"
+                    style={{
+                      backgroundColor: 'var(--sidebar-inset-bg)',
+                    }}
+                  >
+                    No dev dependencies are installed.
+                  </p>
+                )}
+                {Object.entries(curProject.dev_dependencies).map(([name, version], key) => (
+                  <div
+                    key={key}
+                    className="p-4 rounded-sm my-2 flex"
+                    style={{
+                      backgroundColor: 'var(--sidebar-inset-bg)',
+                    }}
+                  >
+                    <div className="left flex flex-col justify-center">
+                      <p className="font-mono">{name}</p>
+                      <div className="flex items-center">
+                        <p className="text-xs opacity-50">{version ? version : 'Verison Not Specified'}</p>
+                        <Link
+                          className="hover:opacity-50 transition-all duration-200"
+                          to={
+                            curProject.project_type.toString() === 'NPM'
+                              ? `https://www.npmjs.com/package/${name}`
+                              : `https://crates.io/crates/${name}`
+                          }
+                          target="_blank"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 50 50">
+                            <path fill="var(--icon-color)" d="m38.288 10.297l1.414 1.415l-14.99 14.99l-1.414-1.414z" />
+                            <path
+                              fill="var(--icon-color)"
+                              d="M40 20h-2v-8h-8v-2h10zm-5 18H15c-1.7 0-3-1.3-3-3V15c0-1.7 1.3-3 3-3h11v2H15c-.6 0-1 .4-1 1v20c0 .6.4 1 1 1h20c.6 0 1-.4 1-1V24h2v11c0 1.7-1.3 3-3 3z"
+                            />
+                          </svg>
+                        </Link>
+                      </div>
+                    </div>
+                    <div className="flex items-end justify-end flex-1 hover:opacity-50 transition-all duration-200">
+                      <button className="bg-red-500 text-sm p-2 rounded-md">Uninstall</button>
+                    </div>
                   </div>
                 ))}
               </div>
-              {/* <p>{curProject.project_type.toString()} Project</p>
-              <p>{curProject.name}</p>
-              <p>Dependencies</p>
-             
-              <p>Dev Dependencies</p>
-              <div className="dev-deps">
-                {Object.keys(curProject.dev_dependencies).map((dep, key) => (
-                  <p key={key}>{dep}</p>
-                ))}
-              </div> */}
             </div>
           )}
         </>
@@ -1286,6 +1547,12 @@ export const ContextMenu = () => {
           </div>
         </div>
       </ReactModal>
+      <Tooltip className="tooltip z-[999]" opacity={'100%'} id="tooltip-popularity">
+        This is a score given based on how popular the package is. The higher the score, the more popular the package.
+      </Tooltip>
+      <Tooltip className="tooltip z-[999]" opacity={'100%'} id="tooltip-quality">
+        This is a score given based on the quality of the package. The higher the score, the better the quality.
+      </Tooltip>
     </>
   );
 };

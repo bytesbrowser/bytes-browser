@@ -138,3 +138,43 @@ export interface ProjectMetadata {
 //     dependencies: HashMap<String, String>,
 // dev_dependencies: HashMap<String, String>,
 // }
+
+export type NPMPackageResults = {
+  results: NPMPackageResult[];
+  total: number;
+};
+
+export type NPMPackageResult = {
+  package: NPMPackageField;
+  flags: {
+    unstable: boolean;
+  };
+  score: {
+    final: number;
+    detail: {
+      quality: number;
+      popularity: number;
+      maintenance: number;
+    };
+  };
+  searchScore: number;
+};
+
+type NPMPackageField = {
+  name: string;
+  scope: string;
+  version: string;
+  description: string;
+  date: string;
+  links: {
+    [key: string]: string;
+  };
+  author: {
+    name: string;
+  };
+  publisher: {
+    username: string;
+    email: string;
+  };
+  maintainers: { username: string; email: string }[];
+};
