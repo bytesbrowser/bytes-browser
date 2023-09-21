@@ -92,6 +92,58 @@ export const ContextMenu = () => {
     }
   };
 
+  const onUninstallDep = (dep: string) => {
+    if (!projectManagerItemTemp) return;
+
+    setPackageLoading(true);
+
+    invoke('remove_dep', {
+      path: projectManagerItemTemp.Directory![1],
+      projectType: curProject?.project_type,
+      packageName: dep,
+    })
+      .then((res) => {
+        toast.success(
+          <>
+            <p>
+              Uninstalled <span className="font-mono text-green-500">{dep}</span>
+            </p>
+          </>,
+        );
+
+        if (projectManagerItemTemp?.Directory && projectManagerItemTemp.Directory[6]) {
+          invoke<ProjectMetadata>('get_supported_project_metadata', { path: projectManagerItemTemp['Directory']![1] })
+            .then((res) => {
+              setPackageLoading(false);
+
+              setCurProject(res);
+              console.log(res);
+              setPackageResults(null);
+            })
+            .catch((err) => {
+              console.error(err);
+              setCurProject(null);
+            });
+        } else {
+          setPackageLoading(false);
+
+          setCurProject(null);
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        setPackageLoading(false);
+
+        toast.error(
+          <>
+            <p>
+              Failed to uninstall <span className="font-mono text-yellow-500">{dep}</span>
+            </p>
+          </>,
+        );
+      });
+  };
+
   const onIntallDep = (dep: string, asDev?: boolean) => {
     if (!projectManagerItemTemp) return;
 
@@ -1514,9 +1566,18 @@ export const ContextMenu = () => {
                         </Link>
                       </div>
                     </div>
-                    <div className="flex items-end justify-end flex-1 hover:opacity-50 transition-all duration-200">
-                      <button className="bg-red-500 text-sm p-2 rounded-md">Uninstall</button>
-                    </div>
+                    {curProject.project_type.toString() === 'NPM' && (
+                      <div className="flex items-end justify-end flex-1 hover:opacity-50 transition-all duration-200">
+                        <button
+                          className="bg-red-500 text-sm p-2 rounded-md"
+                          onClick={() => {
+                            onUninstallDep(name);
+                          }}
+                        >
+                          Uninstall
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
                 <p className="opacity-50 font-medium text-sm mb-2 mt-8">Dev Dependencies</p>
