@@ -2,13 +2,20 @@ import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import ReactModal from 'react-modal';
 import Select from 'react-select';
+import { useRecoilState } from 'recoil';
+
+import { runtimeState } from '../lib/state/runtime.state';
+import { ProfileStore } from '../lib/types';
 
 export const CommandBuilderModal = ({ show, setShow }: { show: boolean; setShow: (show: boolean) => void }) => {
+  const [runtime] = useRecoilState(runtimeState);
+
   const [commandName, setCommandName] = useState<string>('');
   const [addingCommand, setAddingCommand] = useState<string | null>(null);
   const [commands, setCommands] = useState<string[]>([]);
   const [timeType, setTimeType] = useState({ value: 'Seconds', label: 'Seconds' });
   const [time, setTime] = useState<number>(30);
+  const [description, setDescription] = useState<string>('');
 
   useEffect(() => {
     setCommandName('');
@@ -22,9 +29,61 @@ export const CommandBuilderModal = ({ show, setShow }: { show: boolean; setShow:
     setAddingCommand(null);
 
     setShow(false);
-    toast.success(
-      commandName + " command created! You can now use it in the 'Commands' tab, or wait for it to run automatically.",
-    );
+
+    runtime.store
+      .get<ProfileStore>(`profile-store-${runtime.currentUser}`)
+      .then(async (db) => {
+        if (db) {
+          const newCommands = db.commands ?? [];
+
+          newCommands.push({
+            name: commandName,
+            description,
+            commands: commands,
+            time,
+            interval: timeType.value,
+            mountPoint: runtime.currentDrive?.mount_point,
+            path: runtime.currentPath,
+          });
+
+          await runtime.store.set(`profile-store-${runtime.currentUser}`, {
+            ...db,
+            commands: newCommands,
+          });
+
+          await runtime.store.save();
+
+          toast.success(
+            "Command created! You can now use it in the 'Commands' tab, or wait for it to run automatically.",
+          );
+        } else {
+          const newCommands: ProfileStore['commands'] = [];
+
+          newCommands.push({
+            name: commandName,
+            description,
+            commands: commands,
+            time,
+            interval: timeType.value,
+            mountPoint: runtime.currentDrive?.mount_point,
+            path: runtime.currentPath,
+          });
+
+          await runtime.store.set(`profile-store-${runtime.currentUser}`, {
+            commands: newCommands,
+          });
+
+          await runtime.store.save();
+
+          toast.success(
+            "Command created! You can now use it in the 'Commands' tab, or wait for it to run automatically.",
+          );
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        toast.error('An error occurred while creating the command.');
+      });
   };
 
   return (
@@ -49,8 +108,8 @@ export const CommandBuilderModal = ({ show, setShow }: { show: boolean; setShow:
       }}
     >
       <div className="animate__animated animate__fadeIn animate__faster pt-4">
-        <div className={`top p-4 ${(!commandName || !timeType || !time) && ' h-[200px]'}`}>
-          <p className="text-lg">Command Builder</p>
+        <div className={`top p-4 ${(!commandName || !timeType || !time || !description) && ' h-[300px]'}`}>
+          <p className="text-xs">Command Builder</p>
           <div className="builder flex items-center justify-between mt-4">
             <p>DO</p>
             <input
@@ -68,6 +127,14 @@ export const CommandBuilderModal = ({ show, setShow }: { show: boolean; setShow:
             />
             <p>EVERY</p>
             <input
+              value={time}
+              onChange={(e) => {
+                if (e.target.value.length > 1 && parseInt(e.target.value[0]) !== 0 && isNaN(parseInt(e.target.value))) {
+                  setTime(0);
+                  return;
+                }
+                setTime(parseInt(e.target.value));
+              }}
               type="number"
               placeholder="3000"
               className="flex-1 mx-4 p-1 rounded-md text-center"
@@ -117,15 +184,26 @@ export const CommandBuilderModal = ({ show, setShow }: { show: boolean; setShow:
               }}
             />
           </div>
+          <p className="text-xs mt-4 opacity-80">Description</p>
+          <textarea
+            value={description}
+            onChange={(e) => {
+              setDescription(e.target.value);
+            }}
+            className="resize-none mt-4 block w-full border border-gray-500 rounded-md p-2 text-sm outline-none focus:border-white transition-all"
+            style={{
+              backgroundColor: 'var(--sidebar-inset-bg)',
+            }}
+          ></textarea>
         </div>
-        {(!commandName || !timeType || !time) && (
+        {(!commandName || !timeType || !time || !description) && (
           <p className="text-center pb-8 text-xs opacity-50">
             Must enter the command's basic information before proceeding.
           </p>
         )}
-        {commandName && (
+        {commandName && timeType && description && (
           <div
-            className="bottom h-full w-full p-4"
+            className="bottom h-full w-full p-4 animate__animated animate__fadeIn"
             style={{
               backgroundColor: 'var(--sidebar-inset-bg)',
             }}

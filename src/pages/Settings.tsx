@@ -365,7 +365,7 @@ export const Settings = () => {
                 </div>
                 <div className="mt-8 pb-20">
                   <p className="mb-4">Marketplace</p>
-                  <a href="https://bytesbrowser.com" className="underline opacity-80 text-sm">
+                  <a href="https://bytesbrowser.com" target="_blank" className="underline opacity-80 text-sm">
                     Create your own theme
                   </a>
                   <div className="flex flex-wrap">

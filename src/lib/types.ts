@@ -43,7 +43,18 @@ export interface ProfileStore {
   themePreference: string;
   hiddenFolders: HiddenFolderDoc[];
   pinLock?: string;
+  commands: Command[];
 }
+
+export type Command = {
+  name: string;
+  commands: string[];
+  description: string;
+  time: number;
+  interval: string;
+  mountPoint: string;
+  path: string;
+};
 
 export interface Profile {
   name: string;

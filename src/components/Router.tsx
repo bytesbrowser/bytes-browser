@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router-dom';
 
 import { Auth } from '../pages/Auth';
+import { Commands } from '../pages/Commands';
 import { FolderExplorer } from '../pages/FolderExplorer';
 import { Settings } from '../pages/Settings';
 import { Tags } from '../pages/Tags';
@@ -31,6 +32,14 @@ const Router = () => {
         element={
           <RouterLayout>
             <p>Uh Oh!</p>
+          </RouterLayout>
+        }
+      />
+      <Route
+        path="/commands"
+        element={
+          <RouterLayout>
+            <Commands />
           </RouterLayout>
         }
       />
