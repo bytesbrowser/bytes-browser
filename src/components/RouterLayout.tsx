@@ -138,17 +138,19 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
 
       if (!permissionGranted) {
         const permission = await requestPermission();
-        sendNotification({
-          title: 'Bytes Browser',
-          body: 'Bytes Browser is ready to use and has finished caching volumes.',
-          icon: '/byteslogo.svg',
-        });
-        permissionGranted = permission === 'granted';
+
+        if (permission) {
+          sendNotification({
+            title: 'Bytes Browser',
+            body: 'Bytes Browser is ready to use and has finished caching volumes.',
+            icon: '/bytes_logo.png',
+          });
+        }
       } else {
         sendNotification({
           title: 'Bytes Browser',
           body: 'Bytes Browser is ready to use and has finished caching volumes.',
-          icon: '/byteslogo.svg',
+          icon: '/bytes_logo.png',
         });
       }
 

@@ -4,6 +4,7 @@ import ReactModal from 'react-modal';
 import Select from 'react-select';
 import { useRecoilState } from 'recoil';
 
+import CommandsEmitter from '../lib/emitters/commands.emitter';
 import { runtimeState } from '../lib/state/runtime.state';
 import { ProfileStore } from '../lib/types';
 
@@ -31,7 +32,7 @@ export const CommandBuilderModal = ({ show, setShow }: { show: boolean; setShow:
         if (db) {
           const newCommands = db.commands ?? [];
 
-          newCommands.push({
+          const newCmnd = {
             name: commandName,
             description,
             commands: commands,
@@ -39,7 +40,9 @@ export const CommandBuilderModal = ({ show, setShow }: { show: boolean; setShow:
             interval: timeType.value,
             mountPoint: runtime.currentDrive?.mount_point,
             path: runtime.currentPath,
-          });
+          };
+
+          newCommands.push(newCmnd);
 
           await runtime.store.set(`profile-store-${runtime.currentUser}`, {
             ...db,
@@ -52,6 +55,8 @@ export const CommandBuilderModal = ({ show, setShow }: { show: boolean; setShow:
             "Command created! You can now use it in the 'Commands' tab, or wait for it to run automatically.",
           );
 
+          CommandsEmitter.emit('change', newCmnd);
+
           setCommandName('');
           setCommands([]);
           setAddingCommand(null);
@@ -60,7 +65,7 @@ export const CommandBuilderModal = ({ show, setShow }: { show: boolean; setShow:
         } else {
           const newCommands: ProfileStore['commands'] = [];
 
-          newCommands.push({
+          const newCmnd = {
             name: commandName,
             description,
             commands: commands,
@@ -68,7 +73,9 @@ export const CommandBuilderModal = ({ show, setShow }: { show: boolean; setShow:
             interval: timeType.value,
             mountPoint: runtime.currentDrive?.mount_point,
             path: runtime.currentPath,
-          });
+          };
+
+          newCommands.push(newCmnd);
 
           await runtime.store.set(`profile-store-${runtime.currentUser}`, {
             commands: newCommands,
@@ -79,6 +86,8 @@ export const CommandBuilderModal = ({ show, setShow }: { show: boolean; setShow:
           toast.success(
             "Command created! You can now use it in the 'Commands' tab, or wait for it to run automatically.",
           );
+
+          CommandsEmitter.emit('change', newCmnd);
 
           setCommandName('');
           setCommands([]);

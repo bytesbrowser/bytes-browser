@@ -26,7 +26,7 @@ export const Commands = () => {
       <div className="border-b border-white border-opacity-10 pb-4 mb-4">
         <div>
           <h1 className="text-lg">Commands</h1>
-          <p className="mt-2 leading-loose text-xs opacity-80">
+          <p className="mt-4 leading-loose text-xs opacity-80">
             These are the command routines you have created. You can edit, delete, or run them from here.
           </p>
         </div>
@@ -41,10 +41,15 @@ export const Commands = () => {
             }}
           >
             <p className="text-lg font-mono">{command.name}</p>
-            <p className="text-xs text-yellow-500 mt-2 opacity-80">
-              Every {command.time} {command.interval}
+            <p className="text-xs text-yellow-500 mt-4 opacity-80">
+              Every {command.time} {command.interval} in{' '}
+              <span className="text-yellow-500">
+                {(command.mountPoint + command.path).length > 25
+                  ? (command.mountPoint + command.path).slice(0, 25) + '...'
+                  : command.mountPoint + command.path}
+              </span>
             </p>
-            <p className="text-xs mt-2 opacity-80">
+            <p className="text-xs mt-4 opacity-80">
               {command.commands.length < 5 ? (
                 <span className="text-green-500">Low Complexity</span>
               ) : command.commands.length > 10 ? (
@@ -53,7 +58,7 @@ export const Commands = () => {
                 <span className="text-red-500">Medium Complexity</span>
               )}
             </p>
-            <p className="text-xs leading-loose mt-2">{command.description}</p>
+            <p className="text-xs leading-loose mt-4">{command.description}</p>
             <div className="actions mt-4 flex items-center justify-between">
               <button
                 className="rounded-md px-4 py-2 hover:opacity-80 transition-all text-sm w-2/4"

@@ -56,6 +56,21 @@ export type Command = {
   path: string;
 };
 
+export type CommandRunEvent = {
+  command: string;
+  error: boolean;
+  stdout: string | null;
+  stderr: string | null;
+};
+
+// #[derive(Debug, Serialize, Deserialize, Clone)]
+// pub struct CommandRunEvent {
+//     command: String,
+//     error: bool,
+//     stdout: Option<String>,
+//     stderr: Option<String>,
+// }
+
 export interface Profile {
   name: string;
   avatar?: string;

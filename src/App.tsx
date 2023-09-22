@@ -1,9 +1,10 @@
 import { invoke, os } from '@tauri-apps/api';
+import { Event } from '@tauri-apps/api/event';
 import { isPermissionGranted, requestPermission } from '@tauri-apps/api/notification';
 import { appWindow } from '@tauri-apps/api/window';
 import 'animate.css/animate.min.css';
 import { useEffect, useState } from 'react';
-import { Toaster } from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 import { BrowserRouter } from 'react-router-dom';
 import { useRecoilState } from 'recoil';
 
@@ -11,9 +12,10 @@ import Router from './components/Router';
 import { Theme } from './graphql';
 import { useHotkey } from './lib/commands';
 import { BytesBrowserDarkTheme, BytesBrowserLightTheme } from './lib/constants';
+import CommandsEmitter from './lib/emitters/commands.emitter';
 import { runtimeState } from './lib/state/runtime.state';
 import { themeState as themeStateRoot } from './lib/state/theme.state';
-import { Profile, ProfileStore } from './lib/types';
+import { Command, CommandRunEvent, Profile, ProfileStore } from './lib/types';
 
 const App = () => {
   const [runtime, setRuntime] = useRecoilState(runtimeState);
@@ -28,13 +30,63 @@ const App = () => {
   });
 
   useEffect(() => {
+    setupCommandActions();
+
     checkNotificationPermission();
   }, []);
 
+  const setupCommandActions = () => {
+    runtime.store.get<ProfileStore>(`profile-${runtime.currentUser}`).then(async (db) => {
+      if (db) {
+        const commands = db.commands;
+
+        let successfull = 0;
+        let failed = 0;
+
+        await commands.forEach(async (command) => {
+          await invoke('init_command', { command: command })
+            .then((res) => {
+              successfull++;
+            })
+            .catch((err) => {
+              failed++;
+            });
+        });
+
+        if (successfull < 1) {
+          toast.error(`Failed to initialize ${failed} commands.`);
+        } else {
+          toast.success(`Initialized ${successfull} commands. ${failed} failed.`);
+        }
+      }
+    });
+
+    CommandsEmitter.on('change', (command: Command) => {
+      invoke('init_command', { command: command })
+        .then((res) => {
+          toast.success(`Initialized ${command.name} command.`);
+        })
+        .catch((err) => {
+          toast.error(`Failed to initialize ${command.name} command.`);
+        });
+    });
+
+    appWindow.listen('command-executed', (msg: Event<CommandRunEvent>) => {
+      setRuntime({
+        ...runtime,
+        commandLogs: [...runtime.commandLogs, msg.payload],
+      });
+
+      if (msg.payload.error) {
+        toast.error(msg.payload.command + ' failed to run.');
+      } else {
+        toast.success(msg.payload.command + ' ran successfully.');
+      }
+    });
+  };
+
   const checkNotificationPermission = async () => {
     let permissionGranted = await isPermissionGranted();
-
-    console.log(permissionGranted);
 
     if (!permissionGranted) {
       const permission = await requestPermission();
