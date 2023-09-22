@@ -809,6 +809,8 @@ export const ContextMenu = () => {
           tags,
         });
 
+        console.log(tags);
+
         setTags(tags);
 
         await runtime.store.save();
@@ -851,7 +853,7 @@ export const ContextMenu = () => {
   useEffect(() => {
     runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then((db) => {
       if (db) {
-        setTags(db.tags);
+        setTags(db.tags ?? []);
       } else {
         setTags([]);
       }

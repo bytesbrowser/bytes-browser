@@ -23,7 +23,7 @@ export const PageContextMenu = ({
   useEffect(() => {
     runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then((db) => {
       if (db) {
-        const bookmarks = db.bookmarks;
+        const bookmarks = db.bookmarks ?? [];
 
         bookmarks.find((bookmark) => bookmark.file_path === runtime.currentPath)
           ? setIsBookMarked(true)

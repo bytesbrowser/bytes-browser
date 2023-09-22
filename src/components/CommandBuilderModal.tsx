@@ -21,15 +21,10 @@ export const CommandBuilderModal = ({ show, setShow }: { show: boolean; setShow:
     setCommandName('');
     setCommands([]);
     setAddingCommand(null);
-  }, []);
+    setDescription('');
+  }, [show]);
 
   const onFinish = () => {
-    setCommandName('');
-    setCommands([]);
-    setAddingCommand(null);
-
-    setShow(false);
-
     runtime.store
       .get<ProfileStore>(`profile-store-${runtime.currentUser}`)
       .then(async (db) => {
@@ -56,6 +51,12 @@ export const CommandBuilderModal = ({ show, setShow }: { show: boolean; setShow:
           toast.success(
             "Command created! You can now use it in the 'Commands' tab, or wait for it to run automatically.",
           );
+
+          setCommandName('');
+          setCommands([]);
+          setAddingCommand(null);
+
+          setShow(false);
         } else {
           const newCommands: ProfileStore['commands'] = [];
 
@@ -78,6 +79,12 @@ export const CommandBuilderModal = ({ show, setShow }: { show: boolean; setShow:
           toast.success(
             "Command created! You can now use it in the 'Commands' tab, or wait for it to run automatically.",
           );
+
+          setCommandName('');
+          setCommands([]);
+          setAddingCommand(null);
+
+          setShow(false);
         }
       })
       .catch((err) => {
@@ -210,8 +217,29 @@ export const CommandBuilderModal = ({ show, setShow }: { show: boolean; setShow:
           >
             <p className="font-bold text-yellow-600 text-sm opacity-80">{commandName.toUpperCase()}:</p>
             {commands.map((command, index) => (
-              <p key={index} className="ml-12 font-mono">
-                {index}: <span className="font-mono opacity-80">{command}</span>
+              <p key={index} className="ml-12 font-mono flex items-center">
+                {index}:{' '}
+                <span className="font-mono opacity-80 flex items-center">
+                  {command}
+                  <button
+                    onClick={() => {
+                      const foundCmd = commands.find((cmd) => cmd === command);
+
+                      if (foundCmd) {
+                        const newCommands = commands.filter((cmd) => cmd !== foundCmd);
+                        setCommands(newCommands);
+                      }
+                    }}
+                    className="ml-4 hover:opacity-50 transition-all mr-2"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24">
+                      <path
+                        fill="red"
+                        d="m8.4 17l3.6-3.6l3.6 3.6l1.4-1.4l-3.6-3.6L17 8.4L15.6 7L12 10.6L8.4 7L7 8.4l3.6 3.6L7 15.6L8.4 17Zm3.6 5q-2.075 0-3.9-.788t-3.175-2.137q-1.35-1.35-2.137-3.175T2 12q0-2.075.788-3.9t2.137-3.175q1.35-1.35 3.175-2.137T12 2q2.075 0 3.9.788t3.175 2.137q1.35 1.35 2.138 3.175T22 12q0 2.075-.788 3.9t-2.137 3.175q-1.35 1.35-3.175 2.138T12 22Z"
+                      />
+                    </svg>
+                  </button>
+                </span>
               </p>
             ))}
             {addingCommand !== null && (
@@ -275,8 +303,15 @@ export const CommandBuilderModal = ({ show, setShow }: { show: boolean; setShow:
               Add a command
             </button>
             <button
-              onClick={onFinish}
+              onClick={() => {
+                if (commands.length < 1) return;
+
+                onFinish();
+              }}
               className="flex items-center ml-12 my-2 px-3 py-2 rounded-md hover:opacity-50 transition-all text-sm bg-green-600"
+              style={{
+                opacity: commands.length < 1 ? 0.5 : 1,
+              }}
             >
               Finish
             </button>
