@@ -1,3 +1,4 @@
+import { invoke } from '@tauri-apps/api/tauri';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useRecoilState } from 'recoil';
@@ -11,6 +12,8 @@ export const Commands = () => {
   const [commands, setCommands] = useState<Command[]>([]);
 
   useEffect(() => {
+    console.log(runtime.commandLogs);
+
     runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then(async (db) => {
       if (db) {
         const commands = (await db.commands) ?? [];
@@ -95,7 +98,19 @@ export const Commands = () => {
                 Delete
               </button>
             </div>
-            <button className="flex items-center justify-center rounded-md px-4 py-2 hover:opacity-80 transition-all text-sm mt-4 w-full bg-green-600">
+            <button
+              onClick={() => {
+                console.log(runtime.commandLogs);
+                invoke('run_command_once', { command: { ...command, mount_point: command.mountPoint } })
+                  .then((res) => {
+                    console.log(res);
+                  })
+                  .catch((err) => {
+                    console.error(err);
+                  });
+              }}
+              className="flex items-center justify-center rounded-md px-4 py-2 hover:opacity-80 transition-all text-sm mt-4 w-full bg-green-600"
+            >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" className="mr-2">
                 <g fill="white">
                   <path d="M2.78 2L2 2.41v12l.78.42l9-6V8l-9-6zM3 13.48V3.35l7.6 5.07L3 13.48z" />

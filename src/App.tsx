@@ -6,7 +6,7 @@ import 'animate.css/animate.min.css';
 import { useEffect, useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import { BrowserRouter } from 'react-router-dom';
-import { useRecoilState } from 'recoil';
+import { useRecoilCallback, useRecoilState } from 'recoil';
 
 import Router from './components/Router';
 import { Theme } from './graphql';
@@ -21,6 +21,15 @@ const App = () => {
   const [runtime, setRuntime] = useRecoilState(runtimeState);
   const [useTitlebar, setUseTitlebar] = useState<boolean>(false);
   const [themeState, setThemeState] = useRecoilState(themeStateRoot);
+  const runtimeNext = useRecoilCallback(
+    ({ snapshot }) =>
+      async () => {
+        const _runtime = await snapshot.getPromise(runtimeState);
+
+        return _runtime;
+      },
+    [],
+  );
 
   useHotkey('CommandOrControl+Shift+Space', (_shortcut) => {
     setRuntime({
@@ -33,9 +42,15 @@ const App = () => {
     setupCommandActions();
 
     checkNotificationPermission();
+
+    return () => {
+      CommandsEmitter.off('change', () => {});
+    };
   }, []);
 
-  const setupCommandActions = () => {
+  const setupCommandActions = async () => {
+    const runtime = await runtimeNext();
+
     runtime.store.get<ProfileStore>(`profile-${runtime.currentUser}`).then(async (db) => {
       if (db) {
         const commands = db.commands;
@@ -62,7 +77,7 @@ const App = () => {
     });
 
     CommandsEmitter.on('change', (command: Command) => {
-      invoke('init_command', { command: command })
+      invoke('init_command', { command: { ...command, mount_point: command.mountPoint } })
         .then((res) => {
           toast.success(`Initialized ${command.name} command.`);
         })
@@ -71,17 +86,13 @@ const App = () => {
         });
     });
 
-    appWindow.listen('command-executed', (msg: Event<CommandRunEvent>) => {
+    appWindow.listen('command-executed', async (msg: Event<CommandRunEvent>) => {
+      const runtime = await runtimeNext();
+
       setRuntime({
         ...runtime,
         commandLogs: [...runtime.commandLogs, msg.payload],
       });
-
-      if (msg.payload.error) {
-        toast.error(msg.payload.command + ' failed to run.');
-      } else {
-        toast.success(msg.payload.command + ' ran successfully.');
-      }
     });
   };
 
