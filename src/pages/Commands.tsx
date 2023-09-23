@@ -1,13 +1,17 @@
 import { invoke } from '@tauri-apps/api/tauri';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import ReactJson from 'react-json-view';
+import ReactModal from 'react-modal';
 import { useRecoilState } from 'recoil';
 
 import { runtimeState } from '../lib/state/runtime.state';
-import { Command, ProfileStore } from '../lib/types';
+import { Command, CommandType, ProfileStore } from '../lib/types';
 
 export const Commands = () => {
   const [runtime] = useRecoilState(runtimeState);
+  const [logModalOpen, setLogModalOpen] = useState<boolean>(false);
+  const [logModalCommand, setLogModalCommand] = useState<Command | null>(null);
 
   const [commands, setCommands] = useState<Command[]>([]);
 
@@ -101,7 +105,14 @@ export const Commands = () => {
             <button
               onClick={() => {
                 console.log(runtime.commandLogs);
-                invoke('run_command_once', { command: { ...command, mount_point: command.mountPoint } })
+                invoke('run_command_once', {
+                  command: {
+                    ...command,
+                    mount_point: command.mountPoint,
+                    command_type: command.command_type.toString(),
+                  },
+                  commandType: command.command_type.toString(),
+                })
                   .then((res) => {
                     console.log(res);
                   })
@@ -123,9 +134,73 @@ export const Commands = () => {
               </svg>
               <p>Run</p>
             </button>
+            <button
+              onClick={() => {
+                setLogModalCommand(command);
+                setLogModalOpen(true);
+              }}
+              className="flex items-center justify-center rounded-md px-4 py-2 hover:opacity-80 transition-all text-sm mt-4 w-full bg-green-600"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" className="mr-2" viewBox="0 0 48 48">
+                <g fill="none" stroke="white" stroke-linejoin="round" stroke-width="4">
+                  <path d="M13 10h28v34H13z" />
+                  <path stroke-linecap="round" d="M35 10V4H8a1 1 0 0 0-1 1v33h6m8-16h12m-12 8h12" />
+                </g>
+              </svg>
+              <p> Logs</p>
+            </button>
           </div>
         ))}
       </div>
+      <ReactModal
+        isOpen={logModalOpen}
+        onRequestClose={() => {
+          setLogModalOpen(false);
+        }}
+        style={{
+          content: {
+            background: 'radial-gradient(circle, rgba(28,27,32,0.9) 0%, rgba(25,25,24,1) 100%)',
+            border: 'none',
+            padding: 0,
+            width: '80%',
+            height: 'min-content',
+            margin: 'auto',
+            borderRadius: '12px',
+          },
+          overlay: {
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          },
+        }}
+      >
+        <div className="p-4">
+          <p className="text-lg">
+            Command Logs for <span className="font-mono text-yellow-500">{logModalCommand?.name}</span>
+          </p>
+          <hr className="my-4 opacity-50" />
+          <ReactJson
+            displayDataTypes={false}
+            collapsed={false}
+            collapseStringsAfterLength={false}
+            enableClipboard={false}
+            displayObjectSize={false}
+            style={{
+              height: '500px',
+              overflow: 'auto',
+              padding: '10px',
+              borderRadius: '8px',
+              whiteSpace: 'pre-wrap',
+            }}
+            theme="monokai"
+            src={runtime.commandLogs
+              .filter((log) => log.command === logModalCommand?.name)
+              .map((log) => ({
+                ...log,
+                stdout: log.stdout ? log.stdout : '',
+                stderr: log.stderr ? log.stderr : '',
+              }))}
+          />
+        </div>
+      </ReactModal>
     </div>
   );
 };

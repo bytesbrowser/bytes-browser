@@ -8,12 +8,24 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  color: var(--primary-text-color);
   font-family: 'Open Sans', sans-serif;
 }
 
 body {
   background-color: var(--primary-bg);
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+a,
+h6 {
+  user-select: none;
+  -webkit-user-select: none;
+  color: var(--primary-text-color);
 }
 
 .titlebar {

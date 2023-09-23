@@ -15,7 +15,7 @@ import { BytesBrowserDarkTheme, BytesBrowserLightTheme } from './lib/constants';
 import CommandsEmitter from './lib/emitters/commands.emitter';
 import { runtimeState } from './lib/state/runtime.state';
 import { themeState as themeStateRoot } from './lib/state/theme.state';
-import { Command, CommandRunEvent, Profile, ProfileStore } from './lib/types';
+import { Command, CommandRunEvent, CommandType, Profile, ProfileStore } from './lib/types';
 
 const App = () => {
   const [runtime, setRuntime] = useRecoilState(runtimeState);
@@ -51,37 +51,53 @@ const App = () => {
   const setupCommandActions = async () => {
     const runtime = await runtimeNext();
 
-    runtime.store.get<ProfileStore>(`profile-${runtime.currentUser}`).then(async (db) => {
-      if (db) {
-        const commands = db.commands;
+    runtime.store
+      .get<ProfileStore>(`profile-store-${runtime.currentUser}`)
+      .then(async (db) => {
+        console.log('Trying to register commands..');
 
-        let successfull = 0;
-        let failed = 0;
+        if (db) {
+          const commands = db.commands;
 
-        await commands.forEach(async (command) => {
-          await invoke('init_command', { command: command })
-            .then((res) => {
-              successfull++;
+          let successfull = 0;
+          let failed = 0;
+
+          console.log('Registering commands...');
+
+          await commands.forEach(async (command) => {
+            await invoke('register_command', {
+              command: { ...command, mount_point: command.mountPoint, command_type: command.command_type.toString() },
+              commandType: command.command_type.toString(),
             })
-            .catch((err) => {
-              failed++;
-            });
-        });
+              .then((res) => {
+                successfull++;
+              })
+              .catch((err) => {
+                failed++;
+              });
+          });
 
-        if (successfull < 1) {
-          toast.error(`Failed to initialize ${failed} commands.`);
-        } else {
-          toast.success(`Initialized ${successfull} commands. ${failed} failed.`);
+          if (successfull < 1) {
+            toast.error(`Failed to initialize ${failed} commands.`);
+          } else {
+            toast.success(`Initialized ${successfull} commands. ${failed} failed.`);
+          }
         }
-      }
-    });
+      })
+      .catch((err) => {
+        console.error(err);
+      });
 
     CommandsEmitter.on('change', (command: Command) => {
-      invoke('init_command', { command: { ...command, mount_point: command.mountPoint } })
+      invoke('register_command', {
+        command: { ...command, mount_point: command.mountPoint, command_type: command.command_type.toString() },
+        commandType: command.command_type.toString(),
+      })
         .then((res) => {
           toast.success(`Initialized ${command.name} command.`);
         })
         .catch((err) => {
+          console.error(err);
           toast.error(`Failed to initialize ${command.name} command.`);
         });
     });
@@ -93,6 +109,8 @@ const App = () => {
         ...runtime,
         commandLogs: [...runtime.commandLogs, msg.payload],
       });
+
+      toast.success("New command logs available. Click 'Commands' in the sidebar to view.");
     });
   };
 

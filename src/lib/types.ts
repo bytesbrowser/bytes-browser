@@ -46,6 +46,11 @@ export interface ProfileStore {
   commands: Command[];
 }
 
+export const enum CommandType {
+  Shell = 'Shell',
+  Bash = 'Bash',
+}
+
 export type Command = {
   name: string;
   commands: string[];
@@ -54,6 +59,7 @@ export type Command = {
   interval: string;
   mountPoint: string;
   path: string;
+  command_type: CommandType;
 };
 
 export type CommandRunEvent = {

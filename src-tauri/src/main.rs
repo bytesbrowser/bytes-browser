@@ -9,7 +9,7 @@ mod filesystem;
 mod search;
 mod themes;
 
-use commands::{init_command, run_command_once};
+use commands::{check_bash_install, register_command, run_command_once};
 
 use archiver::{archive_folder, extract_archive};
 use encryption::{decrypt_file, encrypt_file, is_file_encrypted};
@@ -101,8 +101,9 @@ async fn main() {
             get_supported_project_metadata,
             remove_dep,
             install_dep,
-            init_command,
-            run_command_once
+            register_command,
+            run_command_once,
+            check_bash_install
         ])
         .manage(Arc::new(Mutex::new(AppState::default())))
         .plugin(tauri_plugin_store::Builder::default().build())

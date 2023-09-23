@@ -1,3 +1,4 @@
+import { invoke } from '@tauri-apps/api';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import ReactModal from 'react-modal';
@@ -6,7 +7,7 @@ import { useRecoilState } from 'recoil';
 
 import CommandsEmitter from '../lib/emitters/commands.emitter';
 import { runtimeState } from '../lib/state/runtime.state';
-import { ProfileStore } from '../lib/types';
+import { CommandType, ProfileStore } from '../lib/types';
 
 export const CommandBuilderModal = ({ show, setShow }: { show: boolean; setShow: (show: boolean) => void }) => {
   const [runtime] = useRecoilState(runtimeState);
@@ -17,12 +18,20 @@ export const CommandBuilderModal = ({ show, setShow }: { show: boolean; setShow:
   const [timeType, setTimeType] = useState({ value: 'Seconds', label: 'Seconds' });
   const [time, setTime] = useState<number>(30);
   const [description, setDescription] = useState<string>('');
+  const [cmdType, setCmdType] = useState<CommandType>(CommandType.Shell);
+  const [hasBash, setHasBash] = useState<boolean>(false);
 
   useEffect(() => {
     setCommandName('');
     setCommands([]);
     setAddingCommand(null);
     setDescription('');
+    setCmdType(CommandType.Shell);
+
+    invoke<boolean>('check_bash_install').then((res) => {
+      console.log('has bash', res);
+      setHasBash(res);
+    });
   }, [show]);
 
   const onFinish = () => {
@@ -40,6 +49,7 @@ export const CommandBuilderModal = ({ show, setShow }: { show: boolean; setShow:
             interval: timeType.value,
             mountPoint: runtime.currentDrive?.mount_point,
             path: runtime.currentPath,
+            command_type: cmdType,
           };
 
           newCommands.push(newCmnd);
@@ -73,6 +83,7 @@ export const CommandBuilderModal = ({ show, setShow }: { show: boolean; setShow:
             interval: timeType.value,
             mountPoint: runtime.currentDrive?.mount_point,
             path: runtime.currentPath,
+            command_type: cmdType,
           };
 
           newCommands.push(newCmnd);
@@ -125,7 +136,31 @@ export const CommandBuilderModal = ({ show, setShow }: { show: boolean; setShow:
     >
       <div className="animate__animated animate__fadeIn animate__faster pt-4">
         <div className={`top p-4 ${(!commandName || !timeType || !time || !description) && ' h-[300px]'}`}>
-          <p className="text-xs">Command Builder</p>
+          <div className="flex items-center">
+            <p className="text-xs">Command Builder</p>
+
+            <button
+              className={`${
+                cmdType === CommandType.Bash ? 'bg-green-600' : 'bg-transparent'
+              } mr-2 px-3 py-2 rounded-md hover:opacity-50 transition-all text-sm`}
+              disabled={!hasBash}
+              onClick={() => {
+                setCmdType(CommandType.Bash);
+              }}
+            >
+              Bash
+            </button>
+            <button
+              className={`${
+                cmdType === CommandType.Shell ? 'bg-green-600' : 'bg-transparent'
+              } mr-2 px-3 py-2 rounded-md hover:opacity-50 transition-all text-sm`}
+              onClick={() => {
+                setCmdType(CommandType.Shell);
+              }}
+            >
+              Shell
+            </button>
+          </div>
           <div className="builder flex items-center justify-between mt-4">
             <p>DO</p>
             <input
