@@ -1,7 +1,7 @@
 import { atom } from 'recoil';
 import { Store } from 'tauri-plugin-store-api';
 
-import { Device } from '../types';
+import { CommandRunEvent, Device } from '../types';
 
 export const runtimeState = atom<{
   currentDrive: Device | null;
@@ -16,14 +16,17 @@ export const runtimeState = atom<{
   devices: Device[];
   listStyle: 'GRID' | 'LIST' | 'TREE';
   searchOpen: boolean;
+  commandBuilderOpen: boolean;
   currentDriveName?: string;
   isInRecycleBin: boolean;
   showHiddenFiles: boolean;
+  commandLogs: CommandRunEvent[];
 }>({
   key: 'runtime_state',
   default: {
     currentDrive: null,
     readVolumes: false,
+    commandBuilderOpen: false,
     readTags: false,
     readBookmarks: false,
     store: new Store('.settings.dat'),
@@ -37,5 +40,6 @@ export const runtimeState = atom<{
     currentDriveName: undefined,
     isInRecycleBin: false,
     showHiddenFiles: false,
+    commandLogs: [],
   },
 });

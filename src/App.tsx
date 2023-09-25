@@ -1,24 +1,35 @@
 import { invoke, os } from '@tauri-apps/api';
+import { Event } from '@tauri-apps/api/event';
 import { isPermissionGranted, requestPermission } from '@tauri-apps/api/notification';
 import { appWindow } from '@tauri-apps/api/window';
 import 'animate.css/animate.min.css';
 import { useEffect, useState } from 'react';
-import { Toaster } from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 import { BrowserRouter } from 'react-router-dom';
-import { useRecoilState } from 'recoil';
+import { useRecoilCallback, useRecoilState } from 'recoil';
 
 import Router from './components/Router';
 import { Theme } from './graphql';
 import { useHotkey } from './lib/commands';
 import { BytesBrowserDarkTheme, BytesBrowserLightTheme } from './lib/constants';
+import CommandsEmitter from './lib/emitters/commands.emitter';
 import { runtimeState } from './lib/state/runtime.state';
 import { themeState as themeStateRoot } from './lib/state/theme.state';
-import { Profile, ProfileStore } from './lib/types';
+import { Command, CommandRunEvent, CommandType, Profile, ProfileStore } from './lib/types';
 
 const App = () => {
   const [runtime, setRuntime] = useRecoilState(runtimeState);
   const [useTitlebar, setUseTitlebar] = useState<boolean>(false);
   const [themeState, setThemeState] = useRecoilState(themeStateRoot);
+  const runtimeNext = useRecoilCallback(
+    ({ snapshot }) =>
+      async () => {
+        const _runtime = await snapshot.getPromise(runtimeState);
+
+        return _runtime;
+      },
+    [],
+  );
 
   useHotkey('CommandOrControl+Shift+Space', (_shortcut) => {
     setRuntime({
@@ -28,13 +39,84 @@ const App = () => {
   });
 
   useEffect(() => {
+    setupCommandActions();
+
     checkNotificationPermission();
+
+    return () => {
+      CommandsEmitter.off('change', () => {});
+    };
   }, []);
+
+  const setupCommandActions = async () => {
+    const runtime = await runtimeNext();
+
+    runtime.store
+      .get<ProfileStore>(`profile-store-${runtime.currentUser}`)
+      .then(async (db) => {
+        console.log('Trying to register commands..');
+
+        if (db) {
+          const commands = db.commands;
+
+          let successfull = 0;
+          let failed = 0;
+
+          console.log('Registering commands...');
+
+          commands.forEach(async (command) => {
+            console.log('Registering command', command);
+            await invoke('register_command', {
+              command: { ...command, mount_point: command.mountPoint, command_type: command.command_type.toString() },
+              commandType: command.command_type.toString(),
+            })
+              .then((res) => {
+                successfull++;
+              })
+              .catch((err) => {
+                failed++;
+              });
+          });
+
+          console.log(successfull, failed);
+
+          if (successfull < 1 && failed > 0) {
+            toast.error(`Failed to initialize ${failed} commands.`);
+          } else {
+            toast.success(`Initialized ${successfull} commands. ${failed} failed.`);
+          }
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+
+    CommandsEmitter.on('change', (command: Command) => {
+      invoke('register_command', {
+        command: { ...command, mount_point: command.mountPoint, command_type: command.command_type.toString() },
+        commandType: command.command_type.toString(),
+      })
+        .then((res) => {
+          toast.success(`Initialized ${command.name} command.`);
+        })
+        .catch((err) => {
+          console.error(err);
+          toast.error(`Failed to initialize ${command.name} command.`);
+        });
+    });
+
+    appWindow.listen('command-executed', async (msg: Event<CommandRunEvent>) => {
+      const runtime = await runtimeNext();
+
+      setRuntime({
+        ...runtime,
+        commandLogs: [...runtime.commandLogs, msg.payload],
+      });
+    });
+  };
 
   const checkNotificationPermission = async () => {
     let permissionGranted = await isPermissionGranted();
-
-    console.log(permissionGranted);
 
     if (!permissionGranted) {
       const permission = await requestPermission();

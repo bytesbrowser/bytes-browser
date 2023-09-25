@@ -1,6 +1,6 @@
 import { Theme } from '../graphql';
 
-export const settingsSidebarConfig = ['My Account', 'Appearance', 'Profiles', 'About', 'Performance', "What's New"];
+export const settingsSidebarConfig = ['My Account', 'Appearance', 'Profiles', 'About', 'General', "What's New"];
 
 export const settingsContentItems = [
   {
@@ -20,8 +20,8 @@ export const settingsContentItems = [
     desc: 'Thank you for using Bytes Browser. Below are some details about your installation.',
   },
   {
-    title: 'Performance',
-    desc: 'Manage your performance settings.',
+    title: 'General',
+    desc: 'Manage your general settings.',
   },
   {
     title: "What's New",

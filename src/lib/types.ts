@@ -43,7 +43,46 @@ export interface ProfileStore {
   themePreference: string;
   hiddenFolders: HiddenFolderDoc[];
   pinLock?: string;
+  commands: Command[];
+  settings: ProfileSettings;
 }
+
+export interface ProfileSettings {
+  showHiddenFilesByDefault?: boolean;
+  defaultCommandType?: CommandType;
+  sendCrashReports?: boolean;
+}
+
+export const enum CommandType {
+  Shell = 'Shell',
+  Bash = 'Bash',
+}
+
+export type Command = {
+  name: string;
+  commands: string[];
+  description: string;
+  time: number;
+  interval: string;
+  mountPoint: string;
+  path: string;
+  command_type: CommandType;
+};
+
+export type CommandRunEvent = {
+  command: string;
+  error: boolean;
+  stdout: string | null;
+  stderr: string | null;
+};
+
+// #[derive(Debug, Serialize, Deserialize, Clone)]
+// pub struct CommandRunEvent {
+//     command: String,
+//     error: bool,
+//     stdout: Option<String>,
+//     stderr: Option<String>,
+// }
 
 export interface Profile {
   name: string;

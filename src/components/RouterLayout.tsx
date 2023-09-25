@@ -4,7 +4,7 @@ import { isPermissionGranted, requestPermission, sendNotification } from '@tauri
 import { appWindow } from '@tauri-apps/api/window';
 import { useEffect, useState } from 'react';
 import { Triangle } from 'react-loader-spinner';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { Tooltip } from 'react-tooltip';
 import { useRecoilState } from 'recoil';
 
@@ -14,6 +14,7 @@ import TagsEmitter from '../lib/emitters/tags.emitter';
 import useTimer from '../lib/hooks/useTimer';
 import { runtimeState } from '../lib/state/runtime.state';
 import { BookmarkDoc, Device as DeviceInterface, Profile, ProfileStore, TagDoc } from '../lib/types';
+import { CommandBuilderModal } from './CommandBuilderModal';
 import { Device } from './Device';
 import { SearchModal } from './SearchModal';
 import { SidebarBookmarks } from './SidebarBookmarks';
@@ -137,17 +138,19 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
 
       if (!permissionGranted) {
         const permission = await requestPermission();
-        sendNotification({
-          title: 'Bytes Browser',
-          body: 'Bytes Browser is ready to use and has finished caching volumes.',
-          icon: '/byteslogo.svg',
-        });
-        permissionGranted = permission === 'granted';
+
+        if (permission) {
+          sendNotification({
+            title: 'Bytes Browser',
+            body: 'Bytes Browser is ready to use and has finished caching volumes.',
+            icon: '/bytes_logo.png',
+          });
+        }
       } else {
         sendNotification({
           title: 'Bytes Browser',
           body: 'Bytes Browser is ready to use and has finished caching volumes.',
-          icon: '/byteslogo.svg',
+          icon: '/bytes_logo.png',
         });
       }
 
@@ -183,6 +186,15 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <>
+      <CommandBuilderModal
+        show={runtime.commandBuilderOpen}
+        setShow={(show) =>
+          setRuntime({
+            ...runtime,
+            commandBuilderOpen: show,
+          })
+        }
+      />
       <SearchModal
         show={runtime.searchOpen}
         setShow={(show) =>
@@ -281,6 +293,25 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
               </div>
               <SidebarTags tags={tags} loading={runtime.readTags} />
               <SidebarBookmarks bookmarks={bookmarks} loading={runtime.readBookmarks} />
+              <Link
+                to="/commands"
+                className="mt-12 flex items-center cursor-pointer hover:scale-105 transition-all"
+                style={{
+                  opacity: 'var(--light-text-opacity)',
+                }}
+              >
+                <svg className="mr-2" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                  <path
+                    fill="var(--icon-color)"
+                    stroke="white"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.5"
+                    d="M21 3.6v16.8a.6.6 0 0 1-.6.6H3.6a.6.6 0 0 1-.6-.6V3.6a.6.6 0 0 1 .6-.6h16.8a.6.6 0 0 1 .6.6ZM10 16l4-8"
+                  />
+                </svg>
+                Commands
+              </Link>
             </div>
             {profile && <SidebarBottom profile={profile} />}
           </div>

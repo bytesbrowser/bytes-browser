@@ -214,7 +214,7 @@ export const Settings = () => {
             {settingsContentItems[settingsIndex].title === 'My Account' && <SettingsAccount />}
             {settingsContentItems[settingsIndex].title === 'Profiles' && <SettingsProfiles />}
             {settingsContentItems[settingsIndex].title === 'About' && <SettingsAbout />}
-            {settingsContentItems[settingsIndex].title === 'Performance' && <SettingsPerformance />}
+            {settingsContentItems[settingsIndex].title === 'General' && <SettingsPerformance />}
             {settingsContentItems[settingsIndex].title === "What's New" && <SettingsNew />}
             {settingsContentItems[settingsIndex].title === 'Appearance' && (
               <>
@@ -365,7 +365,7 @@ export const Settings = () => {
                 </div>
                 <div className="mt-8 pb-20">
                   <p className="mb-4">Marketplace</p>
-                  <a href="https://bytesbrowser.com" className="underline opacity-80 text-sm">
+                  <a href="https://bytesbrowser.com" target="_blank" className="underline opacity-80 text-sm">
                     Create your own theme
                   </a>
                   <div className="flex flex-wrap">
