@@ -140,3 +140,13 @@ pub fn check_bash_install() -> bool {
         Err(_) => false,
     }
 }
+
+#[tauri::command]
+pub fn check_npm_install() -> bool {
+    let output = ProcessCommand::new("npm").arg("-v").output();
+
+    match output {
+        Ok(_) => true,
+        Err(_) => false,
+    }
+}

@@ -51,6 +51,7 @@ export const ContextMenu = () => {
   const [searchVal, setSearchVal] = useState('');
   const [installing, setInstalling] = useState(false);
   const [hasBash, setHasBash] = useState<boolean>(false);
+  const [hasNPM, setHasNPM] = useState<boolean>(false);
 
   const onDelete = async () => {
     if (currentContext.currentItem) {
@@ -214,6 +215,10 @@ export const ContextMenu = () => {
 
     invoke<boolean>('check_bash_install').then((res) => {
       setHasBash(res);
+    });
+
+    invoke<boolean>('check_npm_install').then((res) => {
+      setHasNPM(res);
     });
 
     setPackageResults(null);
@@ -1251,7 +1256,7 @@ export const ContextMenu = () => {
         </Submenu>
         {curProject && (
           <Item
-            disabled={!hasBash}
+            disabled={!hasBash || !hasNPM}
             id="select-project"
             onClick={() => {
               setProjectManagerItemTemp(currentContext.currentItem);
