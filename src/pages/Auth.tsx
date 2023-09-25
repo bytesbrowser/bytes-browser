@@ -44,6 +44,8 @@ export const Auth = () => {
         });
       }
 
+      console.log(profiles);
+
       if (profiles && profiles.length > 0) {
         getSubStatus({
           context: {

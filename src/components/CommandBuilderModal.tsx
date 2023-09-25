@@ -18,7 +18,7 @@ export const CommandBuilderModal = ({ show, setShow }: { show: boolean; setShow:
   const [timeType, setTimeType] = useState({ value: 'Seconds', label: 'Seconds' });
   const [time, setTime] = useState<number>(30);
   const [description, setDescription] = useState<string>('');
-  const [cmdType, setCmdType] = useState<CommandType>(CommandType.Shell);
+  const [cmdType, setCmdType] = useState<CommandType>(CommandType.Bash);
   const [hasBash, setHasBash] = useState<boolean>(false);
 
   useEffect(() => {
@@ -26,7 +26,7 @@ export const CommandBuilderModal = ({ show, setShow }: { show: boolean; setShow:
     setCommands([]);
     setAddingCommand(null);
     setDescription('');
-    setCmdType(CommandType.Shell);
+    setCmdType(CommandType.Bash);
 
     invoke<boolean>('check_bash_install').then((res) => {
       setHasBash(res);
@@ -138,7 +138,7 @@ export const CommandBuilderModal = ({ show, setShow }: { show: boolean; setShow:
           <div className="flex items-center flex-col">
             <p className="text-xs mb-4">Command Builder</p>
             <div className="flex items-center">
-              <button
+              {/* <button
                 className={`${
                   cmdType === CommandType.Bash ? 'bg-green-600' : 'bg-gray-700'
                 } mr-2 px-3 py-2 rounded-md hover:opacity-50 transition-all text-sm`}
@@ -158,7 +158,7 @@ export const CommandBuilderModal = ({ show, setShow }: { show: boolean; setShow:
                 }}
               >
                 Shell
-              </button>
+              </button> */}
             </div>
           </div>
           <div className="builder flex items-center justify-between mt-4">

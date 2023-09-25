@@ -25,7 +25,7 @@ export const runtimeState = atom<{
   key: 'runtime_state',
   default: {
     currentDrive: null,
-    readVolumes: false,
+    readVolumes: true,
     commandBuilderOpen: false,
     readTags: false,
     readBookmarks: false,

@@ -77,7 +77,7 @@ export const Login = ({
   return (
     <div className="animate__animated animate__fadeIn flex flex-col justify-between items-center w-screen h-full bg-content mt-8 pb-4">
       <div>
-        <img src="/byteslogo.svg" className="w-[120px]" />
+        <img src="/byteslogo.svg" className="w-[120px] mt-8" />
       </div>
       <form onSubmit={onLogin} className="flex flex-col w-[500px]">
         <h1 className="text-2xl">Welcome Back</h1>
@@ -109,9 +109,9 @@ export const Login = ({
 
         <div className="flex justify-between items-center mb-4 mt-8">
           <p className="opacity-50 text-md">Password</p>
-          <p onClick={() => setMethod('FORGOT_PASSWORD')} className="transition-all cursor-pointer hover:opacity-50">
+          {/* <p onClick={() => setMethod('FORGOT_PASSWORD')} className="transition-all cursor-pointer hover:opacity-50">
             Forgot Password?
-          </p>
+          </p> */}
         </div>
         <input
           style={{
