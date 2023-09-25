@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import Select from 'react-select';
 import { useRecoilState } from 'recoil';
 
+import { NoInternetFeature } from '../components/NoInternetFeature';
 import { SettingsAbout } from '../components/settings/SettingsAbout';
 import { SettingsAccount } from '../components/settings/SettingsAccount';
 import { SettingsNew } from '../components/settings/SettingsNew';
@@ -368,52 +369,54 @@ export const Settings = () => {
                   <a href="https://bytesbrowser.com" target="_blank" className="underline opacity-80 text-sm">
                     Create your own theme
                   </a>
-                  <div className="flex flex-wrap">
-                    {data?.getThemes
-                      .filter((newTheme) => {
-                        if (themeState.themes.find((theme) => theme.name === newTheme.name)) {
-                          return false;
-                        } else {
-                          return true;
-                        }
-                      })
-                      .map((theme, key) => (
-                        <div
-                          key={key}
-                          className="mt-8 rounded-lg p-4 w-[40%] mr-4 shadow-lg flex flex-col justify-between"
-                          style={{
-                            backgroundColor: 'var(--sidebar-bg)',
-                          }}
-                        >
-                          <img
-                            src={
-                              theme.icon ??
-                              'https://media.istockphoto.com/id/1147544807/vector/thumbnail-image-vector-graphic.jpg?s=612x612&w=0&k=20&c=rnCKVbdxqkjlcs3xH87-9gocETqpspHFXu5dIGB4wuM='
-                            }
-                            className="w-20 rounded-md"
-                          />
-                          <p className="mt-4 font-medium">{theme.name}</p>
-                          <p className="mt-4 opacity-80 text-xs">
-                            Created By {theme.created_by_alias} <Moment fromNow date={theme.created_at} />
-                          </p>
-                          <p className="mt-4 opacity-80 text-xs">V{theme.version}</p>
-                          <p className="mt-4">{theme.description ?? 'No Description.'}</p>
-                          <p
-                            onClick={() => onInstall(theme)}
+                  <NoInternetFeature>
+                    <div className="flex flex-wrap">
+                      {data?.getThemes
+                        .filter((newTheme) => {
+                          if (themeState.themes.find((theme) => theme.name === newTheme.name)) {
+                            return false;
+                          } else {
+                            return true;
+                          }
+                        })
+                        .map((theme, key) => (
+                          <div
+                            key={key}
+                            className="mt-8 rounded-lg p-4 w-[40%] mr-4 shadow-lg flex flex-col justify-between"
                             style={{
-                              color: 'var(--sidebar-inset-text-color)',
-                              opacity: theme.id === '-1' ? '50%' : '100%',
+                              backgroundColor: 'var(--sidebar-bg)',
                             }}
-                            className="bg-success p-2 text-sm w-full rounded mt-4 text-center transition-all hover:opacity-50 cursor-pointer"
                           >
-                            Install
-                          </p>
-                          {theme.id === '-1' && (
-                            <p className="text-sm mt-4">Cannot remove from device. This is a default theme.</p>
-                          )}
-                        </div>
-                      ))}
-                  </div>
+                            <img
+                              src={
+                                theme.icon ??
+                                'https://media.istockphoto.com/id/1147544807/vector/thumbnail-image-vector-graphic.jpg?s=612x612&w=0&k=20&c=rnCKVbdxqkjlcs3xH87-9gocETqpspHFXu5dIGB4wuM='
+                              }
+                              className="w-20 rounded-md"
+                            />
+                            <p className="mt-4 font-medium">{theme.name}</p>
+                            <p className="mt-4 opacity-80 text-xs">
+                              Created By {theme.created_by_alias} <Moment fromNow date={theme.created_at} />
+                            </p>
+                            <p className="mt-4 opacity-80 text-xs">V{theme.version}</p>
+                            <p className="mt-4">{theme.description ?? 'No Description.'}</p>
+                            <p
+                              onClick={() => onInstall(theme)}
+                              style={{
+                                color: 'var(--sidebar-inset-text-color)',
+                                opacity: theme.id === '-1' ? '50%' : '100%',
+                              }}
+                              className="bg-success p-2 text-sm w-full rounded mt-4 text-center transition-all hover:opacity-50 cursor-pointer"
+                            >
+                              Install
+                            </p>
+                            {theme.id === '-1' && (
+                              <p className="text-sm mt-4">Cannot remove from device. This is a default theme.</p>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                  </NoInternetFeature>
                 </div>
               </>
             )}

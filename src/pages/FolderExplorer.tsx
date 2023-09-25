@@ -527,7 +527,7 @@ export const FolderExplorer = () => {
               </div>
             </div>
           </div>
-          <div className="page-options flex items-center min-w-[150px]">
+          <div className="page-options flex items-center">
             <svg
               onClick={(e) => {
                 handlePageContext(e);
@@ -546,7 +546,7 @@ export const FolderExplorer = () => {
                 fill="var(--icon-color)"
               />
             </svg>
-            <div className="result-layout-options bg-sidebar flex items-center rounded-md mr-4">
+            {/* <div className="result-layout-options bg-sidebar flex items-center rounded-md mr-4">
               <svg
                 width="16"
                 height="16"
@@ -608,7 +608,7 @@ export const FolderExplorer = () => {
                   </clipPath>
                 </defs>
               </svg>
-            </div>
+            </div> */}
           </div>
         </div>
         <div className="explorer-contents">
