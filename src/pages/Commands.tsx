@@ -38,7 +38,7 @@ export const Commands = () => {
           </p>
         </div>
       </div>
-      <div className="results grid grid-cols-3 gap-0">
+      <div className="results grid grid-cols-4 gap-0">
         {commands.map((command, key) => (
           <div
             className="p-4 rounded-md shadow-lg w-[300px] cursor-pointer border border-white border-opacity-10"
@@ -67,14 +67,15 @@ export const Commands = () => {
             </p>
             <p className="text-xs leading-loose mt-4">{command.description}</p>
             <div className="actions mt-4 flex items-center justify-between">
-              <button
+              {/* <button
+                disabled
                 className="rounded-md px-4 py-2 hover:opacity-80 transition-all text-sm w-2/4"
                 style={{
                   backgroundColor: 'var(--primary-bg)',
                 }}
               >
                 Edit
-              </button>
+              </button> */}
               <button
                 onClick={() => {
                   runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then(async (db) => {
@@ -97,7 +98,7 @@ export const Commands = () => {
                     }
                   });
                 }}
-                className="ml-2 rounded-md px-4 py-2 hover:opacity-80 transition-all bg-error text-sm w-2/4"
+                className="rounded-md px-4 py-2 hover:opacity-80 transition-all bg-error text-sm w-full"
               >
                 Delete
               </button>

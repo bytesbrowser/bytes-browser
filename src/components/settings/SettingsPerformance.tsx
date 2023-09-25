@@ -1,10 +1,84 @@
+import { useState } from 'react';
+import Select from 'react-select';
 import Toggle from 'react-toggle';
 
 export const SettingsPerformance = () => {
+  const [commandBuilderType, setCommandBuilderType] = useState<{ value: string; label: string } | null>({
+    value: 'Shell',
+    label: 'Default Shell',
+  });
+
   return (
     <div className="flex flex-col">
       <div
         className="item flex items-center justify-between max-w-[650px] pb-4 border-b border-opacity-10 mt-4"
+        style={{
+          borderColor: 'var(--sidebar-border-color)',
+        }}
+      >
+        <p className="text-sm">Show hidden files by default</p>
+        <Toggle defaultChecked={true} icons={false} />
+      </div>
+      <div
+        className="item flex items-center justify-between max-w-[650px] pb-4 border-b border-opacity-10 mt-12"
+        style={{
+          borderColor: 'var(--sidebar-border-color)',
+        }}
+      >
+        <p className="text-sm">Default Command Builder</p>
+        <Select
+          value={commandBuilderType}
+          styles={{
+            option: (styles) => ({
+              ...styles,
+              color: '#FFFFFF',
+              backgroundColor: '#1C1B20',
+              '&:hover': {
+                backgroundColor: '#27272D',
+              },
+              fontSize: '12px',
+            }),
+            container: (styles) => ({
+              ...styles,
+              width: '200px',
+              backgroundColor: '#1C1B20',
+              fontSize: '12px',
+            }),
+            control: (styles) => ({
+              ...styles,
+              backgroundColor: '#1C1B20',
+              borderColor: '#27272D',
+            }),
+            singleValue: (styles) => ({
+              ...styles,
+              color: '#FFFFFF',
+            }),
+            menu: (styles) => ({
+              ...styles,
+              backgroundColor: '#1C1B20',
+            }),
+          }}
+          options={[
+            { value: 'Bash', label: 'Bash' },
+            { value: 'Shell', label: 'Default Shell' },
+          ]}
+          onChange={(e) => {
+            setCommandBuilderType(e);
+          }}
+        />
+      </div>
+      <div
+        className="item flex items-center justify-between max-w-[650px] pb-4 border-b border-opacity-10 mt-12"
+        style={{
+          borderColor: 'var(--sidebar-border-color)',
+        }}
+      >
+        <p className="text-sm">Send Crash Reports</p>
+        <Toggle defaultChecked={true} icons={false} />
+      </div>
+
+      <div
+        className="item flex items-center justify-between max-w-[650px] pb-4 border-b border-opacity-10 mt-12"
         style={{
           borderColor: 'var(--sidebar-border-color)',
         }}

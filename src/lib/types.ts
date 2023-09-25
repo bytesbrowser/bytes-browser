@@ -44,6 +44,13 @@ export interface ProfileStore {
   hiddenFolders: HiddenFolderDoc[];
   pinLock?: string;
   commands: Command[];
+  settings: ProfileSettings;
+}
+
+export interface ProfileSettings {
+  showHiddenFilesByDefault?: boolean;
+  defaultCommandType?: CommandType;
+  sendCrashReports?: boolean;
 }
 
 export const enum CommandType {

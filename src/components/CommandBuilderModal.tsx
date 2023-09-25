@@ -29,7 +29,6 @@ export const CommandBuilderModal = ({ show, setShow }: { show: boolean; setShow:
     setCmdType(CommandType.Shell);
 
     invoke<boolean>('check_bash_install').then((res) => {
-      console.log('has bash', res);
       setHasBash(res);
     });
   }, [show]);
@@ -135,31 +134,32 @@ export const CommandBuilderModal = ({ show, setShow }: { show: boolean; setShow:
       }}
     >
       <div className="animate__animated animate__fadeIn animate__faster pt-4">
-        <div className={`top p-4 ${(!commandName || !timeType || !time || !description) && ' h-[300px]'}`}>
-          <div className="flex items-center">
-            <p className="text-xs">Command Builder</p>
-
-            <button
-              className={`${
-                cmdType === CommandType.Bash ? 'bg-green-600' : 'bg-transparent'
-              } mr-2 px-3 py-2 rounded-md hover:opacity-50 transition-all text-sm`}
-              disabled={!hasBash}
-              onClick={() => {
-                setCmdType(CommandType.Bash);
-              }}
-            >
-              Bash
-            </button>
-            <button
-              className={`${
-                cmdType === CommandType.Shell ? 'bg-green-600' : 'bg-transparent'
-              } mr-2 px-3 py-2 rounded-md hover:opacity-50 transition-all text-sm`}
-              onClick={() => {
-                setCmdType(CommandType.Shell);
-              }}
-            >
-              Shell
-            </button>
+        <div className={`top p-4 ${(!commandName || !timeType || !time || !description) && ' h-[350px]'}`}>
+          <div className="flex items-center flex-col">
+            <p className="text-xs mb-4">Command Builder</p>
+            <div className="flex items-center">
+              <button
+                className={`${
+                  cmdType === CommandType.Bash ? 'bg-green-600' : 'bg-gray-700'
+                } mr-2 px-3 py-2 rounded-md hover:opacity-50 transition-all text-sm`}
+                disabled={!hasBash}
+                onClick={() => {
+                  setCmdType(CommandType.Bash);
+                }}
+              >
+                Bash
+              </button>
+              <button
+                className={`${
+                  cmdType === CommandType.Shell ? 'bg-green-600' : 'bg-gray-700'
+                } mr-2 px-3 py-2 rounded-md hover:opacity-50 transition-all text-sm`}
+                onClick={() => {
+                  setCmdType(CommandType.Shell);
+                }}
+              >
+                Shell
+              </button>
+            </div>
           </div>
           <div className="builder flex items-center justify-between mt-4">
             <p>DO</p>

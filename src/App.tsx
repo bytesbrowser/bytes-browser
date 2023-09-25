@@ -64,7 +64,8 @@ const App = () => {
 
           console.log('Registering commands...');
 
-          await commands.forEach(async (command) => {
+          commands.forEach(async (command) => {
+            console.log('Registering command', command);
             await invoke('register_command', {
               command: { ...command, mount_point: command.mountPoint, command_type: command.command_type.toString() },
               commandType: command.command_type.toString(),
@@ -77,7 +78,9 @@ const App = () => {
               });
           });
 
-          if (successfull < 1) {
+          console.log(successfull, failed);
+
+          if (successfull < 1 && failed > 0) {
             toast.error(`Failed to initialize ${failed} commands.`);
           } else {
             toast.success(`Initialized ${successfull} commands. ${failed} failed.`);
@@ -109,8 +112,6 @@ const App = () => {
         ...runtime,
         commandLogs: [...runtime.commandLogs, msg.payload],
       });
-
-      toast.success("New command logs available. Click 'Commands' in the sidebar to view.");
     });
   };
 
