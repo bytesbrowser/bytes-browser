@@ -57,7 +57,7 @@ const App = () => {
         console.log('Trying to register commands..');
 
         if (db) {
-          const commands = db.commands;
+          const commands = db.commands ?? [];
 
           let successfull = 0;
           let failed = 0;

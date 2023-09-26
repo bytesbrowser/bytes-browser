@@ -216,10 +216,12 @@ export const ContextMenu = () => {
 
     invoke<boolean>('check_bash_install').then((res) => {
       setHasBash(res);
-    });
 
-    invoke<boolean>('check_npm_install').then((res) => {
-      setHasNPM(res);
+      if (res) {
+        invoke<boolean>('check_npm_install').then((res) => {
+          setHasNPM(res);
+        });
+      }
     });
 
     invoke<boolean>('check_git_install').then((res) => {

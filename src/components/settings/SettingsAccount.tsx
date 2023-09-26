@@ -227,6 +227,19 @@ export const SettingsAccount = () => {
   };
 
   return (
+    <div
+      className="rounded-md p-4 justify-center items-center flex flex-col animate__animated animate__fadeIn"
+      style={{
+        backgroundColor: 'var(--sidebar-inset-bg)',
+      }}
+    >
+      <div className="flex items-center">
+        <p className="text-white ml-2">This feature is still being developed. Please check again at a later update.</p>
+      </div>
+    </div>
+  );
+
+  return (
     <form onSubmit={onSubmit} className="flex flex-col">
       {profile?.created_at && (
         <p
@@ -243,7 +256,7 @@ export const SettingsAccount = () => {
         {avatarPreview ? (
           <img
             data-tooltip-id="avatar-tooltip"
-            src={avatarPreview}
+            src={avatarPreview ?? ''}
             className="w-16 h-1w-16 rounded-full cursor-pointer transition-all hover:opacity-50 mb-8"
           />
         ) : (

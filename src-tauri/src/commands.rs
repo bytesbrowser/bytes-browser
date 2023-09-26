@@ -143,10 +143,17 @@ pub fn check_bash_install() -> bool {
 
 #[tauri::command]
 pub fn check_npm_install() -> bool {
-    let output = ProcessCommand::new("npm").arg("-v").output();
+    let output = ProcessCommand::new("bash").arg("-c").arg("npm -v").output();
 
     match output {
-        Ok(_) => true,
+        Ok(output) => {
+            if !output.stdout.is_empty() {
+                true
+            } else {
+                eprintln!("{}", String::from_utf8_lossy(&output.stderr));
+                false
+            }
+        }
         Err(_) => false,
     }
 }

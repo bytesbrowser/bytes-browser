@@ -39,31 +39,31 @@ export const SearchModal = ({ show, setShow }: { show: boolean; setShow: (show: 
             setRecentSearches(db.recentSearches);
           }
         } else {
-          const newDb = {
-            bookmarks: [],
-            tags: [],
-            recentSearches: [],
-          };
-
-          runtime.store?.set(`profile-store-${runtime.currentUser}`, newDb).then(() => {
-            setRecentSearches(newDb.recentSearches);
-          });
+          setRecentSearches([]);
         }
       });
     }
   }, [show]);
 
   const updateRecentSearches = (search: string) => {
+    console.log(search);
+
     if (runtime.store) {
-      runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then((db) => {
-        if (db) {
+      runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then(async (db) => {
+        if (db && db.recentSearches) {
           if (db.recentSearches.includes(search)) {
             return;
           }
 
           db.recentSearches = [...db.recentSearches, search];
           setRecentSearches(db.recentSearches);
-          runtime.store?.set(`profile-store-${runtime.currentUser}`, db);
+          await runtime.store?.set(`profile-store-${runtime.currentUser}`, db);
+
+          await runtime.store.save();
+        } else {
+          setRecentSearches([search]);
+          await runtime.store?.set(`profile-store-${runtime.currentUser}`, { recentSearches: [search] });
+          await runtime.store.save();
         }
       });
     }

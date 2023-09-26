@@ -44,7 +44,7 @@ export const PageContextMenu = ({
           return;
         }
 
-        let bookmarks = [...db.bookmarks];
+        let bookmarks = db.bookmarks ?? [];
 
         const index = bookmarks.findIndex((bookmark) => bookmark.file_path === runtime.currentPath);
 

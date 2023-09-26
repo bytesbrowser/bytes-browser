@@ -1,4 +1,5 @@
 import { Dispatch, FormEvent, SetStateAction, useEffect, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import { LineWave } from 'react-loader-spinner';
 import { Tooltip } from 'react-tooltip';
@@ -14,13 +15,14 @@ export const Register = ({
   setMethod: Dispatch<SetStateAction<'LOGIN' | 'REGISTER' | 'FORGOT_PASSWORD'>>;
   onTokenReceived: (token: string) => Promise<void>;
 }) => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
+
   const [version, setVersion] = useState('');
-  const [form, setForm] = useState({
-    email: { value: '', valid: true },
-    password: { value: '', valid: true },
-    fullName: { value: '', valid: true },
-    avatar: { value: '', valid: true },
-  });
+
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
 
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -31,24 +33,24 @@ export const Register = ({
     getVersionString().then((v) => setVersion(v));
   }, []);
 
-  const onRegister = (e: FormEvent) => {
-    e.preventDefault();
-
-    if (!form.email.value || !form.password.value) {
+  const onRegister = (handler: any) => {
+    if (!handler['fullName'] || !handler['email'] || !handler['password']) {
+      toast.error('Please fill all the fields.');
       return;
     }
 
-    if (!is_email(form.email.value) || form.password.value.length < 5) {
+    if (errors['fullName'] || errors['email'] || errors['password']) {
+      toast.error('Please fill all the fields.');
       return;
     }
 
     registerMutation({
       variables: {
         params: {
-          email: form.email.value,
-          password: form.password.value,
-          fullName: form.fullName.value,
-          avatar: form.avatar.value ? form.avatar.value : undefined,
+          email: handler['email'],
+          password: handler['password'],
+          fullName: handler['fullName'],
+          avatar: avatarPreview ? avatarPreview : undefined,
         },
       },
     }).then((res) => {
@@ -58,31 +60,6 @@ export const Register = ({
     });
   };
 
-  useEffect(() => {
-    let emailValid = is_email(form.email.value);
-    let passwordValid = form.password.value.length >= 5;
-
-    if (form.email.value.length < 1) {
-      emailValid = true;
-    }
-
-    if (form.password.value.length < 1) {
-      passwordValid = true;
-    }
-
-    setForm({
-      ...form,
-      email: {
-        ...form.email,
-        valid: emailValid,
-      },
-      password: {
-        ...form.password,
-        valid: passwordValid,
-      },
-    });
-  }, [form.email.value, form.password.value]);
-
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files && e.target.files[0];
 
@@ -91,13 +68,6 @@ export const Register = ({
 
       reader.onloadend = () => {
         setAvatarPreview(reader.result as string);
-        setForm({
-          ...form,
-          avatar: {
-            ...form.avatar,
-            value: reader.result as string,
-          },
-        });
       };
 
       reader.readAsDataURL(file);
@@ -114,12 +84,14 @@ export const Register = ({
     }
   }, [registerMutationResult.error]);
 
+  console.log(errors);
+
   return (
-    <div className="animate__animated animate__fadeIn flex flex-col justify-between items-center w-screen h-full mt-8 bg-content pb-4">
+    <div className="animate__animated animate__fadeIn flex flex-col justify-between items-center w-screen h-full bg-content mt-8 pb-4">
       <div>
-        <img src="/byteslogo.svg" className="w-[120px]" />
+        <img src="/byteslogo.svg" className="w-[120px] mt-8" />
       </div>
-      <form onSubmit={onRegister} className="flex flex-col w-[500px]">
+      <form onSubmit={handleSubmit(onRegister)} className="flex flex-col w-[500px]">
         <h1 className="text-2xl">Get Started</h1>
         <p className="text-sm mt-4 mb-6 opacity-70">Create a new account</p>
 
@@ -145,43 +117,37 @@ export const Register = ({
         <input
           type="text"
           required
-          className={`text-sm w-full p-3 rounded-md bg-sidebar border border-light-border transition-all outline-none focus:border-gray-400 max-w-[500px] ${
-            !form.fullName.valid && 'border-error focus:border-error'
-          }`}
           placeholder="John Doe"
-          value={form.fullName.value}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              fullName: {
-                ...form.fullName,
-                value: e.target.value,
-              },
-            })
-          }
+          {...register('fullName', { required: true, minLength: 2 })}
+          className={`text-sm w-full p-3 rounded-md border transition-all bg-sidebar outline-none max-w-[500px] ${
+            errors['fullName'] ? 'border-error focus:border-error' : 'border-light-border focus:border-gray-400'
+          }`}
         />
-        {!form.fullName.valid && <p className="text-xs text-error mt-4">Please provide a valid name.</p>}
+        {errors['fullName'] && (
+          <>
+            {errors['fullName'].type === 'required' && <p className="text-xs text-error mt-4">Name is required.</p>}
+            {errors['fullName'].type === 'minLength' && (
+              <p className="text-xs text-error mt-4">Name must be at least 2 characters.</p>
+            )}
+          </>
+        )}
 
         <p className="mb-4 opacity-50 text-md mt-8">Email</p>
         <input
           type="email"
           required
-          className={`text-sm w-full p-3 rounded-md bg-sidebar border border-light-border transition-all outline-none focus:border-gray-400 max-w-[500px] ${
-            !form.email.valid && 'border-error focus:border-error'
-          }`}
           placeholder="you@example.com"
-          value={form.email.value}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              email: {
-                ...form.email,
-                value: e.target.value,
-              },
-            })
-          }
+          {...register('email', { required: true, pattern: /^\S+@\S+$/i })}
+          className={`text-sm w-full p-3 rounded-md border transition-all bg-sidebar outline-none max-w-[500px] ${
+            errors['email'] ? 'border-error focus:border-error' : 'border-light-border focus:border-gray-400'
+          }`}
         />
-        {!form.email.valid && <p className="text-xs text-error mt-4">Please provide a valid email.</p>}
+        {errors['email'] && (
+          <>
+            {errors['email'].type === 'required' && <p className="text-xs text-error mt-4">Email is required.</p>}
+            {errors['email'].type === 'pattern' && <p className="text-xs text-error mt-4">Email must be valid.</p>}
+          </>
+        )}
 
         <div className="flex justify-between items-center mb-4 mt-8">
           <p className="opacity-50 text-md">Password</p>
@@ -189,22 +155,21 @@ export const Register = ({
         <input
           type="password"
           required
-          className={`text-sm w-full p-3 rounded-md bg-sidebar border border-light-border transition-all outline-none focus:border-gray-400 max-w-[500px] ${
-            !form.password.valid && 'border-error focus:border-error'
+          className={`text-sm w-full p-3 rounded-md border transition-all bg-sidebar outline-none max-w-[500px] ${
+            errors['password'] ? 'border-error focus:border-error' : 'border-light-border focus:border-gray-400'
           }`}
           placeholder="●●●●●●●●"
-          onChange={(e) =>
-            setForm({
-              ...form,
-              password: {
-                ...form.password,
-                value: e.target.value,
-              },
-            })
-          }
-          value={form.password.value}
+          {...register('password', { required: true, minLength: 5 })}
         />
-        {!form.password.valid && <p className="text-xs text-error mt-4">Password must be at least 5 characters.</p>}
+        {errors['password'] && (
+          <>
+            {errors['password'].type === 'minLength' && (
+              <p className="text-xs text-error mt-4">Password must be at least 5 characters.</p>
+            )}
+            {errors['password'].type === 'required' && <p className="text-xs text-error mt-4">Password is required.</p>}
+          </>
+        )}
+
         {registerMutationResult.loading ? (
           <LineWave color="white" wrapperStyle={{ margin: '0 auto' }} />
         ) : (

@@ -4,11 +4,7 @@ import { useEffect } from 'react';
 export const useHotkey = (command: string, callback: (shortcut: string) => void) => {
   useEffect(() => {
     isRegistered(command).then((registered) => {
-      if (registered) {
-        unregister(command).then(() => {
-          register(command, callback);
-        });
-      } else {
+      if (!registered) {
         register(command, callback);
       }
     });

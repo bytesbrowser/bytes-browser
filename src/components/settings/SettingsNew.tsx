@@ -28,7 +28,7 @@ export const SettingsNew = () => {
           opacity: 'var(--light-text-opacity)',
         }}
       >
-        <Moment date={new Date('Tue Oct 31 2023 00:00:00 GMT+0400')} />
+        <Moment date={new Date('Mon Oct 17 2023 00:00:00 GMT+0400')} />
       </p>
       <p className="mb-4">Release Impact</p>
       <p className="text-sm mb-8 text-red-500">High</p>
@@ -71,7 +71,7 @@ export const SettingsNew = () => {
           command builder
         </li>
         <li className="mb-4">
-          The project manager has been disabled progromatically. Only systems with bash installed will be able to use
+          The project manager has been disabled programatically. Only systems with bash installed will be able to use
           the project manager for now.
         </li>
         <li className="mb-4">

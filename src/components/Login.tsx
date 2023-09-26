@@ -1,9 +1,9 @@
-import { Dispatch, FormEvent, SetStateAction, useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import { LineWave } from 'react-loader-spinner';
 
 import { useLoginLazyQuery } from '../graphql';
-import { is_email } from '../lib/utils/formChecker';
 import { getVersionString } from '../lib/utils/getVersion';
 
 export const Login = ({
@@ -14,50 +14,32 @@ export const Login = ({
   onTokenReceived: (token: string) => Promise<void>;
 }) => {
   const [loginQuery, loginQueryResult] = useLoginLazyQuery();
-  const [form, setForm] = useState({ email: { value: '', valid: true }, password: { value: '', valid: true } });
   const [version, setVersion] = useState('');
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
 
   useEffect(() => {
     getVersionString().then((v) => setVersion(v));
   }, []);
 
-  useEffect(() => {
-    let emailValid = is_email(form.email.value);
-    let passwordValid = form.password.value.length >= 5;
-
-    if (form.email.value.length < 1) {
-      emailValid = true;
-    }
-
-    if (form.password.value.length < 1) {
-      passwordValid = true;
-    }
-
-    setForm({
-      ...form,
-      email: {
-        ...form.email,
-        valid: emailValid,
-      },
-      password: {
-        ...form.password,
-        valid: passwordValid,
-      },
-    });
-  }, [form.email.value, form.password.value]);
-
-  const onLogin = (e: FormEvent) => {
-    e.preventDefault();
-
-    if (!form.email.value || !form.password.value) {
+  const onLogin = (handler: any) => {
+    if (!handler['email'] || !handler['password']) {
+      toast.error('Please fill all the fields.');
       return;
     }
 
-    if (!is_email(form.email.value) || form.password.value.length < 5) {
+    if (errors['email'] || errors['password']) {
+      toast.error('Please fill all the fields.');
       return;
     }
 
-    loginQuery({ variables: { email: form.email.value, password: form.password.value } }).then((res) => {
+    console.log({ variables: { email: handler['email'], password: handler['password'] } });
+
+    loginQuery({ variables: { email: handler['email'], password: handler['password'] } }).then((res) => {
       if (res.data) {
         onTokenReceived(res.data.login);
       }
@@ -74,12 +56,14 @@ export const Login = ({
     }
   }, [loginQueryResult.error]);
 
+  console.log(errors);
+
   return (
     <div className="animate__animated animate__fadeIn flex flex-col justify-between items-center w-screen h-full bg-content mt-8 pb-4">
       <div>
         <img src="/byteslogo.svg" className="w-[120px] mt-8" />
       </div>
-      <form onSubmit={onLogin} className="flex flex-col w-[500px]">
+      <form onSubmit={handleSubmit(onLogin)} className="flex flex-col w-[500px]">
         <h1 className="text-2xl">Welcome Back</h1>
         <p className="text-sm mt-4 mb-12 opacity-70">Sign in to your account</p>
 
@@ -87,25 +71,21 @@ export const Login = ({
         <input
           type="email"
           required
-          className={`text-sm w-full p-3 rounded-md border border-light-border transition-all outline-none focus:border-gray-400 max-w-[500px] ${
-            !form.email.valid && 'border-error focus:border-error'
+          {...register('email', { required: true, pattern: /^\S+@\S+$/i })}
+          className={`text-sm w-full p-3 rounded-md border transition-all bg-sidebar outline-none max-w-[500px] ${
+            errors['email'] ? 'border-error focus:border-error' : 'border-light-border focus:border-gray-400'
           }`}
           style={{
             backgroundColor: 'var(--sidebar-bg)',
           }}
           placeholder="you@example.com"
-          value={form.email.value}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              email: {
-                ...form.email,
-                value: e.target.value,
-              },
-            })
-          }
         />
-        {!form.email.valid && <p className="text-xs text-error mt-4">Please provide a valid email.</p>}
+        {errors['email'] && (
+          <>
+            {errors['email'].type === 'required' && <p className="text-xs text-error mt-4">Email is required.</p>}
+            {errors['email'].type === 'pattern' && <p className="text-xs text-error mt-4">Email must be valid.</p>}
+          </>
+        )}
 
         <div className="flex justify-between items-center mb-4 mt-8">
           <p className="opacity-50 text-md">Password</p>
@@ -119,22 +99,20 @@ export const Login = ({
           }}
           required
           type="password"
-          className={`text-sm w-full p-3 rounded-md bg-sidebar border border-light-border transition-all outline-none focus:border-gray-400 max-w-[500px] ${
-            !form.password.valid && 'border-error focus:border-error'
+          className={`text-sm w-full p-3 rounded-md border transition-all bg-sidebar outline-none max-w-[500px] ${
+            errors['password'] ? 'border-error focus:border-error' : 'border-light-border focus:border-gray-400'
           }`}
           placeholder="●●●●●●●●"
-          onChange={(e) =>
-            setForm({
-              ...form,
-              password: {
-                ...form.password,
-                value: e.target.value,
-              },
-            })
-          }
-          value={form.password.value}
+          {...register('password', { required: true, minLength: 5 })}
         />
-        {!form.password.valid && <p className="text-xs text-error mt-4">Password must be at least 5 characters.</p>}
+        {errors['password'] && (
+          <>
+            {errors['password'].type === 'minLength' && (
+              <p className="text-xs text-error mt-4">Password must be at least 5 characters.</p>
+            )}
+            {errors['password'].type === 'required' && <p className="text-xs text-error mt-4">Password is required.</p>}
+          </>
+        )}
         {loginQueryResult.loading ? (
           <LineWave color="white" wrapperStyle={{ margin: '0 auto' }} />
         ) : (

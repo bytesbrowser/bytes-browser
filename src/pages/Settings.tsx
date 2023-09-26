@@ -28,8 +28,6 @@ export const Settings = () => {
     fetchPolicy: 'cache-and-network',
   });
 
-  console.log(data);
-
   const logout = async () => {
     let profiles = await runtime.profileStore.get<Profile[]>('profiles');
 
