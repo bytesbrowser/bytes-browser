@@ -150,3 +150,13 @@ pub fn check_npm_install() -> bool {
         Err(_) => false,
     }
 }
+
+#[tauri::command]
+pub fn check_git_install() -> bool {
+    let output = ProcessCommand::new("git").arg("--version").output();
+
+    match output {
+        Ok(output) => String::from_utf8_lossy(&output.stdout).starts_with("git version"),
+        Err(_) => false,
+    }
+}

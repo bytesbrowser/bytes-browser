@@ -21,11 +21,12 @@ export const runtimeState = atom<{
   isInRecycleBin: boolean;
   showHiddenFiles: boolean;
   commandLogs: CommandRunEvent[];
+  searchReady: boolean;
 }>({
   key: 'runtime_state',
   default: {
     currentDrive: null,
-    readVolumes: true,
+    readVolumes: false,
     commandBuilderOpen: false,
     readTags: false,
     readBookmarks: false,
@@ -41,5 +42,6 @@ export const runtimeState = atom<{
     isInRecycleBin: false,
     showHiddenFiles: false,
     commandLogs: [],
+    searchReady: false,
   },
 });

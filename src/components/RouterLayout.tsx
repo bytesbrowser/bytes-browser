@@ -3,10 +3,12 @@ import { Event, listen } from '@tauri-apps/api/event';
 import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/api/notification';
 import { appWindow } from '@tauri-apps/api/window';
 import { useEffect, useState } from 'react';
+import { flushSync } from 'react-dom';
+import toast from 'react-hot-toast';
 import { Triangle } from 'react-loader-spinner';
 import { Link, useParams } from 'react-router-dom';
 import { Tooltip } from 'react-tooltip';
-import { useRecoilState } from 'recoil';
+import { useRecoilCallback, useRecoilState } from 'recoil';
 
 import { useHotkey } from '../lib/commands';
 import BookmarksEmitter from '../lib/emitters/bookmarks.emitter';
@@ -36,21 +38,37 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
   const [bookmarks, setBookmarks] = useState<BookmarkDoc[]>([]);
   const [refreshingVolumes, setRefreshingVolumes] = useState<boolean>(false);
 
+  const runtimeNext = useRecoilCallback(
+    ({ snapshot }) =>
+      async () => {
+        const _runtime = await snapshot.getPromise(runtimeState);
+
+        return _runtime;
+      },
+    [],
+  );
+
   useEffect(() => {
-    os.platform().then((platform) => setIsMac(platform === 'darwin'));
+    runtimeNext().then((runtime) => {
+      os.platform().then((platform) => setIsMac(platform === 'darwin'));
 
-    if (!profile) {
-      updateProfile();
-    }
+      if (!profile) {
+        updateProfile();
+      }
 
-    if (runtime.readVolumes || runtime.devices.length > 0) return;
+      if (runtime.readVolumes || runtime.devices.length > 0) return;
 
-    reset();
-    start();
+      reset();
+      start();
 
-    getVolumes();
-    getUserStore();
-  }, [runtime]);
+      if (!runtime.readVolumes) {
+        console.log('Getting volumes from here lol');
+        getVolumes();
+      }
+
+      getUserStore();
+    });
+  }, []);
 
   useEffect(() => {
     updateProfile();
@@ -93,6 +111,29 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
       setTauriLoadEventMessage(msg.payload);
     });
 
+    appWindow.listen('volume_read', (volume: any) => {
+      console.log(volume);
+      setRuntime({
+        ...runtime,
+        readVolumes: true,
+        currentDrive: volume,
+        devices: [...runtime.devices, volume.payload],
+      });
+    });
+
+    appWindow.listen('search_ready', () => {
+      console.log('Search is ready to use!');
+
+      runtimeNext().then((runtime) => {
+        setRuntime({
+          ...runtime,
+          searchReady: true,
+        });
+      });
+
+      toast.success('Search features are ready to use!');
+    });
+
     return () => {
       BookmarksEmitter.off('change', () => {});
       TagsEmitter.off('change', () => {});
@@ -132,6 +173,7 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
         readVolumes: true,
         currentDrive: new_volumes[0]!,
         devices: new_volumes,
+        searchReady: true,
       });
 
       let permissionGranted = await isPermissionGranted();
@@ -239,9 +281,14 @@ export const RouterLayout = ({ children }: { children: React.ReactNode }) => {
                     opacity: 'var(--light-text-opacity)',
                   }}
                   onClick={() => {
-                    setRuntime({
-                      ...runtime,
-                      searchOpen: true,
+                    runtimeNext().then((runtime) => {
+                      console.log('FROM COMP', runtime);
+                      if (runtime.searchReady) {
+                        setRuntime({
+                          ...runtime,
+                          searchOpen: true,
+                        });
+                      }
                     });
                   }}
                 >
