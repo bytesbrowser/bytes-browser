@@ -1,3 +1,4 @@
+import { os } from '@tauri-apps/api';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { Triangle } from 'react-loader-spinner';
@@ -22,6 +23,15 @@ export const Auth = () => {
 
   useEffect(() => {
     checkAuth();
+
+    os.platform().then((platform) => {
+      if (platform === 'darwin') {
+        return;
+      } else {
+        document.getElementById('titlebar-left')!.style.paddingLeft = '0px';
+        document.getElementById('titlebar-left')!.style.backgroundColor = 'transparent';
+      }
+    });
   }, []);
 
   const checkNetwork = () => {
@@ -43,6 +53,8 @@ export const Auth = () => {
           currentUser: defaultProfile ?? 0,
         });
       }
+
+      console.log(profiles);
 
       if (profiles && profiles.length > 0) {
         getSubStatus({

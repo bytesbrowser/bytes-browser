@@ -28,10 +28,10 @@ export const SettingsNew = () => {
           opacity: 'var(--light-text-opacity)',
         }}
       >
-        <Moment ago date={new Date()} />
+        <Moment date={new Date('Mon Oct 17 2023 00:00:00 GMT+0400')} />
       </p>
       <p className="mb-4">Release Impact</p>
-      <p className="text-sm mb-8 text-success">Low</p>
+      <p className="text-sm mb-8 text-red-500">High</p>
       <p className="mb-4">Release Notes</p>
       <p
         className="text-sm opacity-50 mb-4"
@@ -42,7 +42,8 @@ export const SettingsNew = () => {
         Fixes
       </p>
       <ul className="list-disc ml-8 text-sm">
-        <li className="mb-4">Improved caching and performance on all systems</li>
+        <li className="mb-4">Improved input validation</li>
+        <li className="mb-4">Improved loading times and system performance.</li>
       </ul>
       <p
         className="text-sm opacity-50 mb-4"
@@ -53,8 +54,8 @@ export const SettingsNew = () => {
         Additions
       </p>
       <ul className="list-disc ml-8 text-sm">
-        <li className="mb-4">Improved login flow</li>
-        <li className="mb-4">New settings pages</li>
+        <li className="mb-4">Command Builder</li>
+        <li className="mb-4">NPM and Cargo Project Manager</li>
       </ul>
       <p
         className="text-sm opacity-50 mb-4"
@@ -65,7 +66,17 @@ export const SettingsNew = () => {
         Known Issues
       </p>
       <ul className="list-disc ml-8 text-sm">
-        <li className="mb-4">No known issues</li>
+        <li className="mb-4">
+          Shell has been disabled until it can be fixed. Only systems with bash installed will be able to use the
+          command builder
+        </li>
+        <li className="mb-4">
+          The project manager has been disabled programatically. Only systems with bash installed will be able to use
+          the project manager for now.
+        </li>
+        <li className="mb-4">
+          Commands created after startup will require a restart to be registered. This is known and is being adjusted.
+        </li>
       </ul>
     </div>
   );

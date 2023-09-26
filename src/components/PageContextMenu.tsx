@@ -19,8 +19,13 @@ export const PageContextMenu = ({
 }) => {
   const [runtime, setRuntime] = useRecoilState(runtimeState);
   const [isBookMarked, setIsBookMarked] = useState(false);
+  const [hasBash, setHasBash] = useState<boolean>(false);
 
   useEffect(() => {
+    invoke<boolean>('check_bash_install').then((res) => {
+      setHasBash(res);
+    });
+
     runtime.store.get<ProfileStore>(`profile-store-${runtime.currentUser}`).then((db) => {
       if (db) {
         const bookmarks = db.bookmarks ?? [];
@@ -39,7 +44,7 @@ export const PageContextMenu = ({
           return;
         }
 
-        let bookmarks = [...db.bookmarks];
+        let bookmarks = db.bookmarks ?? [];
 
         const index = bookmarks.findIndex((bookmark) => bookmark.file_path === runtime.currentPath);
 
@@ -203,6 +208,7 @@ export const PageContextMenu = ({
         </Item>
       </Submenu>
       <Item
+        disabled={!hasBash}
         onClick={() =>
           setRuntime({
             ...runtime,

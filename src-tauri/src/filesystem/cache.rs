@@ -49,7 +49,10 @@ impl FsEventHandler {
     }
 
     pub fn handle_create(&self, kind: CreateKind, path: &Path) {
-        let state = &mut self.state_mux.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+        let state = &mut self
+            .state_mux
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         let current_volume = self.get_from_cache(state);
 
         let filename = path.file_name().unwrap().to_string_lossy().to_string();

@@ -51,6 +51,8 @@ export const ContextMenu = () => {
   const [searchVal, setSearchVal] = useState('');
   const [installing, setInstalling] = useState(false);
   const [hasBash, setHasBash] = useState<boolean>(false);
+  const [hasNPM, setHasNPM] = useState<boolean>(false);
+  const [hasGit, setHasGit] = useState<boolean>(false);
 
   const onDelete = async () => {
     if (currentContext.currentItem) {
@@ -214,6 +216,16 @@ export const ContextMenu = () => {
 
     invoke<boolean>('check_bash_install').then((res) => {
       setHasBash(res);
+
+      if (res) {
+        invoke<boolean>('check_npm_install').then((res) => {
+          setHasNPM(res);
+        });
+      }
+    });
+
+    invoke<boolean>('check_git_install').then((res) => {
+      setHasGit(res);
     });
 
     setPackageResults(null);
@@ -1202,7 +1214,7 @@ export const ContextMenu = () => {
               </p>
             </div>
           }
-          disabled={!currentContext.currentItem?.Directory ? true : false}
+          disabled={!currentContext.currentItem?.Directory || !hasGit ? true : false}
         >
           <Item id="init" disabled={!gitMeta?.can_init} onClick={onInit}>
             Init
@@ -1251,7 +1263,7 @@ export const ContextMenu = () => {
         </Submenu>
         {curProject && (
           <Item
-            disabled={!hasBash}
+            disabled={!hasBash || !hasNPM}
             id="select-project"
             onClick={() => {
               setProjectManagerItemTemp(currentContext.currentItem);

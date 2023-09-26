@@ -11,6 +11,7 @@ import { useGetSubscriptionStatusLazyQuery, useGetUserLazyQuery, useLoginLazyQue
 import { runtimeState } from '../../lib/state/runtime.state';
 import { Profile, ProfileStore } from '../../lib/types';
 import { is_email } from '../../lib/utils/formChecker';
+import { NoInternetFeature } from '../NoInternetFeature';
 
 export const SettingsProfiles = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -438,102 +439,104 @@ export const SettingsProfiles = () => {
           </div>
         </>
       </ReactModal>
-      <form onSubmit={onLogin} className="flex flex-col w-[500px]">
-        <h2>Add a profile</h2>
-        <p className="text-sm mt-4 mb-4 opacity-70">Sign in to your account</p>
-        <p
-          className="mb-8 text-sm"
-          style={{
-            opacity: 'var(--light-text-opacity)',
-          }}
-        >
-          Signing into profiles on this device will add them to your team. Removing them will disable team access. Only
-          one user needs to have an activated license.
-        </p>
-
-        <p
-          className="mb-4 opacity-50 text-md"
-          style={{
-            opacity: 'var(--light-text-opacity)',
-          }}
-        >
-          Email
-        </p>
-        <input
-          type="email"
-          style={{
-            borderColor: 'var(--sidebar-border-color)',
-            backgroundColor: 'var(--sidebar-inset-bg)',
-            color: 'var(--sidebar-inset-text-color)',
-          }}
-          required
-          className={`text-sm w-full p-3 rounded-md bg-sidebar border border-light-border transition-all outline-none focus:border-gray-400 max-w-[500px] ${
-            !form.email.valid && 'border-error focus:border-error'
-          }`}
-          placeholder="you@example.com"
-          value={form.email.value}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              email: {
-                ...form.email,
-                value: e.target.value,
-              },
-            })
-          }
-        />
-        {!form.email.valid && <p className="text-xs text-error mt-4">Please provide a valid email.</p>}
-
-        <div className="flex justify-between items-center mb-4 mt-8">
+      <NoInternetFeature>
+        <form onSubmit={onLogin} className="flex flex-col w-[500px]">
+          <h2>Add a profile</h2>
+          <p className="text-sm mt-4 mb-4 opacity-70">Sign in to your account</p>
           <p
-            className="opacity-50 text-md"
+            className="mb-8 text-sm"
             style={{
               opacity: 'var(--light-text-opacity)',
             }}
           >
-            Password
+            Signing into profiles on this device will add them to your team. Removing them will disable team access.
+            Only one user needs to have an activated license.
           </p>
-        </div>
-        <input
-          style={{
-            borderColor: 'var(--sidebar-border-color)',
-            backgroundColor: 'var(--sidebar-inset-bg)',
-            color: 'var(--sidebar-inset-text-color)',
-          }}
-          required
-          type="password"
-          className={`text-sm w-full p-3 rounded-md bg-sidebar border border-light-border transition-all outline-none focus:border-gray-400 max-w-[500px] ${
-            !form.password.valid && 'border-error focus:border-error'
-          }`}
-          placeholder="●●●●●●●●"
-          onChange={(e) =>
-            setForm({
-              ...form,
-              password: {
-                ...form.password,
-                value: e.target.value,
-              },
-            })
-          }
-          value={form.password.value}
-        />
-        <div className="mb-12 w-[250px]">
-          {!form.password.valid && <p className="text-xs text-error mt-4">Password must be at least 5 characters.</p>}
-          {loginQueryResult.loading ? (
-            <LineWave color="var(--icon-color)" wrapperStyle={{ margin: '0 auto' }} />
-          ) : (
-            <button
+
+          <p
+            className="mb-4 opacity-50 text-md"
+            style={{
+              opacity: 'var(--light-text-opacity)',
+            }}
+          >
+            Email
+          </p>
+          <input
+            type="email"
+            style={{
+              borderColor: 'var(--sidebar-border-color)',
+              backgroundColor: 'var(--sidebar-inset-bg)',
+              color: 'var(--sidebar-inset-text-color)',
+            }}
+            required
+            className={`text-sm w-full p-3 rounded-md bg-sidebar border border-light-border transition-all outline-none focus:border-gray-400 max-w-[500px] ${
+              !form.email.valid && 'border-error focus:border-error'
+            }`}
+            placeholder="you@example.com"
+            value={form.email.value}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                email: {
+                  ...form.email,
+                  value: e.target.value,
+                },
+              })
+            }
+          />
+          {!form.email.valid && <p className="text-xs text-error mt-4">Please provide a valid email.</p>}
+
+          <div className="flex justify-between items-center mb-4 mt-8">
+            <p
+              className="opacity-50 text-md"
               style={{
-                color: 'var(--sidebar-inset-text-color)',
+                opacity: 'var(--light-text-opacity)',
               }}
-              type="submit"
-              className="w-full mt-8 bg-success p-2 rounded-md transition-all hover:opacity-50"
             >
-              Sign In
-            </button>
-          )}
-        </div>
-      </form>
+              Password
+            </p>
+          </div>
+          <input
+            style={{
+              borderColor: 'var(--sidebar-border-color)',
+              backgroundColor: 'var(--sidebar-inset-bg)',
+              color: 'var(--sidebar-inset-text-color)',
+            }}
+            required
+            type="password"
+            className={`text-sm w-full p-3 rounded-md bg-sidebar border border-light-border transition-all outline-none focus:border-gray-400 max-w-[500px] ${
+              !form.password.valid && 'border-error focus:border-error'
+            }`}
+            placeholder="●●●●●●●●"
+            onChange={(e) =>
+              setForm({
+                ...form,
+                password: {
+                  ...form.password,
+                  value: e.target.value,
+                },
+              })
+            }
+            value={form.password.value}
+          />
+          <div className="mb-12 w-[250px]">
+            {!form.password.valid && <p className="text-xs text-error mt-4">Password must be at least 5 characters.</p>}
+            {loginQueryResult.loading ? (
+              <LineWave color="var(--icon-color)" wrapperStyle={{ margin: '0 auto' }} />
+            ) : (
+              <button
+                style={{
+                  color: 'var(--sidebar-inset-text-color)',
+                }}
+                type="submit"
+                className="w-full mt-8 bg-success p-2 rounded-md transition-all hover:opacity-50"
+              >
+                Sign In
+              </button>
+            )}
+          </div>
+        </form>
+      </NoInternetFeature>
 
       <h2>Profiles Signed In On This Device</h2>
       <div className="profiles pb-20">

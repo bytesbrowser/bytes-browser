@@ -138,11 +138,7 @@ export const FolderExplorer = () => {
   });
 
   const setDirectoriesFiltered = async (dirs: DirectoryContents[], debugFrom: string) => {
-    console.log('SETTING DIRECTORIES', debugFrom);
-
     if (settingDirectory) return;
-
-    console.log('SETTING DIRECTORIES 2', debugFrom);
 
     setSettingDirectory(true);
 
@@ -402,7 +398,9 @@ export const FolderExplorer = () => {
               viewBox="0 0 24 24"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
-              className={`${runtime.currentPath === '' && 'opacity-50'} mx-1 cursor-pointer`}
+              className={`${
+                (runtime.currentPath === '' || navigationRules.back.length < 1) && 'opacity-50'
+              } mx-1 cursor-pointer`}
             >
               <path
                 d="M5 12H19M5 12L11 6M5 12L11 18"
@@ -451,7 +449,14 @@ export const FolderExplorer = () => {
             }}
             className="breadcrumbs flex items-center py-2 justify-between flex-1 border-r border-white border-opacity-10 mr-4 overflow-hidden"
           >
-            <div className="crumbs flex items-center">
+            <div
+              className="crumbs flex items-center"
+              data-tooltip-id="crumbs-tooltip"
+              data-tooltip-content={`${runtime.currentDriveName}://${runtime.currentPath
+                .split('/')
+                .filter((path) => path.length > 1)
+                .map((path, key, arr) => path)}`}
+            >
               <svg
                 width="21"
                 height="21"
@@ -473,7 +478,7 @@ export const FolderExplorer = () => {
                 </defs>
               </svg>
 
-              <div className="flex items-center">
+              <div className="flex items-center max-w-[900px]">
                 <Link
                   to={`/drive/${currentIndex}`}
                   className="underline cursor-pointer font-medium w-min whitespace-nowrap"
@@ -527,7 +532,7 @@ export const FolderExplorer = () => {
               </div>
             </div>
           </div>
-          <div className="page-options flex items-center min-w-[150px]">
+          <div className="page-options flex items-center">
             <svg
               onClick={(e) => {
                 handlePageContext(e);
@@ -546,7 +551,7 @@ export const FolderExplorer = () => {
                 fill="var(--icon-color)"
               />
             </svg>
-            <div className="result-layout-options bg-sidebar flex items-center rounded-md mr-4">
+            {/* <div className="result-layout-options bg-sidebar flex items-center rounded-md mr-4">
               <svg
                 width="16"
                 height="16"
@@ -608,7 +613,7 @@ export const FolderExplorer = () => {
                   </clipPath>
                 </defs>
               </svg>
-            </div>
+            </div> */}
           </div>
         </div>
         <div className="explorer-contents">
@@ -881,6 +886,8 @@ export const FolderExplorer = () => {
       </div>
       <ContextMenu />
       <PageContextMenu sortMode={sortMode} setSortMode={onSetSortMode} />
+
+      <Tooltip id="crumbs-tooltip"></Tooltip>
     </>
   );
 };

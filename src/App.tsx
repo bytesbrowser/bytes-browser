@@ -57,7 +57,7 @@ const App = () => {
         console.log('Trying to register commands..');
 
         if (db) {
-          const commands = db.commands;
+          const commands = db.commands ?? [];
 
           let successfull = 0;
           let failed = 0;
@@ -82,7 +82,7 @@ const App = () => {
 
           if (successfull < 1 && failed > 0) {
             toast.error(`Failed to initialize ${failed} commands.`);
-          } else {
+          } else if (successfull > 0) {
             toast.success(`Initialized ${successfull} commands. ${failed} failed.`);
           }
         }

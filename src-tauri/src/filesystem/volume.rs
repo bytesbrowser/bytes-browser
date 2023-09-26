@@ -26,7 +26,7 @@ const MACOS_RECYCLE_BIN_NAME: &str = ".Trash";
 
 const WINDOWS_RECYCLE_BIN_NAME: &str = "$Recycle.Bin";
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Volume {
     name: String,
     pub mount_point: PathBuf,
@@ -238,6 +238,13 @@ pub async fn get_volumes_internal(
                 }
             }
 
+            match window.emit("volume_read", &volume) {
+                Ok(_) => {}
+                Err(e) => {
+                    println!("Error emitting event: {}", e);
+                }
+            }
+
             volume
         })
         .collect();
@@ -271,7 +278,19 @@ pub async fn get_volumes_internal(
         }
     }
 
-    build_token_index_root(&state_mux);
+    match build_token_index_root(&state_mux) {
+        Ok(_) => {}
+        Err(e) => {
+            println!("Error building token index: {}", e);
+        }
+    };
+
+    match window.emit("search_ready", true) {
+        Ok(_) => {}
+        Err(e) => {
+            println!("Error emitting event: {}", e);
+        }
+    }
 
     let end_time = Instant::now();
     println!("Getting volumes took: {:?}", end_time - start_time);

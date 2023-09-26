@@ -8,6 +8,7 @@ import { useRecoilState } from 'recoil';
 import { User, useGetUserQuery } from '../../graphql';
 import { runtimeState } from '../../lib/state/runtime.state';
 import { ProfileStore } from '../../lib/types';
+import { NoInternetFeature } from '../NoInternetFeature';
 
 export const SettingsAccount = () => {
   const [runtime, setRuntime] = useRecoilState(runtimeState);
@@ -226,6 +227,19 @@ export const SettingsAccount = () => {
   };
 
   return (
+    <div
+      className="rounded-md p-4 justify-center items-center flex flex-col animate__animated animate__fadeIn"
+      style={{
+        backgroundColor: 'var(--sidebar-inset-bg)',
+      }}
+    >
+      <div className="flex items-center">
+        <p className="text-white ml-2">This feature is still being developed. Please check again at a later update.</p>
+      </div>
+    </div>
+  );
+
+  return (
     <form onSubmit={onSubmit} className="flex flex-col">
       {profile?.created_at && (
         <p
@@ -242,7 +256,7 @@ export const SettingsAccount = () => {
         {avatarPreview ? (
           <img
             data-tooltip-id="avatar-tooltip"
-            src={avatarPreview}
+            src={avatarPreview ?? ''}
             className="w-16 h-1w-16 rounded-full cursor-pointer transition-all hover:opacity-50 mb-8"
           />
         ) : (
@@ -300,7 +314,7 @@ export const SettingsAccount = () => {
         className="text-sm w-full p-3 rounded-md bg-sidebar border border-light-border transition-all outline-none focus:border-gray-400 max-w-[500px]"
       />
 
-      <p
+      {/* <p
         className="mb-4 opacity-50 text-md mt-8"
         style={{
           opacity: 'var(--light-text-opacity)',
@@ -320,7 +334,7 @@ export const SettingsAccount = () => {
         onChange={(e) => setChanges({ ...changes, password: e.target.value })}
         placeholder="*********"
         className="text-sm w-full p-3 rounded-md bg-sidebar border border-light-border transition-all outline-none focus:border-gray-400 max-w-[500px]"
-      />
+      /> */}
       {!editingPin && (
         <div className="flex items-center">
           <p
@@ -346,23 +360,25 @@ export const SettingsAccount = () => {
         </div>
       )}
 
-      <button
-        type="submit"
-        style={{
-          color: 'var(--sidebar-inset-text-color)',
-        }}
-        className={`mb-4 text-sm mt-10 bg-success w-[150px] p-2 rounded-md text-center cursor-pointer hover:opacity-80 transition-all`}
-      >
-        Save Changes
-      </button>
-      <p
-        style={{
-          color: 'var(--sidebar-inset-text-color)',
-        }}
-        className="mb-4 text-sm mt-10 bg-error w-[150px] p-2 rounded-md text-center cursor-pointer hover:opacity-80 transition-all"
-      >
-        Close Account
-      </p>
+      <NoInternetFeature>
+        <button
+          type="submit"
+          style={{
+            color: 'var(--sidebar-inset-text-color)',
+          }}
+          className={`mb-4 text-sm mt-10 bg-success w-[150px] p-2 rounded-md text-center cursor-pointer hover:opacity-80 transition-all`}
+        >
+          Save Changes
+        </button>
+        <p
+          style={{
+            color: 'var(--sidebar-inset-text-color)',
+          }}
+          className="mb-4 text-sm mt-10 bg-error w-[150px] p-2 rounded-md text-center cursor-pointer hover:opacity-80 transition-all"
+        >
+          Close Account
+        </p>
+      </NoInternetFeature>
       <ReactModal
         isOpen={show}
         onRequestClose={() => {

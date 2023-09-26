@@ -1,7 +1,7 @@
 {
   "name": "bytes-browser",
   "private": true,
-  "version": "1.0.2",
+  "version": "1.1.0",
   "type": "module",
   "scripts": {
     "dev": "run-dev.sh",
@@ -30,6 +30,7 @@
     "react": "^18.2.0",
     "react-contexify": "^6.0.0",
     "react-dom": "^18.2.0",
+    "react-hook-form": "^7.46.2",
     "react-hot-toast": "^2.4.1",
     "react-json-view": "^1.21.3",
     "react-loader-spinner": "^5.3.4",
