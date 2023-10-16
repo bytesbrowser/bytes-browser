@@ -1,7 +1,7 @@
 {
   "name": "bytes-browser",
   "private": true,
-  "version": "1.1.2",
+  "version": "1.1.3",
   "type": "module",
   "scripts": {
     "dev": "run-dev.sh",

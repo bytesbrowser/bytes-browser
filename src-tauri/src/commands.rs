@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
-use std::{path::Path, process::Command as ProcessCommand};
+use std::{os::windows::process::CommandExt, path::Path, process::Command as ProcessCommand};
 use tokio::time::{sleep, Duration};
+
+use crate::CREATE_NO_WINDOW;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Command {
@@ -38,6 +40,7 @@ pub fn run_command_once(command: Command, command_type: CommandRunType, window: 
                 .current_dir(&working_directory) // Set the working directory
                 .arg("-c")
                 .arg(&command.commands.join(" "))
+                .creation_flags(CREATE_NO_WINDOW)
                 .stdout(std::process::Stdio::piped())
                 .spawn()
                 .expect("Failed to start command")
@@ -47,6 +50,7 @@ pub fn run_command_once(command: Command, command_type: CommandRunType, window: 
                 .current_dir(&working_directory) // Set the working directory
                 .arg("-c")
                 .arg(&command.commands.join(" "))
+                .creation_flags(CREATE_NO_WINDOW)
                 .stdout(std::process::Stdio::piped())
                 .spawn()
                 .expect("Failed to start command")
@@ -99,6 +103,7 @@ pub async fn register_command(
                 .current_dir(&working_directory)
                 .arg("-c")
                 .arg(&command.commands.join(" "))
+                .creation_flags(CREATE_NO_WINDOW)
                 .stdout(std::process::Stdio::piped())
                 .spawn()
                 .expect("Failed to start command"),
@@ -106,6 +111,7 @@ pub async fn register_command(
                 .current_dir(&working_directory)
                 .arg("-c")
                 .arg(&command.commands.join(" "))
+                .creation_flags(CREATE_NO_WINDOW)
                 .stdout(std::process::Stdio::piped())
                 .spawn()
                 .expect("Failed to start command"),
@@ -141,9 +147,12 @@ pub fn check_bash_install() -> bool {
     let output = ProcessCommand::new("bash")
         .arg("-c")
         .arg("echo 'bash installed'")
-        .output();
+        .creation_flags(CREATE_NO_WINDOW)
+        .stdout(std::process::Stdio::piped())
+        .spawn()
+        .expect("Failed to start command");
 
-    match output {
+    match output.wait_with_output() {
         Ok(output) => String::from_utf8_lossy(&output.stdout).trim() == "bash installed",
         Err(_) => false,
     }
@@ -154,6 +163,7 @@ pub fn check_npm_install() -> bool {
     let output = ProcessCommand::new("bash")
         .arg("-c")
         .arg("npm -v")
+        .creation_flags(CREATE_NO_WINDOW)
         .stdout(std::process::Stdio::piped())
         .spawn()
         .expect("Failed to start command");
@@ -175,6 +185,7 @@ pub fn check_npm_install() -> bool {
 pub fn check_git_install() -> bool {
     let output = ProcessCommand::new("git")
         .arg("--version")
+        .creation_flags(CREATE_NO_WINDOW)
         .stdout(std::process::Stdio::piped())
         .spawn()
         .expect("Failed to start command");

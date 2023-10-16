@@ -3,13 +3,14 @@ use crate::filesystem::cache::{
     load_system_cache, run_cache_interval, save_system_cache, FsEventHandler, CACHE_FILE_PATH,
 };
 use crate::filesystem::{DIRECTORY, FILE};
-use crate::{CachedPath, StateSafe};
+use crate::{CachedPath, StateSafe, CREATE_NO_WINDOW};
 use lazy_static::lazy_static;
 use notify::{RecursiveMode, Watcher};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::File;
+use std::os::windows::process::CommandExt;
 use std::path::PathBuf;
 use std::time::Instant;
 use std::{fs, thread};
@@ -331,6 +332,7 @@ pub async fn safely_eject_removable(mount_path: String, platform: String) -> Res
 
             let output = std::process::Command::new(cmd)
                 .args(&args)
+                .creation_flags(CREATE_NO_WINDOW)
                 .stdout(std::process::Stdio::piped())
                 .spawn()
                 .expect("Failed to start command");

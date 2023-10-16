@@ -1,11 +1,12 @@
 use crate::error::{Error, GitError};
-use crate::StateSafe;
+use crate::{StateSafe, CREATE_NO_WINDOW};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fs::{self, DirEntry};
 use std::io::{self};
 use std::ops::Deref;
+use std::os::windows::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use tokio::fs::File;
@@ -388,6 +389,7 @@ pub async fn install_dep(
                 .arg("-c")
                 .arg(&command_string)
                 .current_dir(&path)
+                .creation_flags(CREATE_NO_WINDOW)
                 .stdout(std::process::Stdio::piped())
                 .spawn()
                 .expect("Failed to start command");
@@ -411,6 +413,7 @@ pub async fn install_dep(
                 .arg("add")
                 .arg(&package_name)
                 .current_dir(&path)
+                .creation_flags(CREATE_NO_WINDOW)
                 .stdout(std::process::Stdio::piped())
                 .spawn()
                 .expect("Failed to start command");
@@ -446,6 +449,7 @@ pub async fn remove_dep(
                 .arg("-c")
                 .arg(&command_string)
                 .current_dir(&path)
+                .creation_flags(CREATE_NO_WINDOW)
                 .stdout(std::process::Stdio::piped())
                 .spawn()
                 .expect("Failed to start command");
@@ -472,6 +476,7 @@ pub async fn remove_dep(
                 .arg("rm")
                 .arg(&package_name)
                 .current_dir(&path)
+                .creation_flags(CREATE_NO_WINDOW)
                 .stdout(std::process::Stdio::piped())
                 .spawn()
                 .expect("Failed to start command");

@@ -12,6 +12,8 @@ mod filesystem;
 mod search;
 mod themes;
 
+pub const CREATE_NO_WINDOW: u32 = 0x08000000;
+
 use commands::{
     check_bash_install, check_git_install, check_npm_install, register_command, run_command_once,
 };
