@@ -38,18 +38,22 @@ pub fn run_command_once(command: Command, command_type: CommandRunType, window: 
                 .current_dir(&working_directory) // Set the working directory
                 .arg("-c")
                 .arg(&command.commands.join(" "))
-                .output()
+                .stdout(std::process::Stdio::piped())
+                .spawn()
+                .expect("Failed to start command")
         }
         CommandRunType::Bash => {
             ProcessCommand::new("bash")
                 .current_dir(&working_directory) // Set the working directory
                 .arg("-c")
                 .arg(&command.commands.join(" "))
-                .output()
+                .stdout(std::process::Stdio::piped())
+                .spawn()
+                .expect("Failed to start command")
         }
     };
 
-    match output {
+    match output.wait_with_output() {
         Ok(output) => {
             let event = CommandRunEvent {
                 command: command.name.clone(),
@@ -95,15 +99,19 @@ pub async fn register_command(
                 .current_dir(&working_directory)
                 .arg("-c")
                 .arg(&command.commands.join(" "))
-                .output(),
+                .stdout(std::process::Stdio::piped())
+                .spawn()
+                .expect("Failed to start command"),
             CommandRunType::Bash => ProcessCommand::new("bash")
                 .current_dir(&working_directory)
                 .arg("-c")
                 .arg(&command.commands.join(" "))
-                .output(),
+                .stdout(std::process::Stdio::piped())
+                .spawn()
+                .expect("Failed to start command"),
         };
 
-        match output {
+        match output.wait_with_output() {
             Ok(output) => {
                 let event = CommandRunEvent {
                     command: command.name.clone(),
@@ -143,9 +151,14 @@ pub fn check_bash_install() -> bool {
 
 #[tauri::command]
 pub fn check_npm_install() -> bool {
-    let output = ProcessCommand::new("bash").arg("-c").arg("npm -v").output();
+    let output = ProcessCommand::new("bash")
+        .arg("-c")
+        .arg("npm -v")
+        .stdout(std::process::Stdio::piped())
+        .spawn()
+        .expect("Failed to start command");
 
-    match output {
+    match output.wait_with_output() {
         Ok(output) => {
             if !output.stdout.is_empty() {
                 true
@@ -160,9 +173,13 @@ pub fn check_npm_install() -> bool {
 
 #[tauri::command]
 pub fn check_git_install() -> bool {
-    let output = ProcessCommand::new("git").arg("--version").output();
+    let output = ProcessCommand::new("git")
+        .arg("--version")
+        .stdout(std::process::Stdio::piped())
+        .spawn()
+        .expect("Failed to start command");
 
-    match output {
+    match output.wait_with_output() {
         Ok(output) => String::from_utf8_lossy(&output.stdout).starts_with("git version"),
         Err(_) => false,
     }

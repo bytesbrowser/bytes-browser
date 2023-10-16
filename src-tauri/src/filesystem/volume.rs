@@ -331,13 +331,24 @@ pub async fn safely_eject_removable(mount_path: String, platform: String) -> Res
 
             let output = std::process::Command::new(cmd)
                 .args(&args)
-                .output()
-                .expect("failed to execute process");
+                .stdout(std::process::Stdio::piped())
+                .spawn()
+                .expect("Failed to start command");
 
-            if output.status.success() {
-                return Ok(true);
-            } else {
-                return Err(String::from_utf8(output.stderr).unwrap());
+            match output.wait_with_output() {
+                Ok(output) => {
+                    if output.status.success() {
+                        return Ok(true);
+                    } else {
+                        return Err(format!(
+                            "Failed to eject removable volume: {}",
+                            String::from_utf8_lossy(&output.stderr)
+                        ));
+                    }
+                }
+                Err(e) => {
+                    return Err(format!("Failed to run command: {}", e));
+                }
             }
         }
     }

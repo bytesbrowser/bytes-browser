@@ -388,9 +388,11 @@ pub async fn install_dep(
                 .arg("-c")
                 .arg(&command_string)
                 .current_dir(&path)
-                .output();
+                .stdout(std::process::Stdio::piped())
+                .spawn()
+                .expect("Failed to start command");
 
-            match output {
+            match output.wait_with_output() {
                 Ok(output) => {
                     if output.status.success() {
                         Ok(format!("Successfully installed package: {}", package_name))
@@ -409,9 +411,11 @@ pub async fn install_dep(
                 .arg("add")
                 .arg(&package_name)
                 .current_dir(&path)
-                .output();
+                .stdout(std::process::Stdio::piped())
+                .spawn()
+                .expect("Failed to start command");
 
-            match output {
+            match output.wait_with_output() {
                 Ok(output) => {
                     if output.status.success() {
                         Ok(format!("Successfully added crate: {}", package_name))
@@ -442,9 +446,11 @@ pub async fn remove_dep(
                 .arg("-c")
                 .arg(&command_string)
                 .current_dir(&path)
-                .output();
+                .stdout(std::process::Stdio::piped())
+                .spawn()
+                .expect("Failed to start command");
 
-            match output {
+            match output.wait_with_output() {
                 Ok(output) => {
                     if output.status.success() {
                         Ok(format!(
@@ -466,9 +472,11 @@ pub async fn remove_dep(
                 .arg("rm")
                 .arg(&package_name)
                 .current_dir(&path)
-                .output();
+                .stdout(std::process::Stdio::piped())
+                .spawn()
+                .expect("Failed to start command");
 
-            match output {
+            match output.wait_with_output() {
                 Ok(output) => {
                     if output.status.success() {
                         Ok(format!("Successfully removed crate: {}", package_name))
