@@ -226,18 +226,18 @@ export const SettingsAccount = () => {
     avatarInputRef.current && avatarInputRef.current.click();
   };
 
-  return (
-    <div
-      className="rounded-md p-4 justify-center items-center flex flex-col animate__animated animate__fadeIn"
-      style={{
-        backgroundColor: 'var(--sidebar-inset-bg)',
-      }}
-    >
-      <div className="flex items-center">
-        <p className="text-white ml-2">This feature is still being developed. Please check again at a later update.</p>
-      </div>
-    </div>
-  );
+  // return (
+  //   <div
+  //     className="rounded-md p-4 justify-center items-center flex flex-col animate__animated animate__fadeIn"
+  //     style={{
+  //       backgroundColor: 'var(--sidebar-inset-bg)',
+  //     }}
+  //   >
+  //     <div className="flex items-center">
+  //       <p className="text-white ml-2">This feature is still being developed. Please check again at a later update.</p>
+  //     </div>
+  //   </div>
+  // );
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col">

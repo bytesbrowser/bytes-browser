@@ -278,12 +278,7 @@ pub async fn get_volumes_internal(
         }
     }
 
-    match build_token_index_root(&state_mux) {
-        Ok(_) => {}
-        Err(e) => {
-            println!("Error building token index: {}", e);
-        }
-    };
+    build_token_index_root(&state_mux);
 
     match window.emit("search_ready", true) {
         Ok(_) => {}
