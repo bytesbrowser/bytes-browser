@@ -61,6 +61,16 @@ pub type StateSafe = Arc<Mutex<AppState>>;
 
 #[tokio::main]
 async fn main() {
+    let client = sentry_tauri::sentry::init((
+        "https://920d9a546652f3efe948eb1e2b65f49d@o4506077065904128.ingest.sentry.io/4506077089497088",
+        sentry_tauri::sentry::ClientOptions {
+            release: sentry_tauri::sentry::release_name!(),
+            ..Default::default()
+        },
+    ));
+
+    let _guard = sentry_tauri::minidump::init(&client);
+
     tauri::Builder::default()
         .setup(|app| {
             let window = app.get_window("main").unwrap();
@@ -116,6 +126,7 @@ async fn main() {
         ])
         .manage(Arc::new(Mutex::new(AppState::default())))
         .plugin(tauri_plugin_store::Builder::default().build())
+        .plugin(sentry_tauri::plugin())
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
