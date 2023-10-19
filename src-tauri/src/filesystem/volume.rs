@@ -335,7 +335,7 @@ pub async fn safely_eject_removable(mount_path: String, platform: String) -> Res
                 .creation_flags(CREATE_NO_WINDOW)
                 .stdout(std::process::Stdio::piped())
                 .spawn()
-                .expect("Failed to start command");
+                .expect("EJECT_REMOVABLE: Failed to start command");
 
             match output.wait_with_output() {
                 Ok(output) => {

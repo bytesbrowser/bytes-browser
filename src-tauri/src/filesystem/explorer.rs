@@ -392,7 +392,7 @@ pub async fn install_dep(
                 .creation_flags(CREATE_NO_WINDOW)
                 .stdout(std::process::Stdio::piped())
                 .spawn()
-                .expect("Failed to start command");
+                .expect("INSTALL_DEP: Failed to start command");
 
             match output.wait_with_output() {
                 Ok(output) => {
@@ -416,7 +416,7 @@ pub async fn install_dep(
                 .creation_flags(CREATE_NO_WINDOW)
                 .stdout(std::process::Stdio::piped())
                 .spawn()
-                .expect("Failed to start command");
+                .expect("INSTALL_DEP: Failed to start command");
 
             match output.wait_with_output() {
                 Ok(output) => {
@@ -452,7 +452,7 @@ pub async fn remove_dep(
                 .creation_flags(CREATE_NO_WINDOW)
                 .stdout(std::process::Stdio::piped())
                 .spawn()
-                .expect("Failed to start command");
+                .expect("REMOVE_DEP: Failed to start command");
 
             match output.wait_with_output() {
                 Ok(output) => {
@@ -479,7 +479,7 @@ pub async fn remove_dep(
                 .creation_flags(CREATE_NO_WINDOW)
                 .stdout(std::process::Stdio::piped())
                 .spawn()
-                .expect("Failed to start command");
+                .expect("REMOVE_DEP: Failed to start command");
 
             match output.wait_with_output() {
                 Ok(output) => {

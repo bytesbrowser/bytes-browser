@@ -43,7 +43,7 @@ pub fn run_command_once(command: Command, command_type: CommandRunType, window: 
                 .creation_flags(CREATE_NO_WINDOW)
                 .stdout(std::process::Stdio::piped())
                 .spawn()
-                .expect("Failed to start command")
+                .expect("RUN_COMMAND_ONCE: Failed to start command")
         }
         CommandRunType::Bash => {
             ProcessCommand::new("bash")
@@ -53,7 +53,7 @@ pub fn run_command_once(command: Command, command_type: CommandRunType, window: 
                 .creation_flags(CREATE_NO_WINDOW)
                 .stdout(std::process::Stdio::piped())
                 .spawn()
-                .expect("Failed to start command")
+                .expect("RUN_COMMAND_ONCE: Failed to start command")
         }
     };
 
@@ -106,7 +106,7 @@ pub async fn register_command(
                 .creation_flags(CREATE_NO_WINDOW)
                 .stdout(std::process::Stdio::piped())
                 .spawn()
-                .expect("Failed to start command"),
+                .expect("REGISTER_COMMAND: Failed to start command"),
             CommandRunType::Bash => ProcessCommand::new("bash")
                 .current_dir(&working_directory)
                 .arg("-c")
@@ -114,7 +114,7 @@ pub async fn register_command(
                 .creation_flags(CREATE_NO_WINDOW)
                 .stdout(std::process::Stdio::piped())
                 .spawn()
-                .expect("Failed to start command"),
+                .expect("REGISTER_COMMAND: Failed to start command"),
         };
 
         match output.wait_with_output() {
@@ -150,7 +150,7 @@ pub fn check_bash_install() -> bool {
         .creation_flags(CREATE_NO_WINDOW)
         .stdout(std::process::Stdio::piped())
         .spawn()
-        .expect("Failed to start command");
+        .expect("CHECK_BASH_INSTALL: Failed to start command");
 
     match output.wait_with_output() {
         Ok(output) => String::from_utf8_lossy(&output.stdout).trim() == "bash installed",
@@ -166,7 +166,7 @@ pub fn check_npm_install() -> bool {
         .creation_flags(CREATE_NO_WINDOW)
         .stdout(std::process::Stdio::piped())
         .spawn()
-        .expect("Failed to start command");
+        .expect("CHECK_NPM_INSTALL: Failed to start command");
 
     match output.wait_with_output() {
         Ok(output) => {
@@ -188,7 +188,7 @@ pub fn check_git_install() -> bool {
         .creation_flags(CREATE_NO_WINDOW)
         .stdout(std::process::Stdio::piped())
         .spawn()
-        .expect("Failed to start command");
+        .expect("CHECK_GIT_INSTALL: Failed to start command");
 
     match output.wait_with_output() {
         Ok(output) => String::from_utf8_lossy(&output.stdout).starts_with("git version"),
